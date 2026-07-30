@@ -1,0 +1,245 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f0b0c553be8edd4682e9180fdd13e37, type: 3}
+  m_Name: I2Languages
+  m_EditorClassIdentifier: 
+  mSource:
+    UserAgreesToHaveItOnTheScene: 0
+    UserAgreesToHaveItInsideThePluginsFolder: 0
+    GoogleLiveSyncIsUptoDate: 1
+    mTerms:
+    - Term: Coin_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Coin
+      Flags: 00
+      Languages_Touch: []
+    - Term: Gem_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Gem
+      Flags: 00
+      Languages_Touch: []
+    - Term: Energy_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Energy
+      Flags: 00
+      Languages_Touch: []
+    - Term: ActivePoint_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Active Point
+      Flags: 00
+      Languages_Touch: []
+    - Term: RemovePin_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Unscrew
+      Flags: 00
+      Languages_Touch: []
+    - Term: Undo_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Undo
+      Flags: 00
+      Languages_Touch: []
+    - Term: Hammer_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Hammer
+      Flags: 00
+      Languages_Touch: []
+    - Term: HoleKey_name
+      TermType: 0
+      Description: 
+      Languages:
+      - Key
+      Flags: 00
+      Languages_Touch: []
+    - Term: BonusTime_name
+      TermType: 0
+      Description: 
+      Languages:
+      - BonusTime
+      Flags: 00
+      Languages_Touch: []
+    - Term: Coin_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Common Resources use to purchase game booster
+      Flags: 00
+      Languages_Touch: []
+    - Term: Gem_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Advance Resource use to purchase item and function in game
+      Flags: 00
+      Languages_Touch: []
+    - Term: Energy_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Use to play game
+      Flags: 00
+      Languages_Touch: []
+    - Term: ActivePoint_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Use to ranking on leaderboard and receive special resource
+      Flags: 00
+      Languages_Touch: []
+    - Term: RemovePin_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Destroy Selected Screw
+      Flags: 00
+      Languages_Touch: []
+    - Term: Undo_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Undo one action
+      Flags: 00
+      Languages_Touch: []
+    - Term: Hammer_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Destroy One Wood Bar
+      Flags: 00
+      Languages_Touch: []
+    - Term: HoleKey_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Unlock Selected Hole
+      Flags: 00
+      Languages_Touch: []
+    - Term: BonusTime_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Add 60s To Level Time
+      Flags: 00
+      Languages_Touch: []
+    - Term: Login_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Login a total of {0} day(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: LevelPlay_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Play a total of {0} level(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: LevelCompleted_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Complete a total of {0} level(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: EndlessPlay_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Play a total of {0} endless mode game(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: ReachEnlessStage_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Reach stage {0} in endless mode.
+      Flags: 00
+      Languages_Touch: []
+    - Term: WinEndlessStage_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Win {0} stage(s) in endless mode.
+      Flags: 00
+      Languages_Touch: []
+    - Term: SpendCoin_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Spend a total of {0} coin(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: SpendEnergy_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Spend a total of {0} energy unit(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: LevelWin_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Win a total of {0} level(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: UseBooster_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Use a total of {0} booster(s).
+      Flags: 00
+      Languages_Touch: []
+    - Term: SpinLuckyWheel_quest_desc
+      TermType: 0
+      Description: 
+      Languages:
+      - Spin the lucky wheel a total of {0} time(s).
+      Flags: 00
+      Languages_Touch: []
+    CaseInsensitiveTerms: 0
+    OnMissingTranslation: 1
+    mTerm_AppName: 
+    mLanguages:
+    - Name: English
+      Code: en
+      Flags: 0
+    IgnoreDeviceLanguage: 0
+    _AllowUnloadingLanguages: 0
+    Google_WebServiceURL: https://script.google.com/macros/s/AKfycby6q1IHIU2qs4DGulp4QppR84U6a7v6ryyF936okRSz-kFRlOJlvhGsgBT937JyrbBCXA/exec
+    Google_SpreadsheetKey: 19mVmUsg445TPv28TP5kykhRBZipfVDyV6EfJyPWN7dM
+    Google_SpreadsheetName: I2Loc Nut&Bolt Localization
+    Google_LastUpdatedVersion: 1741944400420
+    Google_Password: change_this
+    GoogleUpdateFrequency: 3
+    GoogleInEditorCheckFrequency: 2
+    GoogleUpdateSynchronization: 1
+    GoogleUpdateDelay: 0
+    Assets: []
+    Spreadsheet_LocalFileName: 
+    Spreadsheet_LocalCSVSeparator: ','
+    Spreadsheet_LocalCSVEncoding: utf-8
+    Spreadsheet_SpecializationAsRows: 1

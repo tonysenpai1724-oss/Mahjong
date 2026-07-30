@@ -1,0 +1,14 @@
+Pack Type,packageId,Pack Name,Max Buy,price,photoUrl,photoWidth,photoHeight,invoice link created,Reward,,,,
+Starter,Starter_pack,Starter Pack,1,1,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$lbLf0XXU0Fb0AQAAoeN8zq97pAQ,CommonResource|Coin|1000,BoosterResource|RemovePin|1,BoosterResource|Undo|1,BoosterResource|Hammer|1,BoosterResource|HoleKey|1
+Trainee,Trainee_pack,Trainee Pack,1,250,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$8DAqMHXU0Fb1AQAAWMeUeQ0yVxU,CommonResource|Coin|2000,BoosterResource|RemovePin|1,BoosterResource|Undo|1,BoosterResource|Hammer|1,BoosterResource|HoleKey|1
+Carpenter,Carpenter_pack,Carpenter Pack,1,500,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$6jM0THXU0Fb2AQAASDM7ZT2xf_w,CommonResource|Coin|5000,BoosterResource|RemovePin|2,BoosterResource|Undo|2,BoosterResource|Hammer|2,BoosterResource|HoleKey|2
+Professional,Professional_pack,Professional Pack,1,1000,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$EAqk_XXU0Fb3AQAAgp637SEB1eE,CommonResource|Coin|10000,BoosterResource|RemovePin|4,BoosterResource|Undo|4,BoosterResource|Hammer|4,BoosterResource|HoleKey|4
+Engineer,Engineer_pack,Engineer Pack,1,2500,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$_EOI_HXU0Fb4AQAACGRvgVnczj0,CommonResource|Coin|25000,BoosterResource|RemovePin|10,BoosterResource|Undo|10,BoosterResource|Hammer|10,BoosterResource|HoleKey|10
+Master,Master_pack,Master Pack,1,4000,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$yOHs63XU0Fb5AQAARGI99Niby-I,CommonResource|Coin|50000,BoosterResource|RemovePin|20,BoosterResource|Undo|20,BoosterResource|Hammer|20,BoosterResource|HoleKey|20
+Legend,Legend_pack,Legend Pack,1,5000,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$LqB2gHXU0Fb6AQAAReesH4ECQJc,CommonResource|Coin|65000,BoosterResource|RemovePin|25,BoosterResource|Undo|25,BoosterResource|Hammer|25,BoosterResource|HoleKey|25
+Gem1,Gem1_pack,Gem Pack 1,0,50,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$HmoT1HXU0Fb7AQAAqM8J5ECB9Qs,CommonResource|Gem|80,,,,
+Gem2,Gem2_pack,Gem Pack 2,0,250,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$-gw0lHXU0Fb8AQAA9XBNBDb4oEw,CommonResource|Gem|500,,,,
+Gem3,Gem3_pack,Gem Pack 3,0,500,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$FFSYynXU0Fb9AQAA9zBC1BSHEjI,CommonResource|Gem|1200,,,,
+Gem4,Gem4_pack,Gem Pack 4,0,1000,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$Ce2i6HXU0Fb-AQAAAzaI3-4kaCs,CommonResource|Gem|2500,,,,
+Gem5,Gem5_pack,Gem Pack 5,0,2500,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$WNxLiXXU0Fb_AQAA4OfeEBCEAHU,CommonResource|Gem|6500,,,,
+Gem6,Gem6_pack,Gem Pack 6,0,5000,https://i.ibb.co/thk3xBV/icon-game.png,512,512,https://t.me/$-mp8I3XU0FYAAgAAcpbURx3WiHI,CommonResource|Gem|14000,,,,

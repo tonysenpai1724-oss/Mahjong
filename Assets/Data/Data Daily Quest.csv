@@ -1,0 +1,21 @@
+Quest Type,Quest Condition,Point Bonus
+Login,1,20
+SpendEnergy,5,20
+LevelWin,1,40
+UseBooster,2,20
+SpinLuckyWheel,2,20
+,,
+Daily Reward,,
+Point,,
+20,CommonResource|Coin|50,
+40,CommonResource|Energy|2,
+60,CommonResource|Coin|100,
+80,CommonResource|Gem|50,
+100,CommonResource|ActivePoint|20,
+,,
+Weekly Reward,,
+140,CommonResource|Coin|500,
+280,CommonResource|Coin|1000,
+420,CommonResource|Coin|2500,
+560,CommonResource|Gem|200,
+700,CommonResource|ActivePoint|150,

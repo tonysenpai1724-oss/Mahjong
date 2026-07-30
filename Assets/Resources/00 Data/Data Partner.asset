@@ -1,0 +1,269 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1e190196fb666a448b48d0aa6ca8e19, type: 3}
+  m_Name: Data Partner
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes:
+    - Name: lstConfigs
+      Entry: 7
+      Data: 0|System.Collections.Generic.List`1[[PartnerReferalConfig, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 11
+    - Name: 
+      Entry: 7
+      Data: 1|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/captcha_airdrop_bot/start?startapp=1231641802&startApp=1231641802
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/XLcS9YS.jpg
+    - Name: title
+      Entry: 1
+      Data: Join CAPtcha Bot & earn $CAP
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 2|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/loafcat_game_bot/?startapp=ref_8id4zc7l9ott
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/HdiAXLl.jpg
+    - Name: title
+      Entry: 1
+      Data: Play Loafcat Bot
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 3|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/TopDawgGame_bot?start=utm_679c3732a60c184f0af5ce9c
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/cWGO0lV.jpg
+    - Name: title
+      Entry: 1
+      Data: Play Top Dawg and Win Big!
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 4|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/whiskrabot?startapp=dc1a23f9dd3c495cb34ada87f07a1a03
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/ssM1bWQ.jpg
+    - Name: title
+      Entry: 1
+      Data: "Join Whiskra Earn\_Free Sol"
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 5|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/hopium_official_bot/join?startapp=linkCode_HOP414105
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/fSGJiRw.jpg
+    - Name: title
+      Entry: 1
+      Data: 'Join HOPIUM! '
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 6|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/KumaJumpBot/KumaJump?startapp=CTCYQEEHN
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/1iSkkIr.jpg
+    - Name: title
+      Entry: 1
+      Data: 'Play Kuma Jump! '
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 7|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/NotMushCoin_bot/play?startapp=m_5566456612
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/HlUCP2h.jpg
+    - Name: title
+      Entry: 1
+      Data: Play Mushroom Warrior
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 8|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/Pokemonn_Ton_Bot/app?startapp=TH6UEA
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/MA1fOni.jpg
+    - Name: title
+      Entry: 1
+      Data: Earn USDT on Poke Center
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 9|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/masterversess_bot/Masterverses?startapp=7913885852
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/iIjWfsw.jpg
+    - Name: title
+      Entry: 1
+      Data: Join Masterverses
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 10|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://t.me/cyborg_telegram_bot/cyborg?startapp=eyJyZWZDb2RlIjoiVEw0NVpaRkQ0SCJ9
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/Yg2B8aU.png
+    - Name: title
+      Entry: 1
+      Data: Join Cyborg Play-to-Airdrop
+    - Name: gemReward
+      Entry: 3
+      Data: 200
+    - Name: activePointReward
+      Entry: 3
+      Data: 1000
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 11|PartnerReferalConfig, Assembly-CSharp
+    - Name: url
+      Entry: 1
+      Data: https://x.com/thesharks_emoji?s=21
+    - Name: iconUrl
+      Entry: 1
+      Data: https://i.imgur.com/8DOicZl.jpg
+    - Name: title
+      Entry: 1
+      Data: Follow SHARKS For $SHARKS Airdrop!
+    - Name: gemReward
+      Entry: 3
+      Data: 100
+    - Name: activePointReward
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+  configString: H4sIAAAAAAAACqWV726iQBTFX2Vqmn5qlb8KTZrGoq3aWq1obbvZkHEYYBQYMoy17mbfZZ9ln2wH7Na2y4Zs+AAhNzP3/M7lwHz5XluzsHZaCzhP0tNGg9cj3EAw4SiADiTMZTRxFpQ3Ug4ZP8/vMEnOZEWVm5psSMpRXmt/qNWOawTRePahNamTyF+zOqJR4+EG2eajXV8mvljLCQ+xWDmgJAZWe5yJgwvKwRHAkMXgUNTEMh9HE7yBzK2dypJ0XIOIk2c8Fpv4n7ouST+OCz2FFHoIcseHEc4N7b0w7DkGcbVvqBWalPNS+p5L2g834Sf6cQi34GYnk9FXJZ7SpAM3/tUr8I73bM0jp9kykdpSFdiUkGxongQ9HWETlYKj+dVICu+LwIUayOQAjF0wF+/hgvgHVS1sApKuGHyjz6btIhkqqme6roo0U0cLVYMuNFqe1IIylNRSE2k6lBfzu6LszHd6oCtS8+vnJcMY2DSs6iKgCVlHDvU8gggM8/Qsxda9p5DEK4u62OmNxpqsyZJe6sKzrwZksilyIZr0Z8MDUJX7eh3BwTpKRBbfnvfM1tR6vOt2e7elqDKxV6s+K0pN1hZkfavT3lI+XKeBJVbnE05E/z1t5Oh6s6mJSy7/u/TCmTVWgiLgTIJRGoE5ZIxQVpV6TFc4onHsTGnsZIMWsHvqaa8567ZLeYdt2RvF5BNvFmIwsztTQGOQ6QALxxxXRo5gKro8Y5biNM1HPXxX2cO3TFk1DN3QywdO+su5lxaG+X3vquRou6DMdzgOsc9glLPvantqvB1sn+ZPnYUyCfviK73vbqTb+wROVneSbQ3MUi+PvnJhwFk9if8+mnItkAXphNOT9u54/OhK+Ycr4bbA1ksuyQOcBpCtUkdkaUnO0zNFLuU0OiOCnj4fQpc0DOkG2L325NoGl5SBw9fnV9r/+Kd//Q1cPk1MHggAAA==
+  configKey: partner_referral

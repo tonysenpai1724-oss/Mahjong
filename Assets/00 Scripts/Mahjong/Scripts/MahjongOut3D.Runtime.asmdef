@@ -1,0 +1,14 @@
+{
+  "name": "MahjongOut3D.Runtime",
+  "rootNamespace": "MahjongOut3D",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

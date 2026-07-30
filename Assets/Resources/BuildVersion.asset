@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1e94b858ae644b49918aa3b4b2fd536, type: 3}
+  m_Name: BuildVersion
+  m_EditorClassIdentifier: 
+  version: 16
+  userId: '{"accessToken":"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRBc3BTajhkUW9SQk5EQUptaVlXdUZOYzh1bXJxZHpfQmZsbWtlVDRfdHcifQ.eyJzaWQiOiJjbThwbGlqMWgwMTh6eHRpdzJ2ejhweWh4IiwiaXNzIjoicHJpdnkuaW8iLCJpYXQiOjE3NDMwNDc0MjMsImF1ZCI6ImNtNjY1bno2NDAyZTM2bXpmc3pwZzYxbzgiLCJzdWIiOiJkaWQ6cHJpdnk6Y204bzVtbTdoMDI0ZjN5eWdhZjd5dHUxMyIsImV4cCI6MTc0MzA1MTAyM30.vGvPQlsi4OdV7PUGUyAqvGjbmDmDNngAi7uRVMPLbC8FhQQVzO5XOJl3FlN4mkT8mILlYEOF5N60gePVVGY_3Q","refreshToken":"EgDa5FrWqVOlga9_ZSsDuVJzNM9n1J6y7E79YZokOp6gOGx3bbQ3syQhSPmsW1JvQtCkP3Bho1kI7IB-aCA7ag","cId":"457d9196-26d1-4fb2-a267-a5a9f885d4eb","origin":"https://privygame.gfun.top"}'
+  buildType: 1
+  platform: 2
