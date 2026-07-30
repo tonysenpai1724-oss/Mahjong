@@ -70,6 +70,11 @@ namespace MahjongOut3D.TileSystem
         public TileOutlinePresenter Outline => outlinePresenter;
 
         /// <summary>
+        /// Gets the tile visual controller.
+        /// </summary>
+        public TileVisualController VisualController => visualController;
+
+        /// <summary>
         /// Gets the current tile state.
         /// </summary>
         public TileState State => state;
@@ -216,6 +221,20 @@ namespace MahjongOut3D.TileSystem
         public void SetGridCoordinate(Vector3Int coordinate)
         {
             gridCoordinate = coordinate;
+        }
+
+        /// <summary>
+        /// Applies a runtime base color override used to visually distinguish matched pairs.
+        /// </summary>
+        /// <param name="color">Base color for this tile instance.</param>
+        public void SetDebugMatchColor(Color color)
+        {
+            if (visualController == null)
+            {
+                CacheReferences();
+            }
+
+            visualController?.SetRuntimeBaseColor(color);
         }
 
         /// <summary>

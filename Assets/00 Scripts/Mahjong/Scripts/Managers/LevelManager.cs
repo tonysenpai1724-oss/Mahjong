@@ -9,6 +9,7 @@ namespace MahjongOut3D.Managers
     /// </summary>
     public sealed class LevelManager : ManagerBehaviour
     {
+        [SerializeField] private LevelCatalog levelCatalog;
         [SerializeField] private VoxelGridLayoutSettings defaultGridLayout;
 
         private VoxelGridData activeGrid;
@@ -29,6 +30,11 @@ namespace MahjongOut3D.Managers
         public VoxelGridLayoutSettings DefaultGridLayout => defaultGridLayout;
 
         /// <summary>
+        /// Gets the runtime level catalog used for level selection and progression.
+        /// </summary>
+        public LevelCatalog LevelCatalog => levelCatalog;
+
+        /// <summary>
         /// Gets the bootstrap order for the level manager.
         /// </summary>
         public override int InitializationOrder => 10;
@@ -38,6 +44,12 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnInitialize()
         {
+            if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
+            {
+                CurrentLevelIndex = saveManager.CurrentSave.currentLevel;
+                return;
+            }
+
             if (Context.ProjectSettings != null)
             {
                 CurrentLevelIndex = Context.ProjectSettings.DefaultLevelIndex;
@@ -59,6 +71,60 @@ namespace MahjongOut3D.Managers
         public void SetCurrentLevel(int levelIndex)
         {
             CurrentLevelIndex = levelIndex;
+
+            if (Context.Services.TryGet(out SaveManager saveManager))
+            {
+                saveManager.SetCurrentLevel(levelIndex);
+            }
+        }
+
+        /// <summary>
+        /// Loads the current level index from the configured level catalog.
+        /// </summary>
+        /// <returns>True when the level was loaded; otherwise false.</returns>
+        public bool LoadCurrentLevel()
+        {
+            return LoadLevel(CurrentLevelIndex);
+        }
+
+        /// <summary>
+        /// Loads the specified level index from the configured level catalog.
+        /// </summary>
+        /// <param name="levelIndex">Zero-based level index to load.</param>
+        /// <returns>True when the level was loaded; otherwise false.</returns>
+        public bool LoadLevel(int levelIndex)
+        {
+            if (levelCatalog == null || !levelCatalog.TryGetLevel(levelIndex, out LevelDefinition definition))
+            {
+                return false;
+            }
+
+            if (!Context.Services.TryGet(out VoxelLevelGenerator generator))
+            {
+                return false;
+            }
+
+            SetCurrentLevel(levelIndex);
+            generator.GenerateFromDefinition(definition);
+            return true;
+        }
+
+        /// <summary>
+        /// Reloads the currently selected level.
+        /// </summary>
+        /// <returns>True when the level was reloaded; otherwise false.</returns>
+        public bool ReloadCurrentLevel()
+        {
+            return LoadCurrentLevel();
+        }
+
+        /// <summary>
+        /// Attempts to load the next level in the catalog.
+        /// </summary>
+        /// <returns>True when the next level was loaded; otherwise false.</returns>
+        public bool LoadNextLevel()
+        {
+            return LoadLevel(CurrentLevelIndex + 1);
         }
 
         /// <summary>

@@ -16,6 +16,9 @@ namespace MahjongOut3D.CameraSystem
         public float RotationSpeed { get; private set; } = 0.2f;
 
         [field: SerializeField, Min(0.1f)]
+        public float VerticalRotationMultiplier { get; private set; } = 1.5f;
+
+        [field: SerializeField, Min(0.1f)]
         public float ZoomSpeed { get; private set; } = 3f;
 
         [field: SerializeField, Min(0.001f)]

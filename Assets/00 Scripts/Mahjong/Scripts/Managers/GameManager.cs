@@ -46,5 +46,51 @@ namespace MahjongOut3D.Managers
             CurrentState = newState;
             Context?.EventBus.Publish(new GameFlowStateChangedEvent(previousState, CurrentState));
         }
+
+        /// <summary>
+        /// Transitions the runtime into gameplay.
+        /// </summary>
+        public void StartGameplay()
+        {
+            SetState(GameFlowState.Gameplay);
+        }
+
+        /// <summary>
+        /// Pauses gameplay if the game is currently active.
+        /// </summary>
+        public void PauseGameplay()
+        {
+            if (CurrentState == GameFlowState.Gameplay)
+            {
+                SetState(GameFlowState.Paused);
+            }
+        }
+
+        /// <summary>
+        /// Resumes gameplay if the game is currently paused.
+        /// </summary>
+        public void ResumeGameplay()
+        {
+            if (CurrentState == GameFlowState.Paused)
+            {
+                SetState(GameFlowState.Gameplay);
+            }
+        }
+
+        /// <summary>
+        /// Transitions the runtime into the win state.
+        /// </summary>
+        public void WinGameplay()
+        {
+            SetState(GameFlowState.Win);
+        }
+
+        /// <summary>
+        /// Transitions the runtime into the lose state.
+        /// </summary>
+        public void LoseGameplay()
+        {
+            SetState(GameFlowState.Lose);
+        }
     }
 }

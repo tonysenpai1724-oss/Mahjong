@@ -13,6 +13,7 @@ namespace MahjongOut3D.CameraSystem
     {
         private const float FallbackDefaultDistance = 10f;
         private const float FallbackRotationSpeed = 0.2f;
+        private const float FallbackVerticalRotationMultiplier = 1.5f;
         private const float FallbackZoomSpeed = 3f;
         private const float FallbackZoomInputScale = 0.02f;
         private const float FallbackMinZoomDistance = 6f;
@@ -52,6 +53,10 @@ namespace MahjongOut3D.CameraSystem
         private float focusZSmoothVelocity;
         private Vector2 inertialRotationVelocity;
         private Vector3 currentFocusPoint;
+        private Vector3 shakeOffset;
+        private float shakeStartTime;
+        private float shakeEndTime;
+        private float shakeAmplitude;
         private int lastDragFrame = -1;
 
         /// <summary>
@@ -83,6 +88,10 @@ namespace MahjongOut3D.CameraSystem
             if (managedCamera == null)
             {
                 MahjongRuntimeLogger.LogWarning("OrbitCameraController could not find a Camera component. It will drive its own transform only.");
+            }
+            else if (managedCamera.orthographic)
+            {
+                managedCamera.orthographic = false;
             }
 
             if (settings == null)
@@ -132,6 +141,7 @@ namespace MahjongOut3D.CameraSystem
 
             float deltaTime = Mathf.Max(GetDeltaTime(), 0.0001f);
             Vector2 scaledDelta = screenDelta * GetRotationSpeed();
+            scaledDelta.y *= GetVerticalRotationMultiplier();
 
             targetYaw += scaledDelta.x;
             targetPitch = Mathf.Clamp(targetPitch - scaledDelta.y, GetMinPitch(), GetMaxPitch());
@@ -171,6 +181,39 @@ namespace MahjongOut3D.CameraSystem
         public void SetFocusPoint(Vector3 worldPoint)
         {
             focusPoint = worldPoint;
+        }
+
+        /// <summary>
+        /// Frames a world-space bounds volume by updating both focus and distance.
+        /// </summary>
+        /// <param name="worldBounds">World bounds to frame.</param>
+        /// <param name="paddingMultiplier">Extra framing padding multiplier.</param>
+        public void FrameBounds(Bounds worldBounds, float paddingMultiplier = 1.2f)
+        {
+            focusTarget = null;
+            focusPoint = worldBounds.center;
+
+            float safePadding = Mathf.Max(1f, paddingMultiplier);
+            float framingDistance = CalculateFramingDistance(worldBounds, safePadding);
+            targetDistance = Mathf.Clamp(framingDistance, GetMinZoomDistance(), GetMaxZoomDistance());
+
+            if (!isInitialized)
+            {
+                currentFocusPoint = focusPoint;
+                currentDistance = targetDistance;
+            }
+        }
+
+        /// <summary>
+        /// Starts a short additive camera shake effect.
+        /// </summary>
+        /// <param name="durationSeconds">Shake duration in seconds.</param>
+        /// <param name="amplitude">Maximum positional shake amplitude.</param>
+        public void PlayShake(float durationSeconds, float amplitude)
+        {
+            shakeStartTime = GetCurrentTime();
+            shakeEndTime = GetCurrentTime() + Mathf.Max(0f, durationSeconds);
+            shakeAmplitude = Mathf.Max(0f, amplitude);
         }
 
         /// <summary>
@@ -237,6 +280,7 @@ namespace MahjongOut3D.CameraSystem
 
             Quaternion rotation = Quaternion.Euler(currentPitch, currentYaw, 0f);
             Vector3 cameraPosition = currentFocusPoint - (rotation * Vector3.forward * currentDistance);
+            cameraPosition += rotation * GetShakeOffset();
             Transform drivenTransform = GetDrivenTransform();
             drivenTransform.SetPositionAndRotation(cameraPosition, rotation);
         }
@@ -253,6 +297,32 @@ namespace MahjongOut3D.CameraSystem
             }
 
             return focusPoint + focusOffset;
+        }
+
+        /// <summary>
+        /// Calculates a camera distance that keeps the provided bounds inside the current camera frustum.
+        /// </summary>
+        /// <param name="worldBounds">Bounds to frame.</param>
+        /// <param name="paddingMultiplier">Extra framing padding multiplier.</param>
+        /// <returns>Suggested orbit distance.</returns>
+        private float CalculateFramingDistance(Bounds worldBounds, float paddingMultiplier)
+        {
+            Vector3 paddedSize = worldBounds.size * paddingMultiplier;
+            float radius = paddedSize.magnitude * 0.5f;
+            if (managedCamera == null)
+            {
+                return Mathf.Max(radius, GetDefaultZoomDistance());
+            }
+
+            float verticalFovRadians = managedCamera.fieldOfView * Mathf.Deg2Rad;
+            float halfVerticalFov = verticalFovRadians * 0.5f;
+            float halfHorizontalFov = Mathf.Atan(Mathf.Tan(halfVerticalFov) * managedCamera.aspect);
+
+            float distanceByHeight = (paddedSize.y * 0.5f) / Mathf.Max(0.01f, Mathf.Tan(halfVerticalFov));
+            float distanceByWidth = (paddedSize.x * 0.5f) / Mathf.Max(0.01f, Mathf.Tan(halfHorizontalFov));
+            float distanceByDepth = paddedSize.z * 0.5f;
+
+            return Mathf.Max(radius, distanceByHeight, distanceByWidth, distanceByDepth);
         }
 
         /// <summary>
@@ -289,6 +359,39 @@ namespace MahjongOut3D.CameraSystem
         }
 
         /// <summary>
+        /// Gets the current absolute time from the selected time source.
+        /// </summary>
+        /// <returns>Current runtime time.</returns>
+        private float GetCurrentTime()
+        {
+            if (settings != null && settings.UseUnscaledTime)
+            {
+                return Time.unscaledTime;
+            }
+
+            return Time.time;
+        }
+
+        /// <summary>
+        /// Evaluates the current transient shake offset.
+        /// </summary>
+        /// <returns>Local-space shake offset.</returns>
+        private Vector3 GetShakeOffset()
+        {
+            if (shakeAmplitude <= 0f || GetCurrentTime() >= shakeEndTime)
+            {
+                shakeOffset = Vector3.zero;
+                return shakeOffset;
+            }
+
+            float duration = Mathf.Max(0.0001f, shakeEndTime - shakeStartTime);
+            float normalizedRemaining = Mathf.Clamp01((shakeEndTime - GetCurrentTime()) / duration);
+            float amplitude = shakeAmplitude * normalizedRemaining;
+            shakeOffset = Random.insideUnitSphere * amplitude;
+            return shakeOffset;
+        }
+
+        /// <summary>
         /// Gets the transform driven by the orbit camera.
         /// </summary>
         /// <returns>Driven transform instance.</returns>
@@ -313,6 +416,15 @@ namespace MahjongOut3D.CameraSystem
         private float GetRotationSpeed()
         {
             return settings != null ? settings.RotationSpeed : FallbackRotationSpeed;
+        }
+
+        /// <summary>
+        /// Gets the configured vertical pitch sensitivity multiplier.
+        /// </summary>
+        /// <returns>Pitch sensitivity multiplier.</returns>
+        private float GetVerticalRotationMultiplier()
+        {
+            return settings != null ? settings.VerticalRotationMultiplier : FallbackVerticalRotationMultiplier;
         }
 
         /// <summary>

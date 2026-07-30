@@ -4,6 +4,7 @@ using MahjongOut3D.Managers;
 using MahjongOut3D.TileSystem;
 using MahjongOut3D.Utilities;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace MahjongOut3D.LevelSystem
 {
@@ -13,21 +14,37 @@ namespace MahjongOut3D.LevelSystem
     [DisallowMultipleComponent]
     public sealed class VoxelLevelGenerator : MonoBehaviour
     {
+        private static readonly Color[] DebugMatchPalette =
+        {
+            new Color(0.94f, 0.42f, 0.42f),
+            new Color(0.31f, 0.76f, 0.93f),
+            new Color(0.44f, 0.84f, 0.54f),
+            new Color(0.97f, 0.73f, 0.32f),
+            new Color(0.72f, 0.54f, 0.95f),
+            new Color(0.96f, 0.47f, 0.75f),
+            new Color(0.38f, 0.85f, 0.8f),
+            new Color(0.84f, 0.84f, 0.36f),
+        };
+
         [Header("References")]
         [SerializeField] private LevelDefinition levelDefinition;
         [SerializeField] private MahjongTile tilePrefab;
         [SerializeField] private Transform tileRoot;
+        [SerializeField] private TileVisualSettings fallbackTileVisualSettings;
 
         [Header("Generation")]
         [SerializeField] private bool generateOnStart;
         [SerializeField] private bool clearExistingChildrenOnGenerate = true;
+        [SerializeField] private bool usePooling = true;
 
         private readonly List<MahjongTile> spawnedTiles = new List<MahjongTile>();
+        private ComponentPool<MahjongTile> tilePool;
         private GameContext context;
         private LevelManager levelManager;
         private TileManager tileManager;
         private CameraManager cameraManager;
         private int nextTileId;
+        private MahjongTile runtimeFallbackTilePrefab;
 
         /// <summary>
         /// Initializes the generator with the shared runtime context.
@@ -36,6 +53,7 @@ namespace MahjongOut3D.LevelSystem
         public void Initialize(GameContext gameContext)
         {
             context = gameContext;
+            context.Services.Register(typeof(VoxelLevelGenerator), this);
             levelManager = context.Services.Get<LevelManager>();
             tileManager = context.Services.Get<TileManager>();
             context.Services.TryGet(out cameraManager);
@@ -43,6 +61,13 @@ namespace MahjongOut3D.LevelSystem
             if (tileRoot == null)
             {
                 tileRoot = transform;
+            }
+
+            EnsureTileTemplate();
+
+            if (tilePrefab != null && usePooling)
+            {
+                tilePool = new ComponentPool<MahjongTile>(tilePrefab);
             }
         }
 
@@ -71,6 +96,8 @@ namespace MahjongOut3D.LevelSystem
                 MahjongRuntimeLogger.LogWarning("VoxelLevelGenerator received a null LevelDefinition.");
                 return spawnedTiles;
             }
+
+            levelDefinition = definition;
 
             return Generate(definition.LevelName, definition.GridSize, definition.LayoutOverride, definition.Tiles);
         }
@@ -198,14 +225,21 @@ namespace MahjongOut3D.LevelSystem
                 }
 
                 tileManager?.UnregisterTile(tile);
-                Destroy(tile.gameObject);
+                if (usePooling && tilePool != null)
+                {
+                    tilePool.Release(tile, tileRoot);
+                }
+                else
+                {
+                    Destroy(tile.gameObject);
+                }
             }
 
             spawnedTiles.Clear();
             nextTileId = 0;
             levelManager?.ClearActiveGrid();
 
-            if (clearExistingChildrenOnGenerate && tileRoot != null)
+            if (clearExistingChildrenOnGenerate && tileRoot != null && (!usePooling || tilePool == null))
             {
                 for (int index = tileRoot.childCount - 1; index >= 0; index--)
                 {
@@ -229,11 +263,7 @@ namespace MahjongOut3D.LevelSystem
                 return spawnedTiles;
             }
 
-            if (tilePrefab == null)
-            {
-                MahjongRuntimeLogger.LogWarning("VoxelLevelGenerator has no tile prefab assigned.");
-                return spawnedTiles;
-            }
+            EnsureTileTemplate();
 
             ClearGeneratedLevel();
 
@@ -265,7 +295,9 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         private void SpawnTile(VoxelGridData grid, LevelTileDefinition definition)
         {
-            MahjongTile tile = Instantiate(tilePrefab, tileRoot == null ? transform : tileRoot);
+            Transform parent = tileRoot == null ? transform : tileRoot;
+            MahjongTile template = tilePrefab != null ? tilePrefab : runtimeFallbackTilePrefab;
+            MahjongTile tile = usePooling && tilePool != null ? tilePool.Get(parent) : Instantiate(template, parent);
             TileRuntimeData runtimeData = new TileRuntimeData
             {
                 TileId = nextTileId++,
@@ -276,6 +308,7 @@ namespace MahjongOut3D.LevelSystem
             };
 
             tile.ApplyRuntimeData(runtimeData);
+            tile.SetDebugMatchColor(GetDebugMatchColor(definition.MatchId));
             tile.ResetTile();
             grid.TryPlaceTile(tile.TileId, definition.GridCoordinate);
             tileManager.RegisterTile(tile);
@@ -293,8 +326,154 @@ namespace MahjongOut3D.LevelSystem
             }
 
             Bounds localBounds = grid.GetLocalBounds();
-            Vector3 worldCenter = tileRoot != null ? tileRoot.TransformPoint(localBounds.center) : transform.TransformPoint(localBounds.center);
-            cameraManager.SetFocusPoint(worldCenter);
+            Bounds worldBounds = TransformBounds(tileRoot != null ? tileRoot : transform, localBounds);
+            cameraManager.FrameBounds(worldBounds, 1.35f);
+        }
+
+        /// <summary>
+        /// Converts local-space bounds into world-space bounds using the specified transform.
+        /// </summary>
+        /// <param name="targetTransform">Transform providing the local-to-world conversion.</param>
+        /// <param name="localBounds">Local-space bounds to convert.</param>
+        /// <returns>World-space bounds.</returns>
+        private static Bounds TransformBounds(Transform targetTransform, Bounds localBounds)
+        {
+            Vector3 center = targetTransform.TransformPoint(localBounds.center);
+            Vector3 extents = localBounds.extents;
+
+            Vector3 axisX = targetTransform.TransformVector(new Vector3(extents.x, 0f, 0f));
+            Vector3 axisY = targetTransform.TransformVector(new Vector3(0f, extents.y, 0f));
+            Vector3 axisZ = targetTransform.TransformVector(new Vector3(0f, 0f, extents.z));
+
+            Vector3 worldExtents = new Vector3(
+                Mathf.Abs(axisX.x) + Mathf.Abs(axisY.x) + Mathf.Abs(axisZ.x),
+                Mathf.Abs(axisX.y) + Mathf.Abs(axisY.y) + Mathf.Abs(axisZ.y),
+                Mathf.Abs(axisX.z) + Mathf.Abs(axisY.z) + Mathf.Abs(axisZ.z));
+
+            return new Bounds(center, worldExtents * 2f);
+        }
+
+        /// <summary>
+        /// Resolves a debug color for the supplied match identifier.
+        /// </summary>
+        /// <param name="matchId">Match identifier.</param>
+        /// <returns>Consistent debug color for that pair group.</returns>
+        private static Color GetDebugMatchColor(int matchId)
+        {
+            if (DebugMatchPalette.Length == 0)
+            {
+                return Color.white;
+            }
+
+            int colorIndex = Mathf.Abs(matchId) % DebugMatchPalette.Length;
+            return DebugMatchPalette[colorIndex];
+        }
+
+        /// <summary>
+        /// Ensures the generator has a valid tile template, creating a runtime cube fallback when needed.
+        /// </summary>
+        private void EnsureTileTemplate()
+        {
+            if (tilePrefab != null)
+            {
+                return;
+            }
+
+            if (runtimeFallbackTilePrefab != null)
+            {
+                tilePrefab = runtimeFallbackTilePrefab;
+                return;
+            }
+
+            GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            tileObject.name = "RuntimeFallbackMahjongTileTemplate";
+            tileObject.hideFlags = HideFlags.HideAndDontSave;
+            tileObject.SetActive(false);
+            int defaultLayer = LayerMask.NameToLayer("Default");
+            tileObject.layer = defaultLayer >= 0 ? defaultLayer : 0;
+            tileObject.transform.SetParent(transform, false);
+            tileObject.transform.localScale = new Vector3(0.95f, 0.45f, 0.7f);
+
+            MeshRenderer renderer = tileObject.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.On;
+                renderer.receiveShadows = true;
+
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+                if (shader != null)
+                {
+                    Material material = new Material(shader);
+                    material.name = "RuntimeFallbackMahjongTileMaterial";
+                    if (material.HasProperty("_BaseColor"))
+                    {
+                        material.SetColor("_BaseColor", new Color(0.96f, 0.94f, 0.9f, 1f));
+                    }
+                    else if (material.HasProperty("_Color"))
+                    {
+                        material.SetColor("_Color", new Color(0.96f, 0.94f, 0.9f, 1f));
+                    }
+
+                    if (material.HasProperty("_EmissionColor"))
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        material.SetColor("_EmissionColor", Color.black);
+                    }
+
+                    renderer.sharedMaterial = material;
+                }
+            }
+
+            TileOutlinePresenter outlinePresenter = tileObject.GetComponent<TileOutlinePresenter>();
+            if (outlinePresenter == null)
+            {
+                outlinePresenter = tileObject.AddComponent<TileOutlinePresenter>();
+            }
+
+            TileVisualController visualController = tileObject.GetComponent<TileVisualController>();
+            if (visualController == null)
+            {
+                visualController = tileObject.AddComponent<TileVisualController>();
+            }
+
+            MahjongTile tile = tileObject.GetComponent<MahjongTile>();
+            if (tile == null)
+            {
+                tile = tileObject.AddComponent<MahjongTile>();
+            }
+
+            if (fallbackTileVisualSettings != null)
+            {
+                SetPrivateField(visualController, "settings", fallbackTileVisualSettings);
+            }
+
+            runtimeFallbackTilePrefab = tile;
+            tilePrefab = runtimeFallbackTilePrefab;
+
+            if (usePooling)
+            {
+                tilePool = new ComponentPool<MahjongTile>(tilePrefab);
+            }
+        }
+
+        /// <summary>
+        /// Writes a serialized private field on a runtime-created component.
+        /// </summary>
+        /// <typeparam name="TTarget">Component type to modify.</typeparam>
+        /// <typeparam name="TValue">Value type being assigned.</typeparam>
+        /// <param name="target">Component instance receiving the value.</param>
+        /// <param name="fieldName">Serialized field name.</param>
+        /// <param name="value">Value to assign.</param>
+        private static void SetPrivateField<TTarget, TValue>(TTarget target, string fieldName, TValue value)
+            where TTarget : Component
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            System.Reflection.FieldInfo field = typeof(TTarget).GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            field?.SetValue(target, value);
         }
     }
 }

@@ -21,6 +21,8 @@ namespace MahjongOut3D.TileSystem
         private float scaleXSmoothVelocity;
         private float scaleYSmoothVelocity;
         private float scaleZSmoothVelocity;
+        private bool hasRuntimeBaseColorOverride;
+        private Color runtimeBaseColorOverride = Color.white;
 
         /// <summary>
         /// Applies visual feedback for the specified tile state.
@@ -62,6 +64,16 @@ namespace MahjongOut3D.TileSystem
         public TileOutlinePresenter GetOutlinePresenter()
         {
             return outlinePresenter;
+        }
+
+        /// <summary>
+        /// Applies a runtime base color override used for debugging or lightweight theming.
+        /// </summary>
+        /// <param name="color">Base color to use for this tile instance.</param>
+        public void SetRuntimeBaseColor(Color color)
+        {
+            hasRuntimeBaseColorOverride = true;
+            runtimeBaseColorOverride = color;
         }
 
         /// <summary>
@@ -187,7 +199,7 @@ namespace MahjongOut3D.TileSystem
                 }
 
                 propertyBlock.Clear();
-                Color baseColor = cachedBaseColors[index];
+                Color baseColor = hasRuntimeBaseColorOverride ? runtimeBaseColorOverride : cachedBaseColors[index];
                 Color tintColor = baseColor;
                 Color emissionColor = Color.black;
 

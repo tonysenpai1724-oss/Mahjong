@@ -24,6 +24,7 @@ namespace MahjongOut3D.Managers
 
         private float xrayEndTime;
         private int activeXRayDepth;
+        private bool wasXRayActiveLastFrame;
 
         /// <summary>
         /// Gets the number of active tracked tiles.
@@ -317,6 +318,7 @@ namespace MahjongOut3D.Managers
         {
             activeXRayDepth = Mathf.Max(1, surfaceDepth);
             xrayEndTime = GetCurrentTime() + Mathf.Max(0.1f, durationSeconds);
+            wasXRayActiveLastFrame = true;
             RefreshTileExposure();
         }
 
@@ -327,9 +329,24 @@ namespace MahjongOut3D.Managers
         {
             xrayEndTime = 0f;
             activeXRayDepth = 0;
+            wasXRayActiveLastFrame = false;
             RefreshTileExposure();
         }
+
+        /// <summary>
+        /// Monitors X-Ray expiry and refreshes tile visibility only when the effect ends.
+        /// </summary>
+        private void Update()
+        {
+            bool isXRayActive = IsXRayActive();
+            if (wasXRayActiveLastFrame && !isXRayActive)
+            {
+                RefreshTileExposure();
+            }
+
+            wasXRayActiveLastFrame = isXRayActive;
         }
+        
 
         /// <summary>
         /// Forwards tile tap input after resolving the hit tile through a camera raycast.

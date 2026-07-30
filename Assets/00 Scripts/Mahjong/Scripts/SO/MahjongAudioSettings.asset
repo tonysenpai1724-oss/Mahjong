@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6e9dc07988e0f2d2bc3ab515df38e6e, type: 3}
+  m_Name: MahjongAudioSettings
+  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Data.MahjongAudioSettings
+  <SelectClip>k__BackingField: {fileID: 0}
+  <MatchClip>k__BackingField: {fileID: 0}
+  <MismatchClip>k__BackingField: {fileID: 0}
+  <WinClip>k__BackingField: {fileID: 0}
+  <LoseClip>k__BackingField: {fileID: 0}
+  <HintClip>k__BackingField: {fileID: 0}
+  <UndoClip>k__BackingField: {fileID: 0}
+  <ShuffleClip>k__BackingField: {fileID: 0}
+  <BombClip>k__BackingField: {fileID: 0}
+  <XRayClip>k__BackingField: {fileID: 0}

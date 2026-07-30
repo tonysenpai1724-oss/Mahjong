@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.CameraSystem.OrbitCameraSettings
   <DefaultZoomDistance>k__BackingField: 10
   <RotationSpeed>k__BackingField: 0.2
+  <VerticalRotationMultiplier>k__BackingField: 1.9
   <ZoomSpeed>k__BackingField: 3
   <ZoomInputScale>k__BackingField: 0.02
   <MinZoomDistance>k__BackingField: 6

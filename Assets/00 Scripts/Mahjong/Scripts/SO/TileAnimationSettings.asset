@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e14d528160e741caebadad9b76fcff9f, type: 3}
+  m_Name: TileAnimationSettings
+  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Data.TileAnimationSettings
+  <MatchDurationSeconds>k__BackingField: 0.35
+  <MatchSlideDistance>k__BackingField: 1.25
+  <MatchRotationDegrees>k__BackingField: 55
+  <HintDurationSeconds>k__BackingField: 0.7
+  <MismatchDelaySeconds>k__BackingField: 0.2
+  <ShakeDurationSeconds>k__BackingField: 0.18
+  <ShakeAmplitude>k__BackingField: 0.12
+  <MatchParticlePrefab>k__BackingField: {fileID: 0}
+  <UseUnscaledTime>k__BackingField: 1

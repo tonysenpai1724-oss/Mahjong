@@ -35,7 +35,7 @@ namespace MahjongOut3D.Managers
         {
             if (orbitCameraController == null)
             {
-                orbitCameraController = GetComponentInChildren<OrbitCameraController>(true);
+                orbitCameraController = ResolveOrbitCameraController();
             }
 
             if (orbitCameraController == null)
@@ -48,6 +48,62 @@ namespace MahjongOut3D.Managers
             SetActiveCamera(orbitCameraController.ManagedCamera);
             Context.EventBus.Subscribe<OrbitDragInputEvent>(HandleOrbitDragged);
             Context.EventBus.Subscribe<ZoomInputEvent>(HandleZoomChanged);
+        }
+
+        /// <summary>
+        /// Resolves the best orbit camera controller available in the current scene.
+        /// </summary>
+        /// <returns>Resolved orbit camera controller, or null when none was found.</returns>
+        private OrbitCameraController ResolveOrbitCameraController()
+        {
+            OrbitCameraController localController = GetComponentInChildren<OrbitCameraController>(true);
+            if (localController != null)
+            {
+                return localController;
+            }
+
+            OrbitCameraController[] controllers = FindObjectsByType<OrbitCameraController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            OrbitCameraController bestController = null;
+            float bestScore = float.MinValue;
+
+            for (int index = 0; index < controllers.Length; index++)
+            {
+                OrbitCameraController candidate = controllers[index];
+                if (candidate == null || !candidate.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                Camera candidateCamera = candidate.ManagedCamera != null ? candidate.ManagedCamera : candidate.GetComponent<Camera>();
+                float score = 0f;
+
+                if (candidateCamera != null)
+                {
+                    if (!candidateCamera.isActiveAndEnabled)
+                    {
+                        continue;
+                    }
+
+                    score += candidateCamera.depth * 100f;
+                    if (candidateCamera.CompareTag("MainCamera"))
+                    {
+                        score += 1000f;
+                    }
+                }
+
+                if (candidate.gameObject.activeInHierarchy)
+                {
+                    score += 10f;
+                }
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestController = candidate;
+                }
+            }
+
+            return bestController;
         }
 
         /// <summary>
@@ -91,6 +147,16 @@ namespace MahjongOut3D.Managers
         public void SetFocusPoint(Vector3 focusPoint)
         {
             orbitCameraController?.SetFocusPoint(focusPoint);
+        }
+
+        /// <summary>
+        /// Frames a world-space bounds volume with the orbit camera.
+        /// </summary>
+        /// <param name="worldBounds">Bounds to frame.</param>
+        /// <param name="paddingMultiplier">Extra framing padding multiplier.</param>
+        public void FrameBounds(Bounds worldBounds, float paddingMultiplier = 1.2f)
+        {
+            orbitCameraController?.FrameBounds(worldBounds, paddingMultiplier);
         }
 
         /// <summary>
