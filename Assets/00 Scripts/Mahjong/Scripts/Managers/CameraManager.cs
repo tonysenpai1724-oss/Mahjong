@@ -12,6 +12,7 @@ namespace MahjongOut3D.Managers
     public sealed class CameraManager : ManagerBehaviour
     {
         [SerializeField] private OrbitCameraController orbitCameraController;
+        [SerializeField] private BlockRotationController blockRotationController;
 
         /// <summary>
         /// Gets the active runtime camera.
@@ -22,6 +23,11 @@ namespace MahjongOut3D.Managers
         /// Gets the active orbit camera controller.
         /// </summary>
         public OrbitCameraController OrbitCameraController => orbitCameraController;
+
+        /// <summary>
+        /// Gets the active block rotation controller.
+        /// </summary>
+        public BlockRotationController BlockRotationController => blockRotationController;
 
         /// <summary>
         /// Gets the bootstrap order for the camera manager.
@@ -38,13 +44,25 @@ namespace MahjongOut3D.Managers
                 orbitCameraController = ResolveOrbitCameraController();
             }
 
+            if (blockRotationController == null)
+            {
+                blockRotationController = ResolveBlockRotationController();
+            }
+
             if (orbitCameraController == null)
             {
                 MahjongRuntimeLogger.LogWarning("CameraManager could not find an OrbitCameraController in its hierarchy.");
                 return;
             }
 
+            if (blockRotationController == null)
+            {
+                MahjongRuntimeLogger.LogWarning("CameraManager could not find a BlockRotationController in its hierarchy.");
+                return;
+            }
+
             orbitCameraController.Initialize(Context);
+            blockRotationController.Initialize(Context);
             SetActiveCamera(orbitCameraController.ManagedCamera);
             Context.EventBus.Subscribe<OrbitDragInputEvent>(HandleOrbitDragged);
             Context.EventBus.Subscribe<ZoomInputEvent>(HandleZoomChanged);
@@ -107,6 +125,31 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Resolves the block rotation controller available in the current scene.
+        /// </summary>
+        /// <returns>Resolved block rotation controller, or null when none was found.</returns>
+        private BlockRotationController ResolveBlockRotationController()
+        {
+            BlockRotationController localController = GetComponentInChildren<BlockRotationController>(true);
+            if (localController != null)
+            {
+                return localController;
+            }
+
+            BlockRotationController[] controllers = FindObjectsByType<BlockRotationController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int index = 0; index < controllers.Length; index++)
+            {
+                BlockRotationController candidate = controllers[index];
+                if (candidate != null && candidate.isActiveAndEnabled)
+                {
+                    return candidate;
+                }
+            }
+
+            return gameObject.AddComponent<BlockRotationController>();
+        }
+
+        /// <summary>
         /// Unsubscribes from input-driven camera events and clears runtime references.
         /// </summary>
         protected override void OnShutdown()
@@ -117,6 +160,11 @@ namespace MahjongOut3D.Managers
             if (orbitCameraController != null)
             {
                 orbitCameraController.Shutdown();
+            }
+
+            if (blockRotationController != null)
+            {
+                blockRotationController.Shutdown();
             }
 
             ActiveCamera = null;
@@ -150,6 +198,15 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Updates the transform that should rotate instead of the camera.
+        /// </summary>
+        /// <param name="rotationTarget">Root transform of the puzzle block.</param>
+        public void SetRotationTarget(Transform rotationTarget)
+        {
+            blockRotationController?.SetRotationTarget(rotationTarget);
+        }
+
+        /// <summary>
         /// Frames a world-space bounds volume with the orbit camera.
         /// </summary>
         /// <param name="worldBounds">Bounds to frame.</param>
@@ -165,6 +222,12 @@ namespace MahjongOut3D.Managers
         /// <param name="eventData">Drag input payload.</param>
         private void HandleOrbitDragged(OrbitDragInputEvent eventData)
         {
+            if (blockRotationController != null && blockRotationController.RotationTarget != null)
+            {
+                blockRotationController.Rotate(eventData.ScreenDelta);
+                return;
+            }
+
             orbitCameraController?.Rotate(eventData.ScreenDelta);
         }
 

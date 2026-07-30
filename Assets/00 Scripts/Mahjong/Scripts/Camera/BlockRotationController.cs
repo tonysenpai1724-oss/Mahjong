@@ -1,0 +1,227 @@
+using MahjongOut3D.Core;
+using UnityEngine;
+
+namespace MahjongOut3D.CameraSystem
+{
+    /// <summary>
+    /// Rotates the generated Mahjong block itself so lighting remains stable while the player inspects the puzzle.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class BlockRotationController : MonoBehaviour
+    {
+        private const float FallbackRotationSpeed = 0.2f;
+        private const float FallbackVerticalRotationMultiplier = 1.5f;
+        private const float FallbackRotationInertia = 0.88f;
+        private const float FallbackRotationSmoothing = 0.08f;
+
+        [SerializeField] private OrbitCameraSettings settings;
+        [SerializeField] private Transform rotationTarget;
+        [SerializeField] private bool resetRotationWhenTargetChanges = true;
+
+        private bool isInitialized;
+        private Quaternion baseLocalRotation = Quaternion.identity;
+        private Quaternion targetRotationOffset = Quaternion.identity;
+        private Quaternion currentRotationOffset = Quaternion.identity;
+        private Vector2 inertialRotationVelocity;
+        private int lastDragFrame = -1;
+
+        /// <summary>
+        /// Gets the transform currently being rotated.
+        /// </summary>
+        public Transform RotationTarget => rotationTarget;
+
+        /// <summary>
+        /// Initializes the rotation controller.
+        /// </summary>
+        /// <param name="context">Shared runtime context.</param>
+        public void Initialize(GameContext context)
+        {
+            if (isInitialized)
+            {
+                return;
+            }
+
+            isInitialized = true;
+            ApplyTargetRotation(true);
+        }
+
+        /// <summary>
+        /// Clears transient runtime motion state.
+        /// </summary>
+        public void Shutdown()
+        {
+            isInitialized = false;
+            targetRotationOffset = Quaternion.identity;
+            currentRotationOffset = Quaternion.identity;
+            inertialRotationVelocity = Vector2.zero;
+            lastDragFrame = -1;
+        }
+
+        /// <summary>
+        /// Updates which transform should spin when the player drags.
+        /// </summary>
+        /// <param name="target">Transform to rotate.</param>
+        public void SetRotationTarget(Transform target)
+        {
+            rotationTarget = target;
+            baseLocalRotation = rotationTarget != null ? rotationTarget.localRotation : Quaternion.identity;
+
+            if (resetRotationWhenTargetChanges)
+            {
+                targetRotationOffset = Quaternion.identity;
+                currentRotationOffset = Quaternion.identity;
+                inertialRotationVelocity = Vector2.zero;
+
+                if (rotationTarget != null)
+                {
+                    rotationTarget.localRotation = baseLocalRotation;
+                }
+            }
+
+            ApplyTargetRotation(true);
+        }
+
+        /// <summary>
+        /// Applies a drag delta to the puzzle block rotation.
+        /// </summary>
+        /// <param name="screenDelta">Pointer delta in screen pixels.</param>
+        public void Rotate(Vector2 screenDelta)
+        {
+            if (!isInitialized || rotationTarget == null)
+            {
+                return;
+            }
+
+            float deltaTime = Mathf.Max(GetDeltaTime(), 0.0001f);
+            Vector2 scaledDelta = screenDelta * GetRotationSpeed();
+            scaledDelta.y *= GetVerticalRotationMultiplier();
+
+            ApplyRotationDelta(scaledDelta);
+
+            inertialRotationVelocity = scaledDelta / deltaTime;
+            lastDragFrame = Time.frameCount;
+        }
+
+        /// <summary>
+        /// Advances the smoothed block rotation.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (!isInitialized || rotationTarget == null)
+            {
+                return;
+            }
+
+            ApplyRotationInertia();
+            ApplyTargetRotation(false);
+        }
+
+        /// <summary>
+        /// Applies decaying inertial rotation after the drag ends.
+        /// </summary>
+        private void ApplyRotationInertia()
+        {
+            if (lastDragFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            if (inertialRotationVelocity.sqrMagnitude <= 0.0001f)
+            {
+                inertialRotationVelocity = Vector2.zero;
+                return;
+            }
+
+            float deltaTime = GetDeltaTime();
+            ApplyRotationDelta(inertialRotationVelocity * deltaTime);
+
+            float decay = Mathf.Pow(Mathf.Clamp01(GetRotationInertia()), deltaTime * 60f);
+            inertialRotationVelocity *= decay;
+        }
+
+        /// <summary>
+        /// Applies the smoothed local rotation to the current target.
+        /// </summary>
+        /// <param name="snap">True to snap immediately.</param>
+        private void ApplyTargetRotation(bool snap)
+        {
+            if (rotationTarget == null)
+            {
+                return;
+            }
+
+            if (snap)
+            {
+                currentRotationOffset = targetRotationOffset;
+            }
+            else
+            {
+                float interpolation = 1f - Mathf.Exp(-GetDeltaTime() / Mathf.Max(0.0001f, GetRotationSmoothing()));
+                currentRotationOffset = Quaternion.Slerp(currentRotationOffset, targetRotationOffset, interpolation);
+            }
+
+            rotationTarget.localRotation = currentRotationOffset * baseLocalRotation;
+        }
+
+        /// <summary>
+        /// Applies one unconstrained drag delta to the target quaternion.
+        /// </summary>
+        /// <param name="scaledDelta">Scaled pointer delta already converted into angular units.</param>
+        private void ApplyRotationDelta(Vector2 scaledDelta)
+        {
+            Quaternion yawRotation = Quaternion.AngleAxis(-scaledDelta.x, Vector3.up);
+            Quaternion pitchRotation = Quaternion.AngleAxis(scaledDelta.y, Vector3.right);
+            targetRotationOffset = yawRotation * pitchRotation * targetRotationOffset;
+        }
+
+        /// <summary>
+        /// Gets the active simulation delta time.
+        /// </summary>
+        /// <returns>Simulation delta time.</returns>
+        private float GetDeltaTime()
+        {
+            if (settings != null && settings.UseUnscaledTime)
+            {
+                return Time.unscaledDeltaTime;
+            }
+
+            return Time.deltaTime;
+        }
+
+        /// <summary>
+        /// Gets the configured horizontal rotation speed.
+        /// </summary>
+        /// <returns>Rotation speed.</returns>
+        private float GetRotationSpeed()
+        {
+            return settings != null ? settings.RotationSpeed : FallbackRotationSpeed;
+        }
+
+        /// <summary>
+        /// Gets the configured vertical rotation multiplier.
+        /// </summary>
+        /// <returns>Vertical rotation multiplier.</returns>
+        private float GetVerticalRotationMultiplier()
+        {
+            return settings != null ? settings.VerticalRotationMultiplier : FallbackVerticalRotationMultiplier;
+        }
+
+        /// <summary>
+        /// Gets the configured rotation inertia.
+        /// </summary>
+        /// <returns>Rotation inertia.</returns>
+        private float GetRotationInertia()
+        {
+            return settings != null ? settings.RotationInertia : FallbackRotationInertia;
+        }
+
+        /// <summary>
+        /// Gets the configured smoothing duration.
+        /// </summary>
+        /// <returns>Rotation smoothing duration.</returns>
+        private float GetRotationSmoothing()
+        {
+            return settings != null ? settings.RotationSmoothing : FallbackRotationSmoothing;
+        }
+    }
+}

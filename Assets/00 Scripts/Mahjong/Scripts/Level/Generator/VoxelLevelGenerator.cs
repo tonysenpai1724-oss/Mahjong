@@ -325,8 +325,11 @@ namespace MahjongOut3D.LevelSystem
                 return;
             }
 
+            Transform rotationRoot = tileRoot != null ? tileRoot : transform;
+            cameraManager.SetRotationTarget(rotationRoot);
+
             Bounds localBounds = grid.GetLocalBounds();
-            Bounds worldBounds = TransformBounds(tileRoot != null ? tileRoot : transform, localBounds);
+            Bounds worldBounds = TransformBounds(rotationRoot, localBounds);
             cameraManager.FrameBounds(worldBounds, 1.35f);
         }
 

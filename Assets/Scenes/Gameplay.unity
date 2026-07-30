@@ -364,7 +364,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0e5dc905118604b69efc57899baf3ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.LevelManager
-  levelCatalog: {fileID: 0}
+  levelCatalog: {fileID: 11400000, guid: f8b473ff57de4323baabdd6333f902f1, type: 2}
   defaultGridLayout: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
 --- !u!1 &176450021
 GameObject:

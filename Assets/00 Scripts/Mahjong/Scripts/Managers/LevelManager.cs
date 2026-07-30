@@ -12,6 +12,9 @@ namespace MahjongOut3D.Managers
         [SerializeField] private LevelCatalog levelCatalog;
         [SerializeField] private VoxelGridLayoutSettings defaultGridLayout;
 
+        [Header("Debug")]
+        [SerializeField, Min(0)] private int inspectorLevelIndex;
+
         private VoxelGridData activeGrid;
 
         /// <summary>
@@ -33,6 +36,15 @@ namespace MahjongOut3D.Managers
         /// Gets the runtime level catalog used for level selection and progression.
         /// </summary>
         public LevelCatalog LevelCatalog => levelCatalog;
+
+        /// <summary>
+        /// Gets or sets the level index shown in the inspector debug tools.
+        /// </summary>
+        public int InspectorLevelIndex
+        {
+            get => Mathf.Max(0, inspectorLevelIndex);
+            set => inspectorLevelIndex = Mathf.Max(0, value);
+        }
 
         /// <summary>
         /// Gets the bootstrap order for the level manager.
@@ -107,6 +119,15 @@ namespace MahjongOut3D.Managers
             SetCurrentLevel(levelIndex);
             generator.GenerateFromDefinition(definition);
             return true;
+        }
+
+        /// <summary>
+        /// Loads the inspector-selected level index for quick gameplay testing.
+        /// </summary>
+        /// <returns>True when the level was loaded; otherwise false.</returns>
+        public bool LoadInspectorLevel()
+        {
+            return LoadLevel(InspectorLevelIndex);
         }
 
         /// <summary>
