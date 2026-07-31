@@ -316,6 +316,32 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Determines whether the tile should be considered valid for hint selection.
+        /// </summary>
+        /// <param name="tile">Tile to evaluate.</param>
+        /// <returns>True when the tile is a valid hint candidate; otherwise false.</returns>
+        public bool IsTileHintSelectable(MahjongTile tile)
+        {
+            if (tile == null || !tile.IsInteractable)
+            {
+                return false;
+            }
+
+            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
+            if (useSurfaceRules)
+            {
+                if (exposureSettings != null && exposureSettings.RequireDirectCameraVisibility)
+                {
+                    return IsTileCenterVisibleFromCamera(tile);
+                }
+
+                return true;
+            }
+
+            return IsTileSelectable(tile);
+        }
+
+        /// <summary>
         /// Temporarily reveals one or more inner layers of the current voxel grid.
         /// </summary>
         /// <param name="durationSeconds">Effect duration in seconds.</param>
@@ -535,6 +561,49 @@ namespace MahjongOut3D.Managers
 
             float visibleRatio = samplePoints.Length == 0 ? 0f : (float)visibleSampleCount / samplePoints.Length;
             return visibleRatio >= GetRequiredVisibleSampleRatio();
+        }
+
+        /// <summary>
+        /// Validates that the center of a tile is directly visible from the active camera.
+        /// </summary>
+        private bool IsTileCenterVisibleFromCamera(MahjongTile tile)
+        {
+            if (tile == null || !Context.Services.TryGet(out CameraManager cameraManager) || cameraManager.ActiveCamera == null)
+            {
+                return false;
+            }
+
+            Collider tileCollider = tile.TileCollider;
+            if (tileCollider == null)
+            {
+                return false;
+            }
+
+            Camera activeCamera = cameraManager.ActiveCamera;
+            Vector3 cameraPosition = activeCamera.transform.position;
+            Vector3 targetPoint = tileCollider.bounds.center;
+            Vector3 direction = targetPoint - cameraPosition;
+            float distance = direction.magnitude + GetVisibilityRayPadding();
+            if (distance <= Mathf.Epsilon)
+            {
+                return false;
+            }
+
+            Ray ray = new Ray(cameraPosition, direction.normalized);
+            int hitCount = Physics.RaycastNonAlloc(ray, raycastBuffer, distance, tileLayerMask, QueryTriggerInteraction.Ignore);
+            if (hitCount <= 0)
+            {
+                return false;
+            }
+
+            int closestHitIndex = GetClosestHitIndex(hitCount);
+            if (closestHitIndex < 0)
+            {
+                return false;
+            }
+
+            MahjongTile hitTile = raycastBuffer[closestHitIndex].collider.GetComponentInParent<MahjongTile>();
+            return hitTile == tile;
         }
 
         /// <summary>

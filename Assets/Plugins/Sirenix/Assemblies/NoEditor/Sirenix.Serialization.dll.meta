@@ -1,5 +1,6 @@
 fileFormatVersion: 2
 guid: 5651992cdad94894a3af7dc3f1da9170
+timeCreated: 1488828285
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -11,6 +12,16 @@ PluginImporter:
   isExplicitlyReferenced: 0
   validateReferences: 1
   platformData:
+  - first:
+      : Any
+    second:
+      enabled: 0
+      settings:
+        Exclude Editor: 1
+        Exclude Linux64: 1
+        Exclude OSXUniversal: 1
+        Exclude Win: 1
+        Exclude Win64: 0
   - first:
       : N3DS
     second:
@@ -73,16 +84,42 @@ PluginImporter:
     second:
       enabled: 0
       settings:
+        CPU: AnyCPU
         DefaultValueInitialized: true
+        OS: AnyOS
   - first:
       PS4: PS4
     second:
       enabled: 1
       settings: {}
   - first:
-      WebGL: WebGL
+      Standalone: Linux64
     second:
       enabled: 0
+      settings:
+        CPU: AnyCPU
+  - first:
+      Standalone: OSXUniversal
+    second:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
+  - first:
+      Standalone: Win
+    second:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
+  - first:
+      Standalone: Win64
+    second:
+      enabled: 1
+      settings:
+        CPU: AnyCPU
+  - first:
+      WebGL: WebGL
+    second:
+      enabled: 1
       settings: {}
   - first:
       Windows Store Apps: WindowsStoreApps
@@ -108,3 +145,10 @@ PluginImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 89041
+  packageName: Odin Inspector and Serializer
+  packageVersion: 4.0.2.3
+  assetPath: Assets/Plugins/Sirenix/Assemblies/NoEditor/Sirenix.Serialization.dll
+  uploadId: 957408

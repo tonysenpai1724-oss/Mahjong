@@ -23,6 +23,16 @@ namespace MahjongOut3D.TileSystem
         private float scaleZSmoothVelocity;
         private bool hasRuntimeBaseColorOverride;
         private Color runtimeBaseColorOverride = Color.white;
+        private bool isHintHighlighted;
+
+        /// <summary>
+        /// Enables or disables the temporary hint highlight visual.
+        /// </summary>
+        /// <param name="isHighlighted">True to show the hint highlight; otherwise false.</param>
+        public void SetHintHighlighted(bool isHighlighted)
+        {
+            isHintHighlighted = isHighlighted;
+        }
 
         /// <summary>
         /// Applies visual feedback for the specified tile state.
@@ -35,7 +45,7 @@ namespace MahjongOut3D.TileSystem
 
             bool shouldRender = state != TileState.Hidden && state != TileState.Removed;
             SetRenderersVisible(shouldRender);
-            SetOutlineVisible(state == TileState.Selected);
+            SetOutlineVisible(state == TileState.Selected || isHintHighlighted);
 
             targetScale = GetTargetScale(state);
             if (instant)
@@ -207,6 +217,11 @@ namespace MahjongOut3D.TileSystem
                 {
                     tintColor = Color.Lerp(baseColor, GetSelectedTintColor(), GetSelectedTintStrength());
                     emissionColor = GetSelectedEmissionColor() * GetSelectedEmissionIntensity();
+                }
+                else if (isHintHighlighted)
+                {
+                    tintColor = Color.Lerp(baseColor, GetHintTintColor(), GetHintTintStrength());
+                    emissionColor = GetHintEmissionColor() * GetHintEmissionIntensity();
                 }
                 else if (state == TileState.Matched)
                 {
@@ -391,6 +406,42 @@ namespace MahjongOut3D.TileSystem
         private float GetMatchedEmissionIntensity()
         {
             return settings != null ? settings.MatchedEmissionIntensity : 1.75f;
+        }
+
+        /// <summary>
+        /// Gets the hint tint color.
+        /// </summary>
+        /// <returns>Hint tint color.</returns>
+        private Color GetHintTintColor()
+        {
+            return settings != null ? settings.HintTintColor : new Color(0.35f, 1f, 0.75f, 1f);
+        }
+
+        /// <summary>
+        /// Gets the hint emission color.
+        /// </summary>
+        /// <returns>Hint emission color.</returns>
+        private Color GetHintEmissionColor()
+        {
+            return settings != null ? settings.HintEmissionColor : new Color(0.15f, 1f, 0.85f, 1f);
+        }
+
+        /// <summary>
+        /// Gets the hint tint blend strength.
+        /// </summary>
+        /// <returns>Hint tint strength.</returns>
+        private float GetHintTintStrength()
+        {
+            return settings != null ? settings.HintTintStrength : 0.7f;
+        }
+
+        /// <summary>
+        /// Gets the hint emission intensity.
+        /// </summary>
+        /// <returns>Hint emission intensity.</returns>
+        private float GetHintEmissionIntensity()
+        {
+            return settings != null ? settings.HintEmissionIntensity : 2.2f;
         }
 
         /// <summary>

@@ -272,6 +272,26 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Enables or disables the temporary hint highlight for this tile.
+        /// </summary>
+        /// <param name="isHighlighted">True to show hint feedback; otherwise false.</param>
+        public void SetHintHighlighted(bool isHighlighted)
+        {
+            if (visualController == null)
+            {
+                CacheReferences();
+            }
+
+            if (visualController == null)
+            {
+                return;
+            }
+
+            visualController.SetHintHighlighted(isHighlighted);
+            visualController.ApplyState(state, true);
+        }
+
+        /// <summary>
         /// Changes the runtime tile state and updates visuals and colliders.
         /// </summary>
         /// <param name="newState">New tile state.</param>

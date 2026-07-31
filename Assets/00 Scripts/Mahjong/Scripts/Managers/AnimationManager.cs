@@ -17,6 +17,8 @@ namespace MahjongOut3D.Managers
         [SerializeField] private TileAnimationSettings animationSettings;
 
         private ComponentPool<ParticleSystem> particlePool;
+        private MahjongTile activeHintFirstTile;
+        private MahjongTile activeHintSecondTile;
 
         /// <summary>
         /// Gets a value indicating whether a blocking animation is currently running.
@@ -44,6 +46,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnShutdown()
         {
+            ClearHintHighlight();
             particlePool?.Clear();
             particlePool = null;
         }
@@ -71,7 +74,7 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Plays a temporary hint flash by selecting two tiles and restoring their state.
+        /// Applies a hint highlight to the supplied pair and keeps it visible until another hint replaces it.
         /// </summary>
         /// <param name="firstTile">First hinted tile.</param>
         /// <param name="secondTile">Second hinted tile.</param>
@@ -193,7 +196,7 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Temporarily selects two hinted tiles and then restores them.
+        /// Applies the current hint highlight and replaces any previous hinted pair.
         /// </summary>
         private IEnumerator PlayHintSequenceRoutine(MahjongTile firstTile, MahjongTile secondTile)
         {
@@ -202,36 +205,38 @@ namespace MahjongOut3D.Managers
                 yield break;
             }
 
-            bool firstWasSelected = firstTile.State == TileState.Selected;
-            bool secondWasSelected = secondTile.State == TileState.Selected;
-
-            if (!firstWasSelected)
+            if (activeHintFirstTile == firstTile && activeHintSecondTile == secondTile)
             {
-                firstTile.TrySelect();
+                firstTile.SetHintHighlighted(true);
+                secondTile.SetHintHighlighted(true);
+                yield break;
             }
 
-            if (!secondWasSelected)
+            ClearHintHighlight();
+
+            activeHintFirstTile = firstTile;
+            activeHintSecondTile = secondTile;
+            firstTile.SetHintHighlighted(true);
+            secondTile.SetHintHighlighted(true);
+        }
+
+        /// <summary>
+        /// Clears the currently active hint highlight pair.
+        /// </summary>
+        private void ClearHintHighlight()
+        {
+            if (activeHintFirstTile != null)
             {
-                secondTile.TrySelect();
+                activeHintFirstTile.SetHintHighlighted(false);
             }
 
-            float elapsed = 0f;
-            float duration = GetHintDurationSeconds();
-            while (elapsed < duration)
+            if (activeHintSecondTile != null && activeHintSecondTile != activeHintFirstTile)
             {
-                elapsed += GetDeltaTime();
-                yield return null;
+                activeHintSecondTile.SetHintHighlighted(false);
             }
 
-            if (!firstWasSelected && firstTile.State == TileState.Selected)
-            {
-                firstTile.Deselect();
-            }
-
-            if (!secondWasSelected && secondTile.State == TileState.Selected)
-            {
-                secondTile.Deselect();
-            }
+            activeHintFirstTile = null;
+            activeHintSecondTile = null;
         }
 
         /// <summary>

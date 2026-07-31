@@ -1,5 +1,6 @@
 fileFormatVersion: 2
 guid: d2a8f0021d6b47c5923d8972dfb81ef1
+timeCreated: 1488828285
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -99,11 +100,6 @@ PluginImporter:
       settings:
         CPU: 
   - first:
-      WebGL: WebGL
-    second:
-      enabled: 1
-      settings: {}
-  - first:
       Windows Store Apps: WindowsStoreApps
     second:
       enabled: 0
@@ -112,3 +108,10 @@ PluginImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 89041
+  packageName: Odin Inspector and Serializer
+  packageVersion: 4.0.2.3
+  assetPath: Assets/Plugins/Sirenix/Assemblies/NoEmitAndNoEditor/Sirenix.Serialization.dll
+  uploadId: 957408

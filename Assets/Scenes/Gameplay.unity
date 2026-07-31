@@ -517,8 +517,8 @@ MonoBehaviour:
   - {fileID: 2100000, guid: cd359387c4a6db63b862b33fe851fcf1, type: 2}
   - {fileID: 2100000, guid: d73a71a373099303aa6f44f0d6b380c6, type: 2}
   - {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
-  tileBaseColor: {r: 0.8113208, g: 0.3119806, b: 0.2946778, a: 1}
-  tileSpacingOffset: {x: 0.02, y: 0.02, z: 0.02}
+  tileBaseColor: {r: 0.8867924, g: 0.7942281, b: 0.7905838, a: 1}
+  tileSpacingOffset: {x: 0, y: 0, z: 0}
   generateOnStart: 1
   clearExistingChildrenOnGenerate: 1
   usePooling: 1

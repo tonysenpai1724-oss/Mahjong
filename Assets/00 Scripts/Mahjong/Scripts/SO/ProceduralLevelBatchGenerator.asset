@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.ProceduralLevelBatchGenerator
   targetCatalog: {fileID: 11400000, guid: f8b473ff57de4323baabdd6333f902f1, type: 2}
   layoutOverride: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
+  tilePrefab: {fileID: 2112072835, guid: 6e5d8adad2fe4d1bb20f57ce3cb1648c, type: 3}
   outputFolder: Assets/00 Scripts/Mahjong/Generated Levels
   levelNamePrefix: Generated
   seed: 20260730
@@ -22,19 +23,19 @@ MonoBehaviour:
   normalSettings:
     label: Normal
     levelCount: 5
-    minGridSize: {x: 3, y: 3, z: 3}
-    maxGridSize: {x: 4, y: 4, z: 4}
+    minLayerCount: 2
+    maxLayerCount: 4
     minPairCount: 22
-    maxPairCount: 24
+    maxPairCount: 300
     flippedTileChance: 0.45
-    shape: 5
-    allowedShapes: 0200000005000000
+    shape: 0
+    allowedShapes: 00000000
     difficulty: 1
   hardSettings:
     label: Hard
     levelCount: 5
-    minGridSize: {x: 5, y: 5, z: 5}
-    maxGridSize: {x: 6, y: 6, z: 6}
+    minLayerCount: 3
+    maxLayerCount: 6
     minPairCount: 34
     maxPairCount: 40
     flippedTileChance: 0.55
@@ -44,8 +45,8 @@ MonoBehaviour:
   superHardSettings:
     label: SuperHard
     levelCount: 5
-    minGridSize: {x: 8, y: 8, z: 8}
-    maxGridSize: {x: 10, y: 10, z: 10}
+    minLayerCount: 6
+    maxLayerCount: 8
     minPairCount: 48
     maxPairCount: 300
     flippedTileChance: 0.65

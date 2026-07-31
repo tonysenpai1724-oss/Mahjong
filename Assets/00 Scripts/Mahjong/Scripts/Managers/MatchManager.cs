@@ -395,7 +395,7 @@ namespace MahjongOut3D.Managers
             Dictionary<int, MahjongTile> firstByMatchId = new Dictionary<int, MahjongTile>();
             foreach (MahjongTile tile in tileManager.GetExposedTiles())
             {
-                if (tile == null || tile.IsRemoved || !tileManager.IsTileSelectable(tile))
+                if (tile == null || tile.IsRemoved || !tileManager.IsTileHintSelectable(tile))
                 {
                     continue;
                 }

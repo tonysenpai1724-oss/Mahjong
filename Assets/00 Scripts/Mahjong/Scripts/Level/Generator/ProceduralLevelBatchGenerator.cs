@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MahjongOut3D.TileSystem;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -26,6 +27,7 @@ namespace MahjongOut3D.LevelSystem
 
         [SerializeField] private LevelCatalog targetCatalog;
         [SerializeField] private VoxelGridLayoutSettings layoutOverride;
+        [SerializeField] private MahjongTile tilePrefab;
         [SerializeField] private string outputFolder = "Assets/00 Scripts/Mahjong/Generated Levels";
         [SerializeField] private string levelNamePrefix = "Generated";
         [SerializeField] private int seed = 20260730;
@@ -36,15 +38,15 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private DifficultyBatchDefinition superHardSettings = DifficultyBatchDefinition.CreateSuperHardDefaults();
 
         /// <summary>
-        /// Describes how many levels to generate for one difficulty tier and the grid sizes that tier may use.
+        /// Describes how many levels to generate for one difficulty tier and the shell-layer counts that tier may use.
         /// </summary>
         [Serializable]
         public sealed class DifficultyBatchDefinition
         {
             [SerializeField] private string label = "Normal";
             [SerializeField] private int levelCount = 5;
-            [SerializeField] private Vector3Int minGridSize = new Vector3Int(4, 4, 3);
-            [SerializeField] private Vector3Int maxGridSize = new Vector3Int(4, 4, 4);
+            [SerializeField] private int minLayerCount = 4;
+            [SerializeField] private int maxLayerCount = 5;
             [SerializeField] private int minPairCount = 22;
             [SerializeField] private int maxPairCount = 24;
             [SerializeField] private float flippedTileChance = 0.5f;
@@ -63,20 +65,14 @@ namespace MahjongOut3D.LevelSystem
             public int LevelCount => Mathf.Max(0, levelCount);
 
             /// <summary>
-            /// Gets the minimum voxel grid size allowed for this tier.
+            /// Gets the minimum shell-layer count allowed for this tier.
             /// </summary>
-            public Vector3Int MinGridSize => new Vector3Int(
-                Mathf.Max(2, minGridSize.x),
-                Mathf.Max(2, minGridSize.y),
-                Mathf.Max(2, minGridSize.z));
+            public int MinLayerCount => Mathf.Max(1, minLayerCount);
 
             /// <summary>
-            /// Gets the maximum voxel grid size allowed for this tier.
+            /// Gets the maximum shell-layer count allowed for this tier.
             /// </summary>
-            public Vector3Int MaxGridSize => new Vector3Int(
-                Mathf.Max(MinGridSize.x, maxGridSize.x),
-                Mathf.Max(MinGridSize.y, maxGridSize.y),
-                Mathf.Max(MinGridSize.z, maxGridSize.z));
+            public int MaxLayerCount => Mathf.Max(MinLayerCount, maxLayerCount);
 
             /// <summary>
             /// Gets the minimum pair count allowed for this tier.
@@ -125,8 +121,8 @@ namespace MahjongOut3D.LevelSystem
                 {
                     label = "Normal",
                     levelCount = 5,
-                    minGridSize = new Vector3Int(5, 5, 4),
-                    maxGridSize = new Vector3Int(6, 6, 5),
+                    minLayerCount = 4,
+                    maxLayerCount = 5,
                     minPairCount = 22,
                     maxPairCount = 24,
                     flippedTileChance = 0.45f,
@@ -148,8 +144,8 @@ namespace MahjongOut3D.LevelSystem
                 {
                     label = "Hard",
                     levelCount = 5,
-                    minGridSize = new Vector3Int(6, 5, 5),
-                    maxGridSize = new Vector3Int(7, 6, 5),
+                    minLayerCount = 5,
+                    maxLayerCount = 6,
                     minPairCount = 34,
                     maxPairCount = 40,
                     flippedTileChance = 0.55f,
@@ -171,8 +167,8 @@ namespace MahjongOut3D.LevelSystem
                 {
                     label = "SuperHard",
                     levelCount = 5,
-                    minGridSize = new Vector3Int(5, 5, 5),
-                    maxGridSize = new Vector3Int(6, 5, 5),
+                    minLayerCount = 6,
+                    maxLayerCount = 7,
                     minPairCount = 48,
                     maxPairCount = 58,
                     flippedTileChance = 0.65f,
@@ -277,9 +273,62 @@ namespace MahjongOut3D.LevelSystem
             public VoxelGridDirection FacingDirection { get; set; }
 
             /// <summary>
-            /// Gets or sets the split-slot index on a single exposed face.
+            /// Gets or sets the nesting depth of this tile shell, where zero is the outermost shell.
+            /// </summary>
+            public int ShellIndex { get; set; }
+
+            /// <summary>
+            /// Gets or sets the split-slot index on a single exposed face. Negative means centered on the face.
             /// </summary>
             public int SurfaceSlotIndex { get; set; }
+
+            /// <summary>
+            /// Gets or sets a custom local position override used by direct shell generators.
+            /// </summary>
+            public Vector3 CustomLocalPosition { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether the custom local position override should be used.
+            /// </summary>
+            public bool UseCustomLocalPosition { get; set; }
+        }
+
+        /// <summary>
+        /// Stores the tile face and thickness dimensions used to build square cube shells.
+        /// </summary>
+        private readonly struct CubeTileMetrics
+        {
+            public CubeTileMetrics(float faceWidth, float faceHeight, float thickness)
+            {
+                FaceWidth = Mathf.Max(0.01f, faceWidth);
+                FaceHeight = Mathf.Max(0.01f, faceHeight);
+                Thickness = Mathf.Max(0.01f, thickness);
+            }
+
+            public float FaceWidth { get; }
+
+            public float FaceHeight { get; }
+
+            public float Thickness { get; }
+        }
+
+        /// <summary>
+        /// Stores the resolved tile grid used by one cube shell.
+        /// </summary>
+        private readonly struct CubeShellPlan
+        {
+            public CubeShellPlan(int columnCount, int rowCount, float sideLength)
+            {
+                ColumnCount = Mathf.Max(1, columnCount);
+                RowCount = Mathf.Max(1, rowCount);
+                SideLength = Mathf.Max(0.01f, sideLength);
+            }
+
+            public int ColumnCount { get; }
+
+            public int RowCount { get; }
+
+            public float SideLength { get; }
         }
 
         /// <summary>
@@ -380,16 +429,11 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Chooses a random grid size inside the bounds defined for the difficulty tier.
+        /// Chooses a random shell-layer count inside the bounds defined for the difficulty tier.
         /// </summary>
-        private static VoxelGridSize GetRandomGridSize(DifficultyBatchDefinition settings, System.Random random)
+        private static int GetRandomLayerCount(DifficultyBatchDefinition settings, System.Random random)
         {
-            Vector3Int min = settings.MinGridSize;
-            Vector3Int max = settings.MaxGridSize;
-            int width = random.Next(min.x, max.x + 1);
-            int height = random.Next(min.y, max.y + 1);
-            int depth = random.Next(min.z, max.z + 1);
-            return new VoxelGridSize(width, height, depth);
+            return random.Next(settings.MinLayerCount, settings.MaxLayerCount + 1);
         }
 
         /// <summary>
@@ -420,6 +464,12 @@ namespace MahjongOut3D.LevelSystem
 
             int maxTileCount = Mathf.Max(2, settings.MaxPairCount * 2);
             int minTileCount = Mathf.Max(2, settings.MinPairCount * 2);
+
+            if (shape == LevelShapeType.Cube)
+            {
+                return GetPreferredCubeTileCount(shells, settings.MinLayerCount, minTileCount, maxTileCount);
+            }
+
             List<int> completeLayerCounts = new List<int>(shells.Count);
             int cumulativeCount = 0;
 
@@ -450,6 +500,21 @@ namespace MahjongOut3D.LevelSystem
 
             if (shape == LevelShapeType.Heart || shape == LevelShapeType.Castle)
             {
+                int targetFullLayerCount = Mathf.Min(shells.Count, shape == LevelShapeType.Castle ? 4 : 5);
+                if (targetFullLayerCount >= 3)
+                {
+                    int layeredTileCount = 0;
+                    for (int layerIndex = 0; layerIndex < targetFullLayerCount; layerIndex++)
+                    {
+                        layeredTileCount += shells[layerIndex].Count;
+                    }
+
+                    if (layeredTileCount >= 2)
+                    {
+                        return layeredTileCount % 2 == 0 ? layeredTileCount : layeredTileCount - 1;
+                    }
+                }
+
                 if (preferredCounts.Count > 0)
                 {
                     return preferredCounts[preferredCounts.Count - 1];
@@ -483,9 +548,58 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
+        /// Chooses a visually complete cube by keeping whole shells from the smallest cube outward.
+        /// </summary>
+        private static int GetPreferredCubeTileCount(List<List<TilePlacementData>> shells, int minimumLayerCount, int minTileCount, int maxTileCount)
+        {
+            if (shells == null || shells.Count == 0)
+            {
+                return 0;
+            }
+
+            int cumulativeCount = 0;
+            int bestCount = 0;
+            int bestLayerCount = 0;
+            for (int index = 0; index < shells.Count; index++)
+            {
+                cumulativeCount += Mathf.Max(0, shells[index].Count);
+                if (cumulativeCount < 2 || cumulativeCount % 2 != 0)
+                {
+                    continue;
+                }
+
+                int layerCount = index + 1;
+                if (layerCount >= Mathf.Max(1, minimumLayerCount) && cumulativeCount >= minTileCount && cumulativeCount <= maxTileCount)
+                {
+                    return cumulativeCount;
+                }
+
+                if (cumulativeCount <= maxTileCount && layerCount > bestLayerCount)
+                {
+                    bestCount = cumulativeCount;
+                    bestLayerCount = layerCount;
+                }
+            }
+
+            if (bestCount >= 2)
+            {
+                return bestCount;
+            }
+
+            int fallbackCount = 0;
+            int targetLayerIndex = Mathf.Clamp(Mathf.Max(1, minimumLayerCount) - 1, 0, shells.Count - 1);
+            for (int index = 0; index <= targetLayerIndex; index++)
+            {
+                fallbackCount += Mathf.Max(0, shells[index].Count);
+            }
+
+            return fallbackCount % 2 == 0 ? fallbackCount : fallbackCount - 1;
+        }
+
+        /// <summary>
         /// Generates a shape candidate with enough voxels to support the tier.
         /// </summary>
-        private static ShapeCandidate CreateShapeCandidate(DifficultyBatchDefinition settings, System.Random random)
+        private ShapeCandidate CreateShapeCandidate(DifficultyBatchDefinition settings, System.Random random)
         {
             ShapeCandidate bestCandidate = null;
             int requestedTileCount = settings.MinPairCount * 2;
@@ -493,8 +607,9 @@ namespace MahjongOut3D.LevelSystem
             for (int attempt = 0; attempt < 12; attempt++)
             {
                 LevelShapeType selectedShape = settings.GetRandomShape(random);
-                VoxelGridSize gridSize = AdjustGridSizeForShape(GetRandomGridSize(settings, random), selectedShape);
-                List<List<TilePlacementData>> shells = BuildShapeShells(gridSize, selectedShape);
+                int targetLayerCount = GetRandomLayerCount(settings, random);
+                VoxelGridSize gridSize = BuildGridSizeForShape(targetLayerCount, selectedShape);
+                List<List<TilePlacementData>> shells = BuildShapeShells(gridSize, selectedShape, targetLayerCount, settings);
                 if (GetShellTileCapacity(shells) < 2)
                 {
                     continue;
@@ -523,17 +638,18 @@ namespace MahjongOut3D.LevelSystem
                 return bestCandidate;
             }
 
-            VoxelGridSize fallbackGridSize = AdjustGridSizeForShape(GetRandomGridSize(settings, random), LevelShapeType.Cube);
+            int fallbackLayerCount = GetRandomLayerCount(settings, random);
+            VoxelGridSize fallbackGridSize = BuildGridSizeForShape(fallbackLayerCount, LevelShapeType.Cube);
             return new ShapeCandidate
             {
                 GridSize = fallbackGridSize,
                 Shape = LevelShapeType.Cube,
-                Shells = BuildShapeShells(fallbackGridSize, LevelShapeType.Cube),
+                Shells = BuildShapeShells(fallbackGridSize, LevelShapeType.Cube, fallbackLayerCount, settings),
             };
         }
 
         /// <summary>
-        /// Builds the occupied coordinates by taking shell layers from outside to inside.
+        /// Builds the occupied coordinates by taking shell layers in the order supplied by the shell builder.
         /// </summary>
         private static List<TilePlacementData> BuildOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random)
         {
@@ -545,7 +661,7 @@ namespace MahjongOut3D.LevelSystem
 
                 for (int coordinateIndex = 0; coordinateIndex < shellCoordinates.Count && orderedCoordinates.Count < tileCount; coordinateIndex++)
                 {
-                    orderedCoordinates.Add(shellCoordinates[coordinateIndex]);
+                    orderedCoordinates.Add(ClonePlacement(shellCoordinates[coordinateIndex], shellIndex));
                 }
             }
 
@@ -558,10 +674,49 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
+        /// Creates a copy of the placement data annotated with the shell depth it belongs to.
+        /// </summary>
+        private static TilePlacementData ClonePlacement(TilePlacementData placement, int shellIndex)
+        {
+            if (placement == null)
+            {
+                return null;
+            }
+
+            return new TilePlacementData
+            {
+                Coordinate = placement.Coordinate,
+                FacingDirection = placement.FacingDirection,
+                ShellIndex = Mathf.Max(0, shellIndex),
+                SurfaceSlotIndex = placement.SurfaceSlotIndex,
+                CustomLocalPosition = placement.CustomLocalPosition,
+                UseCustomLocalPosition = placement.UseCustomLocalPosition,
+            };
+        }
+
+        /// <summary>
         /// Builds the shell list for the requested shape.
         /// </summary>
-        private static List<List<TilePlacementData>> BuildShapeShells(VoxelGridSize gridSize, LevelShapeType shape)
+        private List<List<TilePlacementData>> BuildShapeShells(VoxelGridSize gridSize, LevelShapeType shape, int targetLayerCount, DifficultyBatchDefinition settings)
         {
+            switch (shape)
+            {
+                case LevelShapeType.Cube:
+                    return BuildNestedCubeShells(targetLayerCount, settings);
+
+                case LevelShapeType.Heart:
+                case LevelShapeType.Castle:
+                {
+                    List<List<TilePlacementData>> nestedShells = BuildNestedSilhouetteShells(gridSize, shape, targetLayerCount);
+                    if (GetShellTileCapacity(nestedShells) >= 2)
+                    {
+                        return nestedShells;
+                    }
+
+                    break;
+                }
+            }
+
             return BuildShells(BuildShapeCoordinates(gridSize, shape));
         }
 
@@ -582,34 +737,389 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds shells as nested complete silhouettes where each inner silhouette is smaller than the outer one.
         /// </summary>
-        private static List<List<TilePlacementData>> BuildNestedSilhouetteShells(VoxelGridSize gridSize, LevelShapeType shape)
+        private static List<List<TilePlacementData>> BuildNestedSilhouetteShells(VoxelGridSize gridSize, LevelShapeType shape, int targetLayerCount)
         {
-            return BuildShells(BuildShapeCoordinates(gridSize, shape));
-        }
-
-        /// <summary>
-        /// Returns how many nested silhouette layers should be generated.
-        /// </summary>
-        private static int GetNestedLayerCount(VoxelGridSize gridSize, LevelShapeType shape)
-        {
-            int minDimension = Mathf.Min(gridSize.Width, Mathf.Min(gridSize.Height, gridSize.Depth));
-            int maxLayers = shape == LevelShapeType.Castle ? 4 : 5;
-            return Mathf.Clamp(minDimension - 1, 2, maxLayers);
-        }
-
-        /// <summary>
-        /// Returns the scale used by one nested silhouette layer.
-        /// </summary>
-        private static float GetNestedLayerScale(int layerIndex, int layerCount, LevelShapeType shape)
-        {
-            if (layerCount <= 1)
+            HashSet<Vector3Int> outerVolume = new HashSet<Vector3Int>(BuildShapeCoordinates(gridSize, shape));
+            if (outerVolume.Count < 2)
             {
-                return 1f;
+                return BuildShells(BuildShapeCoordinates(gridSize, shape));
             }
 
-            float minimumScale = shape == LevelShapeType.Castle ? 0.38f : 0.26f;
-            float t = layerIndex / (float)(layerCount - 1);
-            return Mathf.Lerp(1f, minimumScale, t);
+            int desiredLayerCount = Mathf.Max(1, targetLayerCount);
+            int scaleSampleCount = GetNestedLayerScaleSampleCount(gridSize, shape);
+            float minimumScale = GetMinimumNestedScale(shape);
+
+            List<HashSet<Vector3Int>> nestedVolumes = new List<HashSet<Vector3Int>>(desiredLayerCount)
+            {
+                outerVolume,
+            };
+
+            HashSet<Vector3Int> previousVolume = outerVolume;
+            for (int sampleIndex = 1; sampleIndex <= scaleSampleCount && nestedVolumes.Count < desiredLayerCount; sampleIndex++)
+            {
+                float t = sampleIndex / (float)scaleSampleCount;
+                float layerScale = Mathf.Lerp(0.96f, minimumScale, t);
+                HashSet<Vector3Int> scaledVolume = BuildScaledShapeCoordinateSet(gridSize, shape, layerScale);
+                scaledVolume.IntersectWith(previousVolume);
+
+                if (scaledVolume.Count < 2 || scaledVolume.SetEquals(previousVolume) || scaledVolume.Count >= previousVolume.Count)
+                {
+                    continue;
+                }
+
+                nestedVolumes.Add(scaledVolume);
+                previousVolume = scaledVolume;
+            }
+
+            if (nestedVolumes.Count <= 1)
+            {
+                return BuildShells(BuildShapeCoordinates(gridSize, shape));
+            }
+
+            List<List<TilePlacementData>> shells = new List<List<TilePlacementData>>(nestedVolumes.Count);
+            for (int index = 0; index < nestedVolumes.Count; index++)
+            {
+                List<TilePlacementData> shell = ExtractSurfaceShell(nestedVolumes[index]);
+                if (shell.Count >= 2)
+                {
+                    shells.Add(shell);
+                }
+            }
+
+            return shells.Count > 0 ? shells : BuildShells(BuildShapeCoordinates(gridSize, shape));
+        }
+
+        /// <summary>
+        /// Builds nested cube shells directly in world space so the resulting block stays cubic on all three axes.
+        /// </summary>
+        private List<List<TilePlacementData>> BuildNestedCubeShells(int targetLayerCount, DifficultyBatchDefinition settings)
+        {
+            CubeTileMetrics metrics = ResolveCubeTileMetrics();
+            List<List<TilePlacementData>> shells = new List<List<TilePlacementData>>();
+            int layerCount = Mathf.Max(2, targetLayerCount);
+            int desiredVisibleLayerCount = settings != null ? settings.MinLayerCount : 1;
+            int maxTileCount = settings != null ? Mathf.Max(2, settings.MaxPairCount * 2) : int.MaxValue;
+
+            CubeShellPlan previousShell = CreateInitialCubeShellPlan(metrics, maxTileCount, desiredVisibleLayerCount);
+            shells.Add(BuildCubeFacePanels(previousShell, metrics));
+
+            for (int layerIndex = 1; layerIndex < layerCount; layerIndex++)
+            {
+                CubeShellPlan shellPlan = CreateCoveringCubeShellPlan(previousShell, metrics);
+                List<TilePlacementData> shell = BuildCubeFacePanels(shellPlan, metrics);
+                if (shell.Count >= 2)
+                {
+                    shells.Add(shell);
+                }
+
+                previousShell = shellPlan;
+            }
+
+            return shells;
+        }
+
+        /// <summary>
+        /// Builds one cube shell using exact world-space tile positions derived from the tile prefab dimensions.
+        /// </summary>
+        private List<TilePlacementData> BuildCubeFacePanels(CubeShellPlan shellPlan, CubeTileMetrics metrics)
+        {
+            int widthCount = shellPlan.ColumnCount;
+            int heightCount = shellPlan.RowCount;
+            float cubeSideLength = shellPlan.SideLength;
+            float normalOffset = GetRecessedCubeFaceNormalOffset(cubeSideLength, metrics);
+            float edgeInset = GetCubeFaceEdgeInset(metrics);
+            float targetPanelSideLength = Mathf.Max(0.01f, cubeSideLength - (edgeInset * 2f));
+            float widthAxisStep = GetSquarePanelStep(widthCount, metrics.FaceWidth, targetPanelSideLength);
+            float heightAxisStep = GetSquarePanelStep(heightCount, metrics.FaceHeight, targetPanelSideLength);
+
+            List<TilePlacementData> shell = new List<TilePlacementData>();
+
+            for (int verticalIndex = 0; verticalIndex < widthCount; verticalIndex++)
+            {
+                float localY = GetCenteredPanelCoordinate(verticalIndex, widthCount, widthAxisStep);
+                for (int depthIndex = 0; depthIndex < heightCount; depthIndex++)
+                {
+                    float localZ = GetCenteredPanelCoordinate(depthIndex, heightCount, heightAxisStep);
+                    shell.Add(CreateCustomPlacement(new Vector3(-normalOffset, localY, localZ), VoxelGridDirection.Left));
+                    shell.Add(CreateCustomPlacement(new Vector3(normalOffset, localY, localZ), VoxelGridDirection.Right));
+                }
+            }
+
+            for (int depthIndex = 0; depthIndex < heightCount; depthIndex++)
+            {
+                float localZ = GetCenteredPanelCoordinate(depthIndex, heightCount, heightAxisStep);
+                for (int widthIndex = 0; widthIndex < widthCount; widthIndex++)
+                {
+                    float localX = GetCenteredPanelCoordinate(widthIndex, widthCount, widthAxisStep);
+                    shell.Add(CreateCustomPlacement(new Vector3(localX, -normalOffset, localZ), VoxelGridDirection.Down));
+                    shell.Add(CreateCustomPlacement(new Vector3(localX, normalOffset, localZ), VoxelGridDirection.Up));
+                }
+            }
+
+            for (int heightIndex = 0; heightIndex < heightCount; heightIndex++)
+            {
+                float localY = GetCenteredPanelCoordinate(heightIndex, heightCount, heightAxisStep);
+                for (int widthIndex = 0; widthIndex < widthCount; widthIndex++)
+                {
+                    float localX = GetCenteredPanelCoordinate(widthIndex, widthCount, widthAxisStep);
+                    shell.Add(CreateCustomPlacement(new Vector3(localX, localY, -normalOffset), VoxelGridDirection.Back));
+                    shell.Add(CreateCustomPlacement(new Vector3(localX, localY, normalOffset), VoxelGridDirection.Forward));
+                }
+            }
+
+            return shell;
+        }
+
+        /// <summary>
+        /// Resolves the face-center offset after pushing the entire tile inward so the assembled block reads as a flatter square face.
+        /// </summary>
+        private static float GetRecessedCubeFaceNormalOffset(float cubeSideLength, CubeTileMetrics metrics)
+        {
+            float centeredOffset = (cubeSideLength - metrics.Thickness) * 0.5f;
+            float inwardRecess = metrics.Thickness * 1f;
+            return Mathf.Max(0f, centeredOffset - inwardRecess);
+        }
+
+        /// <summary>
+        /// Resolves the two in-plane face dimensions and thickness directly from the configured tile prefab, with layout settings as fallback.
+        /// </summary>
+        private CubeTileMetrics ResolveCubeTileMetrics()
+        {
+            if (TryGetTilePrefabBounds(out Bounds prefabBounds))
+            {
+                return new CubeTileMetrics(prefabBounds.size.x, prefabBounds.size.z, prefabBounds.size.y);
+            }
+
+            Vector3 cellSize = layoutOverride != null ? layoutOverride.CellSize : new Vector3(0.95f, 0.45f, 0.7f);
+            return new CubeTileMetrics(cellSize.x, cellSize.z, cellSize.y);
+        }
+
+        /// <summary>
+        /// Tries to resolve the physical tile bounds directly from the assigned prefab.
+        /// </summary>
+        private bool TryGetTilePrefabBounds(out Bounds prefabBounds)
+        {
+            prefabBounds = default;
+            if (tilePrefab == null)
+            {
+                return false;
+            }
+
+            Collider[] colliders = tilePrefab.GetComponentsInChildren<Collider>(true);
+            if (TryEncapsulateBounds(colliders, out prefabBounds))
+            {
+                return true;
+            }
+
+            Renderer[] renderers = tilePrefab.GetComponentsInChildren<Renderer>(true);
+            return TryEncapsulateBounds(renderers, out prefabBounds);
+        }
+
+        /// <summary>
+        /// Builds the most compact starting square face plan that still leaves room for the requested visible layer count.
+        /// </summary>
+        private static CubeShellPlan CreateInitialCubeShellPlan(CubeTileMetrics metrics, int maxTileCount, int desiredVisibleLayerCount)
+        {
+            float edgeInset = GetCubeFaceEdgeInset(metrics);
+            int safeVisibleLayerCount = Mathf.Max(1, desiredVisibleLayerCount);
+            int maxFaceTileCount = Mathf.Max(1, maxTileCount / (6 * safeVisibleLayerCount));
+            GetSquareFaceTileGrid(metrics.FaceWidth, metrics.FaceHeight, maxFaceTileCount, out int baseColumnCount, out int baseRowCount);
+
+            float panelWidth = baseColumnCount * metrics.FaceWidth;
+            float panelHeight = baseRowCount * metrics.FaceHeight;
+            float sideLength = Mathf.Max(panelWidth, panelHeight) + (edgeInset * 2f);
+            return new CubeShellPlan(baseColumnCount, baseRowCount, sideLength);
+        }
+
+        /// <summary>
+        /// Builds the next larger cube shell by expanding the shorter face axis until the previous shell is fully covered.
+        /// </summary>
+        private static CubeShellPlan CreateCoveringCubeShellPlan(CubeShellPlan previousShell, CubeTileMetrics metrics)
+        {
+            float requiredSideLength = previousShell.SideLength + (metrics.Thickness * 2f);
+            int columnCount = Mathf.Max(1, previousShell.ColumnCount);
+            int rowCount = Mathf.Max(1, previousShell.RowCount);
+            float edgeInset = GetCubeFaceEdgeInset(metrics);
+
+            while (true)
+            {
+                float panelWidth = columnCount * metrics.FaceWidth;
+                float panelHeight = rowCount * metrics.FaceHeight;
+                float sideLength = Mathf.Max(panelWidth, panelHeight) + (edgeInset * 2f);
+                if (sideLength + 0.0001f >= requiredSideLength)
+                {
+                    return new CubeShellPlan(columnCount, rowCount, sideLength);
+                }
+
+                if (panelWidth <= panelHeight)
+                {
+                    columnCount++;
+                }
+                else
+                {
+                    rowCount++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resolves the empty border each face needs so perpendicular faces do not overlap at the edges.
+        /// </summary>
+        private static float GetCubeFaceEdgeInset(CubeTileMetrics metrics)
+        {
+            return Mathf.Max(0.01f, metrics.Thickness + 0.001f);
+        }
+
+        /// <summary>
+        /// Resolves the center-to-center step that stretches one tile strip to fill a square panel without overlap.
+        /// </summary>
+        private static float GetSquarePanelStep(int tileCount, float tileSize, float targetPanelSideLength)
+        {
+            int safeTileCount = Mathf.Max(1, tileCount);
+            float safeTileSize = Mathf.Max(0.01f, tileSize);
+            if (safeTileCount <= 1)
+            {
+                return 0f;
+            }
+
+            float step = (Mathf.Max(safeTileSize, targetPanelSideLength) - safeTileSize) / (safeTileCount - 1);
+            return Mathf.Max(safeTileSize, step);
+        }
+
+        /// <summary>
+        /// Resolves the smallest tile grid whose total X/Y span is as square as possible.
+        /// </summary>
+        private static void GetSquareFaceTileGrid(float tileFaceWidth, float tileFaceHeight, int maxFaceTileCount, out int columnCount, out int rowCount)
+        {
+            float safeWidth = Mathf.Max(0.01f, tileFaceWidth);
+            float safeHeight = Mathf.Max(0.01f, tileFaceHeight);
+            const int MaxTilesPerAxis = 12;
+            int safeMaxFaceTileCount = Mathf.Max(1, maxFaceTileCount);
+
+            float bestMismatch = float.MaxValue;
+            int bestColumnCount = 1;
+            int bestRowCount = 1;
+            int bestTileCount = int.MaxValue;
+
+            for (int candidateColumnCount = 1; candidateColumnCount <= MaxTilesPerAxis; candidateColumnCount++)
+            {
+                for (int candidateRowCount = 1; candidateRowCount <= MaxTilesPerAxis; candidateRowCount++)
+                {
+                    int tileCount = candidateColumnCount * candidateRowCount;
+                    if (tileCount > safeMaxFaceTileCount)
+                    {
+                        continue;
+                    }
+
+                    float panelWidth = candidateColumnCount * safeWidth;
+                    float panelHeight = candidateRowCount * safeHeight;
+                    float longestSide = Mathf.Max(panelWidth, panelHeight);
+                    float mismatch = longestSide <= 0.01f ? 0f : Mathf.Abs(panelWidth - panelHeight) / longestSide;
+
+                    bool isBetterMismatch = mismatch + 0.0001f < bestMismatch;
+                    bool isSameMismatchWithFewerTiles = Mathf.Abs(mismatch - bestMismatch) <= 0.0001f && tileCount < bestTileCount;
+                    if (!isBetterMismatch && !isSameMismatchWithFewerTiles)
+                    {
+                        continue;
+                    }
+
+                    bestMismatch = mismatch;
+                    bestColumnCount = candidateColumnCount;
+                    bestRowCount = candidateRowCount;
+                    bestTileCount = tileCount;
+                }
+            }
+
+            columnCount = bestColumnCount;
+            rowCount = bestRowCount;
+        }
+
+        /// <summary>
+        /// Tries to combine collider or renderer bounds into a single prefab bound.
+        /// </summary>
+        private static bool TryEncapsulateBounds<TComponent>(TComponent[] components, out Bounds combinedBounds)
+            where TComponent : Component
+        {
+            combinedBounds = default;
+            bool hasBounds = false;
+
+            if (components == null)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < components.Length; index++)
+            {
+                TComponent component = components[index];
+                if (component == null)
+                {
+                    continue;
+                }
+
+                Bounds componentBounds;
+                switch (component)
+                {
+                    case Collider collider:
+                        componentBounds = collider.bounds;
+                        break;
+
+                    case Renderer renderer:
+                        componentBounds = renderer.bounds;
+                        break;
+
+                    default:
+                        continue;
+                }
+
+                if (componentBounds.size.sqrMagnitude <= Mathf.Epsilon)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    combinedBounds = componentBounds;
+                    hasBounds = true;
+                    continue;
+                }
+
+                combinedBounds.Encapsulate(componentBounds.min);
+                combinedBounds.Encapsulate(componentBounds.max);
+            }
+
+            return hasBounds;
+        }
+
+        /// <summary>
+        /// Creates one outward-facing placement at a custom local position.
+        /// </summary>
+        private static TilePlacementData CreateCustomPlacement(Vector3 localPosition, VoxelGridDirection facingDirection)
+        {
+            return new TilePlacementData
+            {
+                Coordinate = Vector3Int.zero,
+                FacingDirection = facingDirection,
+                SurfaceSlotIndex = -1,
+                CustomLocalPosition = localPosition,
+                UseCustomLocalPosition = true,
+            };
+        }
+
+        /// <summary>
+        /// Returns how many intermediate scale samples should be tested to find unique nested layers.
+        /// </summary>
+        private static int GetNestedLayerScaleSampleCount(VoxelGridSize gridSize, LevelShapeType shape)
+        {
+            int minDimension = Mathf.Min(gridSize.Width, Mathf.Min(gridSize.Height, gridSize.Depth));
+            return shape == LevelShapeType.Castle ? Mathf.Max(10, minDimension * 4) : Mathf.Max(12, minDimension * 5);
+        }
+
+        /// <summary>
+        /// Returns the smallest scale allowed for the innermost nested silhouette.
+        /// </summary>
+        private static float GetMinimumNestedScale(LevelShapeType shape)
+        {
+            return shape == LevelShapeType.Castle ? 0.46f : 0.34f;
         }
 
         /// <summary>
@@ -637,23 +1147,34 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Ensures the selected silhouette has enough resolution to be visually recognizable.
+        /// Builds a visually reasonable voxel grid for the supplied shell-layer count and shape.
         /// </summary>
-        private static VoxelGridSize AdjustGridSizeForShape(VoxelGridSize gridSize, LevelShapeType shape)
+        private static VoxelGridSize BuildGridSizeForShape(int layerCount, LevelShapeType shape)
         {
-            int width = gridSize.Width;
-            int height = gridSize.Height;
-            int depth = gridSize.Depth;
+            int safeLayerCount = Mathf.Max(1, layerCount);
+            int width = safeLayerCount + 1;
+            int height = safeLayerCount + 1;
+            int depth = safeLayerCount + 1;
 
             switch (shape)
             {
+                case LevelShapeType.Cube:
+                {
+                    int cubeSide = Mathf.Clamp((safeLayerCount / 2) + 1, 3, 4);
+                    width = cubeSide;
+                    height = cubeSide;
+                    depth = cubeSide;
+                    break;
+                }
+
                 case LevelShapeType.Heart:
                     width = Mathf.Max(width, 5);
                     height = Mathf.Max(height, 5);
-                    depth = Mathf.Max(depth, 4);
+                    depth = Mathf.Max(safeLayerCount, 4);
                     break;
+
                 case LevelShapeType.Castle:
-                    width = Mathf.Max(width, 6);
+                    width = Mathf.Max(width + 1, 6);
                     height = Mathf.Max(height, 5);
                     depth = Mathf.Max(depth, 5);
                     break;
@@ -745,9 +1266,44 @@ namespace MahjongOut3D.LevelSystem
                 MatchId = matchId,
                 GridCoordinate = GetLogicalGridCoordinate(tileIndex, logicalGridSize),
                 UseCustomLocalPosition = true,
-                LocalPosition = GetSurfaceTileLocalPosition(placement, shapeGridSize),
+                LocalPosition = GetCompactedSurfaceTileLocalPosition(placement, shapeGridSize),
                 LocalEulerAngles = GetFacingRotationEuler(placement.FacingDirection, flipTile),
             };
+        }
+
+        /// <summary>
+        /// Resolves the wrapped tile local position and pulls inner shells outward until they touch the previous shell.
+        /// </summary>
+        private Vector3 GetCompactedSurfaceTileLocalPosition(TilePlacementData placement, VoxelGridSize shapeGridSize)
+        {
+            if (placement == null)
+            {
+                return Vector3.zero;
+            }
+
+            if (placement.UseCustomLocalPosition)
+            {
+                return placement.CustomLocalPosition;
+            }
+
+            Vector3 localPosition = GetSurfaceTileLocalPosition(placement, shapeGridSize);
+
+            int shellIndex = Mathf.Max(0, placement.ShellIndex);
+            if (shellIndex == 0)
+            {
+                return localPosition;
+            }
+
+            Vector3 faceNormal = ((Vector3)VoxelGridDirections.GetOffset(placement.FacingDirection)).normalized;
+            float faceStep = GetSurfaceFaceStep(placement.FacingDirection);
+            float shellThickness = GetSurfaceShellThickness();
+            float shellGap = Mathf.Max(0f, faceStep - shellThickness);
+            if (shellGap <= Mathf.Epsilon)
+            {
+                return localPosition;
+            }
+
+            return localPosition + (faceNormal * (shellGap * shellIndex));
         }
 
         /// <summary>
@@ -794,14 +1350,7 @@ namespace MahjongOut3D.LevelSystem
                         {
                             Coordinate = coordinate,
                             FacingDirection = facingDirection,
-                            SurfaceSlotIndex = 0,
-                        });
-
-                        shell.Add(new TilePlacementData
-                        {
-                            Coordinate = coordinate,
-                            FacingDirection = facingDirection,
-                            SurfaceSlotIndex = 1,
+                            SurfaceSlotIndex = -1,
                         });
                     }
                 }
@@ -953,12 +1502,65 @@ namespace MahjongOut3D.LevelSystem
             Vector3 voxelCenter = GetStaticLocalPosition(placement.Coordinate, shapeGridSize, step, originOffset, pivotMode);
 
             Vector3 faceNormal = ((Vector3)VoxelGridDirections.GetOffset(placement.FacingDirection)).normalized;
-            Vector3 tangent = GetSurfaceTangent(placement.FacingDirection);
             Vector3 halfFaceOffset = Vector3.Scale(faceNormal, cellSize) * 0.5f;
             Vector3 paddingOffset = faceNormal * 0.02f;
-            Vector3 slotOffset = tangent * GetSurfaceSlotDistance(placement.FacingDirection, step) * (placement.SurfaceSlotIndex == 0 ? -1f : 1f);
 
+            if (placement.SurfaceSlotIndex < 0)
+            {
+                return voxelCenter + halfFaceOffset + paddingOffset;
+            }
+
+            Vector3 tangent = GetSurfaceTangent(placement.FacingDirection);
+            Vector3 slotOffset = tangent * GetSurfaceSlotDistance(placement.FacingDirection, step) * (placement.SurfaceSlotIndex == 0 ? -1f : 1f);
             return voxelCenter + halfFaceOffset + paddingOffset + slotOffset;
+        }
+
+        /// <summary>
+        /// Converts a panel index into a centered local coordinate that supports both odd and even shell sizes.
+        /// </summary>
+        private static float GetCenteredPanelCoordinate(int index, int count)
+        {
+            return index - ((count - 1) * 0.5f);
+        }
+
+        /// <summary>
+        /// Converts a panel index into an exact centered world-space coordinate for the supplied step distance.
+        /// </summary>
+        private static float GetCenteredPanelCoordinate(int index, int count, float step)
+        {
+            return ((index + 0.5f) - (count * 0.5f)) * step;
+        }
+
+        /// <summary>
+        /// Resolves the normal-axis spacing currently used by surface-wrapped placements on the supplied face.
+        /// </summary>
+        private float GetSurfaceFaceStep(VoxelGridDirection facingDirection)
+        {
+            Vector3 step = layoutOverride != null ? layoutOverride.CellStep : new Vector3(0.95f, 0.45f, 0.7f);
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return Mathf.Max(0.01f, step.x);
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return Mathf.Max(0.01f, step.y);
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return Mathf.Max(0.01f, step.z);
+            }
+        }
+
+        /// <summary>
+        /// Resolves the tile thickness used when shell layers are compacted against each other.
+        /// </summary>
+        private float GetSurfaceShellThickness()
+        {
+            Vector3 cellSize = layoutOverride != null ? layoutOverride.CellSize : new Vector3(0.95f, 0.45f, 0.7f);
+            return Mathf.Max(0.01f, cellSize.y);
         }
 
         /// <summary>

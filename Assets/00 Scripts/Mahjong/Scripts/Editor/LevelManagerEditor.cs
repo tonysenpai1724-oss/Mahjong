@@ -33,19 +33,35 @@ namespace MahjongOut3D.Editor
             LevelManager levelManager = (LevelManager)target;
             using (new EditorGUI.DisabledScope(!Application.isPlaying))
             {
-                if (GUILayout.Button("Load Level"))
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    bool loaded = levelManager.LoadInspectorLevel();
-                    if (!loaded)
+                    if (GUILayout.Button("Load Level"))
                     {
-                        Debug.LogWarning($"Could not load level index {levelManager.InspectorLevelIndex}. Check the LevelCatalog entries.", levelManager);
+                        bool loaded = levelManager.LoadInspectorLevel();
+                        if (!loaded)
+                        {
+                            Debug.LogWarning($"Could not load level index {levelManager.InspectorLevelIndex}. Check the LevelCatalog entries.", levelManager);
+                        }
+                    }
+
+                    if (GUILayout.Button("Hint"))
+                    {
+                        MatchManager matchManager = Object.FindFirstObjectByType<MatchManager>(FindObjectsInactive.Exclude);
+                        if (matchManager == null)
+                        {
+                            Debug.LogWarning("Could not find an active MatchManager in the scene.", levelManager);
+                        }
+                        else if (!matchManager.UseHint())
+                        {
+                            Debug.LogWarning("Hint failed. There may be no valid exposed pair right now.", levelManager);
+                        }
                     }
                 }
             }
 
             if (!Application.isPlaying)
             {
-                EditorGUILayout.HelpBox("Nút Load Level chỉ hoạt động trong Play Mode.", MessageType.None);
+                EditorGUILayout.HelpBox("Nút Load Level và Hint chỉ hoạt động trong Play Mode.", MessageType.None);
             }
         }
     }

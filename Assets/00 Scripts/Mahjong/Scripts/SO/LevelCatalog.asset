@@ -13,18 +13,18 @@ MonoBehaviour:
   m_Name: LevelCatalog
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.LevelCatalog
   <Levels>k__BackingField:
-  - {fileID: 11400000, guid: 82ebc48afd8aee1f394f5d80ce047440, type: 2}
-  - {fileID: 11400000, guid: 513a45f6061f3bf748b5233e76fa235e, type: 2}
-  - {fileID: 11400000, guid: 152888ae075feb5ab9479ca58598ea23, type: 2}
-  - {fileID: 11400000, guid: 99618ea68ec1d7e259565ae8bb2ea800, type: 2}
-  - {fileID: 11400000, guid: 67761a1c74d627786add23e7fa0dbbac, type: 2}
-  - {fileID: 11400000, guid: 30c6baf6174449f019b93c801fbe684d, type: 2}
-  - {fileID: 11400000, guid: 90d2b5d099249ca83b118834d4e11716, type: 2}
-  - {fileID: 11400000, guid: 1eae4203fd4e4d2da87e1c894d21aa14, type: 2}
-  - {fileID: 11400000, guid: 3f8fe4836c7e87237925b0d85dfb9963, type: 2}
-  - {fileID: 11400000, guid: a659b06c8dd04bcdcba6a0b56c3ad0cb, type: 2}
-  - {fileID: 11400000, guid: ceefec8b05dd4b3ba81fc1f8add6defc, type: 2}
-  - {fileID: 11400000, guid: 7d4883faf3425135fb12cb4930b8453d, type: 2}
-  - {fileID: 11400000, guid: fe6e4ccd00d0144caa8ac743c31e40c3, type: 2}
-  - {fileID: 11400000, guid: 02023a1c96497608eb5d5c58e2be1cf2, type: 2}
-  - {fileID: 11400000, guid: c17f8bdcc8533e5bbb7b7d4a41b94e69, type: 2}
+  - {fileID: 11400000, guid: 68a63b96c3b4997f5b6bd3cfa15c2e8c, type: 2}
+  - {fileID: 11400000, guid: 9f5fcfba456e16005a65458cd3cc0e76, type: 2}
+  - {fileID: 11400000, guid: 10b3c8c327b26532295b0338c5685d6e, type: 2}
+  - {fileID: 11400000, guid: 97c7c431f163044d186fc8c628aec027, type: 2}
+  - {fileID: 11400000, guid: 6e8ae8cfa834a4151ac8d062f495846b, type: 2}
+  - {fileID: 11400000, guid: 04932237b460f2dffb3c44a46170413a, type: 2}
+  - {fileID: 11400000, guid: 32718df84ba8ff71dab091bb0c705769, type: 2}
+  - {fileID: 11400000, guid: 456ecff813b4a84799c0f7fc79f72f3a, type: 2}
+  - {fileID: 11400000, guid: 6c9fc9c515f6511018391b42db163076, type: 2}
+  - {fileID: 11400000, guid: 873be7e8e0be998608727539fae92f1f, type: 2}
+  - {fileID: 11400000, guid: 95c9d98e4403bed1da45d8d55712182a, type: 2}
+  - {fileID: 11400000, guid: 4561ba8653ab3257eb4ae1a62050bde5, type: 2}
+  - {fileID: 11400000, guid: 4a087979ec25fe9e2897e44a0439767b, type: 2}
+  - {fileID: 11400000, guid: 5b61e6a4e28564653842d8f14f3f35dc, type: 2}
+  - {fileID: 11400000, guid: f17684baa7f86b0b8b9b5f201ef0a1e6, type: 2}

@@ -107,7 +107,12 @@ namespace MahjongOut3D.LevelSystem
             levelDefinition = definition;
             levelManager?.SetActiveLevelDefinition(definition, definition.UseSurfaceTilePlacement);
 
-            return Generate(definition.LevelName, definition.GetRuntimeGridSize(), definition.LayoutOverride, definition.Tiles);
+            IList<LevelTileDefinition> runtimeTiles = BuildRuntimeTileDefinitions(
+                definition.UseSurfaceTilePlacement,
+                definition.Shape,
+                definition.LayoutOverride,
+                definition.Tiles);
+            return Generate(definition.LevelName, definition.GetRuntimeGridSize(), definition.LayoutOverride, runtimeTiles);
         }
 
         /// <summary>
@@ -126,7 +131,12 @@ namespace MahjongOut3D.LevelSystem
 
             VoxelGridSize gridSize = new VoxelGridSize(jsonData.width, jsonData.height, jsonData.depth);
             levelManager?.SetActiveLevelDefinition(null, jsonData.useSurfaceTilePlacement);
-            return Generate(jsonData.levelName, gridSize, null, LevelJsonSerializer.ToTileDefinitions(jsonData));
+            IList<LevelTileDefinition> runtimeTiles = BuildRuntimeTileDefinitions(
+                jsonData.useSurfaceTilePlacement,
+                jsonData.shape,
+                null,
+                LevelJsonSerializer.ToTileDefinitions(jsonData));
+            return Generate(jsonData.levelName, gridSize, null, runtimeTiles);
         }
 
         /// <summary>
@@ -299,6 +309,172 @@ namespace MahjongOut3D.LevelSystem
             FocusCameraOnGrid(grid);
             context.EventBus.Publish(new LevelGeneratedEvent(levelName, spawnedTiles.Count, grid));
             return spawnedTiles;
+        }
+
+        /// <summary>
+        /// Returns the authored tile list without applying any runtime cube migration.
+        /// </summary>
+        private IList<LevelTileDefinition> BuildRuntimeTileDefinitions(bool useSurfaceTilePlacement, LevelShapeType shape, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> sourceTiles)
+        {
+            return sourceTiles;
+        }
+
+        /// <summary>
+        /// Creates a detached tile-definition copy safe for runtime adjustments.
+        /// </summary>
+        private static LevelTileDefinition CloneTileDefinition(LevelTileDefinition source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return new LevelTileDefinition
+            {
+                MatchId = source.MatchId,
+                GridCoordinate = source.GridCoordinate,
+                UseCustomLocalPosition = source.UseCustomLocalPosition,
+                LocalPosition = source.LocalPosition,
+                LocalEulerAngles = source.LocalEulerAngles,
+            };
+        }
+
+        /// <summary>
+        /// Resolves which cardinal face a custom-placed cube tile is pointing toward.
+        /// </summary>
+        private static VoxelGridDirection ResolveFacingDirection(Vector3 localEulerAngles)
+        {
+            Vector3 normal = Quaternion.Euler(localEulerAngles) * Vector3.up;
+            Vector3 absoluteNormal = new Vector3(Mathf.Abs(normal.x), Mathf.Abs(normal.y), Mathf.Abs(normal.z));
+
+            if (absoluteNormal.x >= absoluteNormal.y && absoluteNormal.x >= absoluteNormal.z)
+            {
+                return normal.x >= 0f ? VoxelGridDirection.Right : VoxelGridDirection.Left;
+            }
+
+            if (absoluteNormal.y >= absoluteNormal.x && absoluteNormal.y >= absoluteNormal.z)
+            {
+                return normal.y >= 0f ? VoxelGridDirection.Up : VoxelGridDirection.Down;
+            }
+
+            return normal.z >= 0f ? VoxelGridDirection.Forward : VoxelGridDirection.Back;
+        }
+
+        /// <summary>
+        /// Reads the magnitude on the axis normal to the resolved cube face.
+        /// </summary>
+        private static float GetCubeShellNormalMagnitude(Vector3 localPosition, VoxelGridDirection facingDirection)
+        {
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return Mathf.Abs(localPosition.x);
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return Mathf.Abs(localPosition.y);
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return Mathf.Abs(localPosition.z);
+            }
+        }
+
+        /// <summary>
+        /// Applies a corrected magnitude on the axis normal to the resolved cube face.
+        /// </summary>
+        private static Vector3 SetCubeShellNormalMagnitude(Vector3 localPosition, VoxelGridDirection facingDirection, float correctedMagnitude)
+        {
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    localPosition.x = Mathf.Sign(localPosition.x == 0f ? (facingDirection == VoxelGridDirection.Right ? 1f : -1f) : localPosition.x) * correctedMagnitude;
+                    return localPosition;
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    localPosition.y = Mathf.Sign(localPosition.y == 0f ? (facingDirection == VoxelGridDirection.Up ? 1f : -1f) : localPosition.y) * correctedMagnitude;
+                    return localPosition;
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    localPosition.z = Mathf.Sign(localPosition.z == 0f ? (facingDirection == VoxelGridDirection.Forward ? 1f : -1f) : localPosition.z) * correctedMagnitude;
+                    return localPosition;
+            }
+        }
+
+        /// <summary>
+        /// Collapses repeated shell magnitudes into one descending set used to infer shell depth.
+        /// </summary>
+        private static List<float> BuildUniqueDescendingMagnitudes(List<float> magnitudes)
+        {
+            List<float> uniqueMagnitudes = new List<float>();
+            if (magnitudes == null || magnitudes.Count == 0)
+            {
+                return uniqueMagnitudes;
+            }
+
+            magnitudes.Sort((left, right) => right.CompareTo(left));
+            for (int index = 0; index < magnitudes.Count; index++)
+            {
+                float magnitude = magnitudes[index];
+                if (uniqueMagnitudes.Count == 0 || Mathf.Abs(uniqueMagnitudes[uniqueMagnitudes.Count - 1] - magnitude) > 0.0001f)
+                {
+                    uniqueMagnitudes.Add(magnitude);
+                }
+            }
+
+            return uniqueMagnitudes;
+        }
+
+        /// <summary>
+        /// Maps a shell magnitude back to its outer-to-inner shell index.
+        /// </summary>
+        private static int ResolveShellIndex(float magnitude, List<float> uniqueMagnitudes)
+        {
+            if (uniqueMagnitudes == null || uniqueMagnitudes.Count == 0)
+            {
+                return 0;
+            }
+
+            int bestIndex = 0;
+            float bestDelta = Mathf.Abs(uniqueMagnitudes[0] - magnitude);
+            for (int index = 1; index < uniqueMagnitudes.Count; index++)
+            {
+                float delta = Mathf.Abs(uniqueMagnitudes[index] - magnitude);
+                if (delta < bestDelta)
+                {
+                    bestDelta = delta;
+                    bestIndex = index;
+                }
+            }
+
+            return bestIndex;
+        }
+
+        /// <summary>
+        /// Resolves the corrected center offset used by the current cube-shell generator for the supplied face.
+        /// </summary>
+        private static float GetCorrectedCubeShellNormalMagnitude(int shellWidth, Vector3 cellSize, VoxelGridDirection facingDirection)
+        {
+            float shellCount = Mathf.Max(2, shellWidth);
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return Mathf.Max(0.01f, (shellCount * cellSize.x) - cellSize.y) * 0.5f;
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return Mathf.Max(0.01f, (shellCount * cellSize.z) - cellSize.y) * 0.5f;
+            }
         }
 
         /// <summary>

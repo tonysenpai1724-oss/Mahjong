@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Gameplay.PowerUpSettings
   <CoinsPerMatch>k__BackingField: 2
   <CoinsPerLevelWin>k__BackingField: 30
-  <HintCost>k__BackingField: 10
+  <HintCost>k__BackingField: 0
   <UndoCost>k__BackingField: 15
   <ShuffleCost>k__BackingField: 20
   <BombCost>k__BackingField: 25
