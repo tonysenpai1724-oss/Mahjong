@@ -14,6 +14,7 @@ namespace MahjongOut3D.LevelSystem
     [DisallowMultipleComponent]
     public sealed class VoxelLevelGenerator : MonoBehaviour
     {
+        private const string DefaultFallbackVisualSourceName = "Bamboo_1";
         private static readonly Color[] DebugMatchPalette =
         {
             new Color(0.94f, 0.42f, 0.42f),
@@ -30,7 +31,13 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private LevelDefinition levelDefinition;
         [SerializeField] private MahjongTile tilePrefab;
         [SerializeField] private Transform tileRoot;
+        [SerializeField] private GameObject fallbackVisualSource;
         [SerializeField] private TileVisualSettings fallbackTileVisualSettings;
+        [SerializeField] private Material[] matchIndicatorMaterials;
+
+        [Header("Tile Tuning")]
+        [SerializeField] private Color tileBaseColor = Color.white;
+        [SerializeField] private Vector3 tileSpacingOffset;
 
         [Header("Generation")]
         [SerializeField] private bool generateOnStart;
@@ -98,8 +105,9 @@ namespace MahjongOut3D.LevelSystem
             }
 
             levelDefinition = definition;
+            levelManager?.SetActiveLevelDefinition(definition, definition.UseSurfaceTilePlacement);
 
-            return Generate(definition.LevelName, definition.GridSize, definition.LayoutOverride, definition.Tiles);
+            return Generate(definition.LevelName, definition.GetRuntimeGridSize(), definition.LayoutOverride, definition.Tiles);
         }
 
         /// <summary>
@@ -117,6 +125,7 @@ namespace MahjongOut3D.LevelSystem
             }
 
             VoxelGridSize gridSize = new VoxelGridSize(jsonData.width, jsonData.height, jsonData.depth);
+            levelManager?.SetActiveLevelDefinition(null, jsonData.useSurfaceTilePlacement);
             return Generate(jsonData.levelName, gridSize, null, LevelJsonSerializer.ToTileDefinitions(jsonData));
         }
 
@@ -159,6 +168,7 @@ namespace MahjongOut3D.LevelSystem
                 }
             }
 
+            levelManager?.SetActiveLevelDefinition(null, false);
             return Generate("ArrayGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles);
         }
 
@@ -208,6 +218,7 @@ namespace MahjongOut3D.LevelSystem
                 matchId++;
             }
 
+            levelManager?.SetActiveLevelDefinition(null, false);
             return Generate("MaskGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles);
         }
 
@@ -303,16 +314,53 @@ namespace MahjongOut3D.LevelSystem
                 TileId = nextTileId++,
                 MatchId = definition.MatchId,
                 GridCoordinate = definition.GridCoordinate,
-                LocalPosition = grid.GetLocalPosition(definition.GridCoordinate),
+                LocalPosition = ApplyTileSpacing(definition.UseCustomLocalPosition ? definition.LocalPosition : grid.GetLocalPosition(definition.GridCoordinate)),
                 LocalEulerAngles = definition.LocalEulerAngles,
             };
 
             tile.ApplyRuntimeData(runtimeData);
-            tile.SetDebugMatchColor(GetDebugMatchColor(definition.MatchId));
+            tile.SetDebugMatchColor(tileBaseColor);
+            tile.SetMatchIndicatorMaterial(GetMatchIndicatorMaterial(definition.MatchId));
             tile.ResetTile();
             grid.TryPlaceTile(tile.TileId, definition.GridCoordinate);
             tileManager.RegisterTile(tile);
             spawnedTiles.Add(tile);
+        }
+
+        /// <summary>
+        /// Resolves the optional test material used to identify a tile match group.
+        /// </summary>
+        /// <param name="matchId">Match identifier.</param>
+        /// <returns>Indicator material for that match group, or null when none is configured.</returns>
+        private Material GetMatchIndicatorMaterial(int matchId)
+        {
+            if (matchIndicatorMaterials == null || matchIndicatorMaterials.Length == 0)
+            {
+                return null;
+            }
+
+            int materialIndex = Mathf.Abs(matchId) % matchIndicatorMaterials.Length;
+            return matchIndicatorMaterials[materialIndex];
+        }
+
+        /// <summary>
+        /// Applies an outward spacing offset so the distance between tiles can be tuned from the inspector.
+        /// </summary>
+        /// <param name="localPosition">Original tile local position.</param>
+        /// <returns>Adjusted tile local position.</returns>
+        private Vector3 ApplyTileSpacing(Vector3 localPosition)
+        {
+            if (tileSpacingOffset == Vector3.zero || localPosition.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return localPosition;
+            }
+
+            Vector3 spacingScale = new Vector3(
+                Mathf.Max(0f, 1f + tileSpacingOffset.x),
+                Mathf.Max(0f, 1f + tileSpacingOffset.y),
+                Mathf.Max(0f, 1f + tileSpacingOffset.z));
+
+            return Vector3.Scale(localPosition, spacingScale);
         }
 
         /// <summary>
@@ -328,9 +376,71 @@ namespace MahjongOut3D.LevelSystem
             Transform rotationRoot = tileRoot != null ? tileRoot : transform;
             cameraManager.SetRotationTarget(rotationRoot);
 
-            Bounds localBounds = grid.GetLocalBounds();
-            Bounds worldBounds = TransformBounds(rotationRoot, localBounds);
+            Bounds worldBounds;
+            if (!TryBuildSpawnedTileBounds(out worldBounds))
+            {
+                Bounds localBounds = grid.GetLocalBounds();
+                worldBounds = TransformBounds(rotationRoot, localBounds);
+            }
+
             cameraManager.FrameBounds(worldBounds, 1.35f);
+        }
+
+        /// <summary>
+        /// Builds a world-space bounds volume that encloses every spawned tile.
+        /// </summary>
+        /// <param name="worldBounds">Combined world-space bounds.</param>
+        /// <returns>True when at least one valid bounds source was found; otherwise false.</returns>
+        private bool TryBuildSpawnedTileBounds(out Bounds worldBounds)
+        {
+            worldBounds = default;
+            bool hasBounds = false;
+
+            for (int index = 0; index < spawnedTiles.Count; index++)
+            {
+                MahjongTile tile = spawnedTiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                if (tile.TileCollider != null)
+                {
+                    if (!hasBounds)
+                    {
+                        worldBounds = tile.TileCollider.bounds;
+                        hasBounds = true;
+                    }
+                    else
+                    {
+                        worldBounds.Encapsulate(tile.TileCollider.bounds);
+                    }
+
+                    continue;
+                }
+
+                Renderer[] renderers = tile.GetComponentsInChildren<Renderer>(false);
+                for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+                {
+                    Renderer renderer = renderers[rendererIndex];
+                    if (renderer == null)
+                    {
+                        continue;
+                    }
+
+                    if (!hasBounds)
+                    {
+                        worldBounds = renderer.bounds;
+                        hasBounds = true;
+                    }
+                    else
+                    {
+                        worldBounds.Encapsulate(renderer.bounds);
+                    }
+                }
+            }
+
+            return hasBounds;
         }
 
         /// <summary>
@@ -388,6 +498,15 @@ namespace MahjongOut3D.LevelSystem
                 return;
             }
 
+            CreatePrimitiveFallbackTile();
+        }
+
+        /// <summary>
+        /// Creates the old primitive-based fallback when no imported Mahjong source is available.
+        /// </summary>
+        private void CreatePrimitiveFallbackTile()
+        {
+
             GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             tileObject.name = "RuntimeFallbackMahjongTileTemplate";
             tileObject.hideFlags = HideFlags.HideAndDontSave;
@@ -403,27 +522,35 @@ namespace MahjongOut3D.LevelSystem
                 renderer.shadowCastingMode = ShadowCastingMode.On;
                 renderer.receiveShadows = true;
 
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-                if (shader != null)
+                MeshRenderer sourceRenderer = ResolveFallbackMaterialRenderer();
+                if (sourceRenderer != null && sourceRenderer.sharedMaterials != null && sourceRenderer.sharedMaterials.Length > 0)
                 {
-                    Material material = new Material(shader);
-                    material.name = "RuntimeFallbackMahjongTileMaterial";
-                    if (material.HasProperty("_BaseColor"))
+                    renderer.sharedMaterial = sourceRenderer.sharedMaterials[0];
+                }
+                else
+                {
+                    Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+                    if (shader != null)
                     {
-                        material.SetColor("_BaseColor", new Color(0.96f, 0.94f, 0.9f, 1f));
-                    }
-                    else if (material.HasProperty("_Color"))
-                    {
-                        material.SetColor("_Color", new Color(0.96f, 0.94f, 0.9f, 1f));
-                    }
+                        Material material = new Material(shader);
+                        material.name = "RuntimeFallbackMahjongTileMaterial";
+                        if (material.HasProperty("_BaseColor"))
+                        {
+                            material.SetColor("_BaseColor", new Color(0.96f, 0.94f, 0.9f, 1f));
+                        }
+                        else if (material.HasProperty("_Color"))
+                        {
+                            material.SetColor("_Color", new Color(0.96f, 0.94f, 0.9f, 1f));
+                        }
 
-                    if (material.HasProperty("_EmissionColor"))
-                    {
-                        material.EnableKeyword("_EMISSION");
-                        material.SetColor("_EmissionColor", Color.black);
-                    }
+                        if (material.HasProperty("_EmissionColor"))
+                        {
+                            material.EnableKeyword("_EMISSION");
+                            material.SetColor("_EmissionColor", Color.black);
+                        }
 
-                    renderer.sharedMaterial = material;
+                        renderer.sharedMaterial = material;
+                    }
                 }
             }
 
@@ -457,6 +584,41 @@ namespace MahjongOut3D.LevelSystem
             {
                 tilePool = new ComponentPool<MahjongTile>(tilePrefab);
             }
+        }
+
+        /// <summary>
+        /// Resolves the imported Mahjong visual source used for runtime fallback tiles.
+        /// </summary>
+        /// <returns>Resolved source object when available; otherwise null.</returns>
+        private GameObject ResolveFallbackVisualSource()
+        {
+            if (fallbackVisualSource != null)
+            {
+                return fallbackVisualSource;
+            }
+
+            GameObject[] sceneObjects = FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int index = 0; index < sceneObjects.Length; index++)
+            {
+                GameObject candidate = sceneObjects[index];
+                if (candidate != null && candidate.name.Equals(DefaultFallbackVisualSourceName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    fallbackVisualSource = candidate;
+                    return fallbackVisualSource;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves the renderer used only as a material donor for fallback runtime tiles.
+        /// </summary>
+        /// <returns>Renderer providing Mahjong materials when available; otherwise null.</returns>
+        private MeshRenderer ResolveFallbackMaterialRenderer()
+        {
+            GameObject source = ResolveFallbackVisualSource();
+            return source != null ? source.GetComponentInChildren<MeshRenderer>(true) : null;
         }
 
         /// <summary>

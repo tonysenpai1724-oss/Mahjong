@@ -11,6 +11,8 @@ namespace MahjongOut3D.LevelSystem
     {
         [SerializeField] private int matchId;
         [SerializeField] private Vector3Int gridCoordinate;
+        [SerializeField] private bool useCustomLocalPosition;
+        [SerializeField] private Vector3 localPosition;
         [SerializeField] private Vector3 localEulerAngles;
 
         /// <summary>
@@ -29,6 +31,24 @@ namespace MahjongOut3D.LevelSystem
         {
             get => gridCoordinate;
             set => gridCoordinate = value;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this tile should use a custom local-space position.
+        /// </summary>
+        public bool UseCustomLocalPosition
+        {
+            get => useCustomLocalPosition;
+            set => useCustomLocalPosition = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the custom local-space position used when <see cref="UseCustomLocalPosition"/> is enabled.
+        /// </summary>
+        public Vector3 LocalPosition
+        {
+            get => localPosition;
+            set => localPosition = value;
         }
 
         /// <summary>

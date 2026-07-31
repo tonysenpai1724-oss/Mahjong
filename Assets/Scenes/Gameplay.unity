@@ -136,7 +136,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &46032705
 RectTransform:
   m_ObjectHideFlags: 0
@@ -256,7 +256,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &87565147
 RectTransform:
   m_ObjectHideFlags: 0
@@ -366,6 +366,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.LevelManager
   levelCatalog: {fileID: 11400000, guid: f8b473ff57de4323baabdd6333f902f1, type: 2}
   defaultGridLayout: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
+  inspectorLevelIndex: 0
 --- !u!1 &176450021
 GameObject:
   m_ObjectHideFlags: 0
@@ -410,7 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35f816d93cbbfed16ae572d78f1574e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.MatchManager
-  powerUpSettings: {fileID: 0}
+  powerUpSettings: {fileID: 11400000, guid: 3a9be00ff3d9492284bdf0d8e8784957, type: 2}
 --- !u!1 &176450031
 GameObject:
   m_ObjectHideFlags: 0
@@ -455,7 +456,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf4612a75278c28f1b80067f9451bc63, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.AudioManager
-  audioSettings: {fileID: 0}
+  audioSettings: {fileID: 11400000, guid: 12d59e45189949ba8d774b7dc9aa86bb, type: 2}
   musicSource: {fileID: 0}
   sfxSource: {fileID: 0}
 --- !u!1 &176450041
@@ -503,9 +504,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.VoxelLevelGenerator
   levelDefinition: {fileID: 11400000, guid: a61ab51a01044b2a8f158d1e00b0b5a4, type: 2}
-  tilePrefab: {fileID: 0}
+  tilePrefab: {fileID: 2112072835, guid: 6e5d8adad2fe4d1bb20f57ce3cb1648c, type: 3}
   tileRoot: {fileID: 176450052}
+  fallbackVisualSource: {fileID: 3849202022951820079, guid: fa344e7a7a64930119ebc8361022852a, type: 3}
   fallbackTileVisualSettings: {fileID: 11400000, guid: 07ad9084b37f4ca59ad76a9b1efa812f, type: 2}
+  matchIndicatorMaterials:
+  - {fileID: 2100000, guid: b0502f8decb057e9d955f35a39d6c96e, type: 2}
+  - {fileID: 2100000, guid: 435fa6b73e3ee38ceb2b417a7f00e8ee, type: 2}
+  - {fileID: 2100000, guid: 369dfca0d1bc787a4b31871d8643f6e2, type: 2}
+  - {fileID: 2100000, guid: e79c124e6f547e625b945f34c24af75e, type: 2}
+  - {fileID: 2100000, guid: b7d3a0ece4e83eaac9c8d15899571e9b, type: 2}
+  - {fileID: 2100000, guid: cd359387c4a6db63b862b33fe851fcf1, type: 2}
+  - {fileID: 2100000, guid: d73a71a373099303aa6f44f0d6b380c6, type: 2}
+  - {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
+  tileBaseColor: {r: 0.8113208, g: 0.3119806, b: 0.2946778, a: 1}
+  tileSpacingOffset: {x: 0.02, y: 0.02, z: 0.02}
   generateOnStart: 1
   clearExistingChildrenOnGenerate: 1
   usePooling: 1
@@ -826,6 +839,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 0
+  m_RequiresOpaqueTextureOption: 0
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &355325243
 GameObject:
   m_ObjectHideFlags: 0
@@ -839,6 +884,7 @@ GameObject:
   - component: {fileID: 355325245}
   - component: {fileID: 355325244}
   - component: {fileID: 355325248}
+  - component: {fileID: 355325249}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -976,6 +1022,50 @@ MonoBehaviour:
   focusPoint: {x: 0, y: 0, z: 0}
   focusOffset: {x: 0, y: 0, z: 0}
   initialYaw: 0
+--- !u!114 &355325249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355325243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &377002526
 GameObject:
   m_ObjectHideFlags: 0
@@ -1066,6 +1156,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 0
+  m_RequiresOpaqueTextureOption: 0
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!81 &391232639
 AudioListener:
   m_ObjectHideFlags: 0
@@ -1150,6 +1272,7 @@ GameObject:
   m_Component:
   - component: {fileID: 450911806}
   - component: {fileID: 450911807}
+  - component: {fileID: 450911808}
   m_Layer: 0
   m_Name: CameraManager
   m_TagString: Untagged
@@ -1185,6 +1308,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.CameraManager
   orbitCameraController: {fileID: 355325248}
+  blockRotationController: {fileID: 450911808}
+--- !u!114 &450911808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450911805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80513dbf30404a43388d1d15d207a4a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.CameraSystem.BlockRotationController
+  settings: {fileID: 11400000, guid: 06ff36f10bd327a3c9a3559c3f21d029, type: 2}
+  rotationTarget: {fileID: 0}
+  resetRotationWhenTargetChanges: 1
 --- !u!1 &529651427
 GameObject:
   m_ObjectHideFlags: 0
@@ -2117,6 +2256,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 1
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!108 &834537397
 Light:
   m_ObjectHideFlags: 0
@@ -2794,7 +2950,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1015
   maxRaycastDistance: 250
-  exposureSettings: {fileID: 0}
+  exposureSettings: {fileID: 11400000, guid: 93b9d7d4140242b588962f4ea387c103, type: 2}
 --- !u!1 &1402399101
 GameObject:
   m_ObjectHideFlags: 0
@@ -3496,7 +3652,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b3e26cef390160283c951cd71816dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.AnimationManager
-  animationSettings: {fileID: 0}
+  animationSettings: {fileID: 11400000, guid: 54d8e42891ff41928442f725f2657b0d, type: 2}
 --- !u!1 &2067724666
 GameObject:
   m_ObjectHideFlags: 0
@@ -8053,118 +8209,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &2112072828
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2112072832}
-  - component: {fileID: 2112072831}
-  - component: {fileID: 2112072830}
-  - component: {fileID: 2112072829}
-  m_Layer: 0
-  m_Name: Cube
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!65 &2112072829
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2112072828}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &2112072830
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2112072828}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &2112072831
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2112072828}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &2112072832
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2112072828}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.47995737, y: -0.007267882, z: 0.21641137, w: 0.8501495}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: -54.383, y: -22.205, z: 40.077}
 --- !u!1 &2122050125
 GameObject:
   m_ObjectHideFlags: 0
@@ -8611,4 +8655,3 @@ SceneRoots:
   - {fileID: 1853129372}
   - {fileID: 758055964}
   - {fileID: 176450052}
-  - {fileID: 2112072832}

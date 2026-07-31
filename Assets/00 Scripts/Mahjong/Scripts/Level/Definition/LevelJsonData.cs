@@ -13,6 +13,7 @@ namespace MahjongOut3D.LevelSystem
         public int width;
         public int height;
         public int depth;
+        public bool useSurfaceTilePlacement;
         public LevelShapeType shape;
         public LevelDifficulty difficulty;
         public List<LevelJsonTileData> tiles = new List<LevelJsonTileData>();
@@ -28,6 +29,10 @@ namespace MahjongOut3D.LevelSystem
         public int x;
         public int y;
         public int z;
+        public bool useCustomLocalPosition;
+        public float posX;
+        public float posY;
+        public float posZ;
         public float rotX;
         public float rotY;
         public float rotZ;

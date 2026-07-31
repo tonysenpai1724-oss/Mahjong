@@ -48,6 +48,8 @@ namespace MahjongOut3D.LevelSystem
                 {
                     MatchId = tile.matchId,
                     GridCoordinate = new Vector3Int(tile.x, tile.y, tile.z),
+                    UseCustomLocalPosition = tile.useCustomLocalPosition,
+                    LocalPosition = new Vector3(tile.posX, tile.posY, tile.posZ),
                     LocalEulerAngles = new Vector3(tile.rotX, tile.rotY, tile.rotZ),
                 });
             }
@@ -73,6 +75,7 @@ namespace MahjongOut3D.LevelSystem
                 width = definition.GridSize.Width,
                 height = definition.GridSize.Height,
                 depth = definition.GridSize.Depth,
+                useSurfaceTilePlacement = definition.UseSurfaceTilePlacement,
                 shape = definition.Shape,
                 difficulty = definition.Difficulty,
             };
@@ -96,6 +99,10 @@ namespace MahjongOut3D.LevelSystem
                     x = tile.GridCoordinate.x,
                     y = tile.GridCoordinate.y,
                     z = tile.GridCoordinate.z,
+                    useCustomLocalPosition = tile.UseCustomLocalPosition,
+                    posX = tile.LocalPosition.x,
+                    posY = tile.LocalPosition.y,
+                    posZ = tile.LocalPosition.z,
                     rotX = tile.LocalEulerAngles.x,
                     rotY = tile.LocalEulerAngles.y,
                     rotZ = tile.LocalEulerAngles.z,

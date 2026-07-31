@@ -13,7 +13,7 @@ namespace MahjongOut3D.LevelSystem
         public Vector3 CellSize { get; private set; } = Vector3.one;
 
         [field: SerializeField]
-        public Vector3 CellSpacing { get; private set; } = new Vector3(0.05f, 0.05f, 0.05f);
+        public Vector3 CellSpacing { get; private set; } = Vector3.zero;
 
         [field: Header("Pivot")]
         [field: SerializeField]

@@ -18,6 +18,16 @@ namespace MahjongOut3D.Managers
         private VoxelGridData activeGrid;
 
         /// <summary>
+        /// Gets the currently active level definition asset.
+        /// </summary>
+        public LevelDefinition ActiveLevelDefinition { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the active level uses surface-wrapped tile placement.
+        /// </summary>
+        public bool ActiveUsesSurfaceTilePlacement { get; private set; }
+
+        /// <summary>
         /// Gets the currently selected level index.
         /// </summary>
         public int CurrentLevelIndex { get; private set; } = -1;
@@ -74,6 +84,7 @@ namespace MahjongOut3D.Managers
         protected override void OnShutdown()
         {
             SetActiveGrid(null);
+            SetActiveLevelDefinition(null, false);
         }
 
         /// <summary>
@@ -117,8 +128,20 @@ namespace MahjongOut3D.Managers
             }
 
             SetCurrentLevel(levelIndex);
+            SetActiveLevelDefinition(definition, definition != null && definition.UseSurfaceTilePlacement);
             generator.GenerateFromDefinition(definition);
             return true;
+        }
+
+        /// <summary>
+        /// Updates the active level metadata used by gameplay systems.
+        /// </summary>
+        /// <param name="definition">Active level definition, or null for ad-hoc generated content.</param>
+        /// <param name="useSurfaceTilePlacement">Whether the current level uses surface-wrapped tile placement.</param>
+        public void SetActiveLevelDefinition(LevelDefinition definition, bool useSurfaceTilePlacement)
+        {
+            ActiveLevelDefinition = definition;
+            ActiveUsesSurfaceTilePlacement = useSurfaceTilePlacement;
         }
 
         /// <summary>

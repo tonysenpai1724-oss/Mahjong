@@ -296,6 +296,12 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
+            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
+            if (useSurfaceRules)
+            {
+                return true;
+            }
+
             if (exposureSettings != null && exposureSettings.RequireSurfaceExposure && !IsTileExposed(tile))
             {
                 return false;
@@ -338,6 +344,12 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private void Update()
         {
+            if (Context != null && Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement)
+            {
+                RefreshTileExposure();
+                return;
+            }
+
             bool isXRayActive = IsXRayActive();
             if (wasXRayActiveLastFrame && !isXRayActive)
             {
@@ -424,6 +436,12 @@ namespace MahjongOut3D.Managers
             if (tile == null || grid == null || tile.IsRemoved || tile.IsMatched)
             {
                 return false;
+            }
+
+            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
+            if (useSurfaceRules)
+            {
+                return true;
             }
 
             if (IsTileSurfaceExposed(tile, grid))

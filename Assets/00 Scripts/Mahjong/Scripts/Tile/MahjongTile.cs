@@ -16,6 +16,7 @@ namespace MahjongOut3D.TileSystem
 
         [Header("Components")]
         [SerializeField] private MeshRenderer meshRenderer;
+        [SerializeField] private MeshRenderer matchIndicatorRenderer;
         [SerializeField] private Collider tileCollider;
         [SerializeField] private Animator animator;
         [SerializeField] private TileOutlinePresenter outlinePresenter;
@@ -23,6 +24,13 @@ namespace MahjongOut3D.TileSystem
 
         [Header("Runtime")]
         [SerializeField] private TileState state = TileState.Hidden;
+
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+
+        private MaterialPropertyBlock baseColorPropertyBlock;
+        private bool hasDebugBaseColor;
+        private Color debugBaseColor = Color.white;
 
         /// <summary>
         /// Occurs when the tile changes runtime state.
@@ -53,6 +61,11 @@ namespace MahjongOut3D.TileSystem
         /// Gets the primary tile renderer.
         /// </summary>
         public MeshRenderer MeshRenderer => meshRenderer;
+
+        /// <summary>
+        /// Gets the optional renderer used to display a match-indicator material on the tile.
+        /// </summary>
+        public MeshRenderer MatchIndicatorRenderer => matchIndicatorRenderer;
 
         /// <summary>
         /// Gets the tile collider used for hit testing.
@@ -234,7 +247,28 @@ namespace MahjongOut3D.TileSystem
                 CacheReferences();
             }
 
+            hasDebugBaseColor = true;
+            debugBaseColor = color;
             visualController?.SetRuntimeBaseColor(color);
+            visualController?.ApplyState(state, true);
+            ApplyDirectBaseColorOverride();
+        }
+
+        /// <summary>
+        /// Assigns a material to the optional match-indicator renderer used for gameplay testing.
+        /// </summary>
+        /// <param name="material">Material to display on the indicator quad, or null to leave the current material unchanged.</param>
+        public void SetMatchIndicatorMaterial(Material material)
+        {
+            if (matchIndicatorRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (matchIndicatorRenderer != null && material != null)
+            {
+                matchIndicatorRenderer.sharedMaterial = material;
+            }
         }
 
         /// <summary>
@@ -279,6 +313,20 @@ namespace MahjongOut3D.TileSystem
                 meshRenderer = visualController != null ? visualController.GetPrimaryRenderer() : GetComponentInChildren<MeshRenderer>(true);
             }
 
+            if (matchIndicatorRenderer == null)
+            {
+                MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>(true);
+                for (int index = 0; index < renderers.Length; index++)
+                {
+                    MeshRenderer renderer = renderers[index];
+                    if (renderer != null && renderer != meshRenderer && renderer.gameObject.name.Equals("Quad", StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchIndicatorRenderer = renderer;
+                        break;
+                    }
+                }
+            }
+
             if (tileCollider == null)
             {
                 tileCollider = GetComponentInChildren<Collider>(true);
@@ -307,9 +355,66 @@ namespace MahjongOut3D.TileSystem
                 tileCollider.enabled = currentState == TileState.Visible || currentState == TileState.Selected;
             }
 
+            if (matchIndicatorRenderer != null)
+            {
+                matchIndicatorRenderer.enabled = currentState != TileState.Hidden && currentState != TileState.Removed;
+            }
+
             if (visualController != null)
             {
                 visualController.ApplyState(currentState, instant);
+            }
+        }
+
+        /// <summary>
+        /// Reapplies the runtime base color directly onto the primary renderer so debug tinting stays visible.
+        /// </summary>
+        private void ApplyDirectBaseColorOverride()
+        {
+            if (!hasDebugBaseColor)
+            {
+                return;
+            }
+
+            if (meshRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (meshRenderer == null)
+            {
+                return;
+            }
+
+            Material sharedMaterial = meshRenderer.sharedMaterial;
+            if (sharedMaterial == null)
+            {
+                return;
+            }
+
+            if (baseColorPropertyBlock == null)
+            {
+                baseColorPropertyBlock = new MaterialPropertyBlock();
+            }
+
+            meshRenderer.GetPropertyBlock(baseColorPropertyBlock);
+
+            bool applied = false;
+            if (sharedMaterial.HasProperty(BaseColorId))
+            {
+                baseColorPropertyBlock.SetColor(BaseColorId, debugBaseColor);
+                applied = true;
+            }
+
+            if (sharedMaterial.HasProperty(ColorId))
+            {
+                baseColorPropertyBlock.SetColor(ColorId, debugBaseColor);
+                applied = true;
+            }
+
+            if (applied)
+            {
+                meshRenderer.SetPropertyBlock(baseColorPropertyBlock);
             }
         }
     }

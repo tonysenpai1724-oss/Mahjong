@@ -27,28 +27,28 @@ MonoBehaviour:
     minPairCount: 22
     maxPairCount: 24
     flippedTileChance: 0.45
-    shape: 2
-    allowedShapes: 02000000
+    shape: 5
+    allowedShapes: 0200000005000000
     difficulty: 1
   hardSettings:
     label: Hard
     levelCount: 5
     minGridSize: {x: 5, y: 5, z: 5}
-    maxGridSize: {x: 7, y: 7, z: 7}
+    maxGridSize: {x: 6, y: 6, z: 6}
     minPairCount: 34
     maxPairCount: 40
     flippedTileChance: 0.55
-    shape: 3
-    allowedShapes: 03000000
+    shape: 1
+    allowedShapes: 0300000001000000
     difficulty: 2
   superHardSettings:
     label: SuperHard
     levelCount: 5
-    minGridSize: {x: 12, y: 12, z: 12}
-    maxGridSize: {x: 50, y: 50, z: 50}
+    minGridSize: {x: 8, y: 8, z: 8}
+    maxGridSize: {x: 10, y: 10, z: 10}
     minPairCount: 48
-    maxPairCount: 1000
+    maxPairCount: 300
     flippedTileChance: 0.65
     shape: 2
-    allowedShapes: 0200000003000000
+    allowedShapes: 02000000
     difficulty: 3

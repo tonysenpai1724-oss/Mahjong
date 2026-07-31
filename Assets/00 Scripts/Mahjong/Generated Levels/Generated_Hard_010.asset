@@ -14,250 +14,2051 @@ MonoBehaviour:
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.LevelDefinition
   <LevelName>k__BackingField: Generated_Hard_010
   <GridSize>k__BackingField:
-    width: 6
-    height: 6
-    depth: 7
+    width: 8
+    height: 8
+    depth: 8
   <LayoutOverride>k__BackingField: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
   <Shape>k__BackingField: 3
+  <UseSurfaceTilePlacement>k__BackingField: 1
   <Difficulty>k__BackingField: 2
   <Tiles>k__BackingField:
   - matchId: 0
-    gridCoordinate: {x: 3, y: 4, z: 2}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 0, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.22999991, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 0
-    gridCoordinate: {x: 5, y: 3, z: 2}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 1, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 1
-    gridCoordinate: {x: 5, y: 3, z: 5}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 2, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.7199999, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 0}
   - matchId: 1
-    gridCoordinate: {x: 3, y: 4, z: 3}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 3, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 270, y: 0, z: 0}
   - matchId: 2
-    gridCoordinate: {x: 0, y: 3, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 4, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
   - matchId: 2
-    gridCoordinate: {x: 2, y: 4, z: 3}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 5, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: -1.5}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
   - matchId: 3
-    gridCoordinate: {x: 3, y: 3, z: 6}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 6, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -0.23000003, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 0}
   - matchId: 3
-    gridCoordinate: {x: 0, y: 3, z: 4}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 7, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 180, z: 0}
   - matchId: 4
-    gridCoordinate: {x: 0, y: 3, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 0, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.4749999, z: -0.9699999}
+    localEulerAngles: {x: 90, y: 180, z: 0}
   - matchId: 4
-    gridCoordinate: {x: 4, y: 3, z: 6}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 1, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
   - matchId: 5
-    gridCoordinate: {x: 2, y: 3, z: 6}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 2, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: -0.47500002, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 90}
   - matchId: 5
-    gridCoordinate: {x: 5, y: 3, z: 3}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 3, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 6
-    gridCoordinate: {x: 2, y: 4, z: 2}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 4, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: 0.30000013}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
   - matchId: 6
-    gridCoordinate: {x: 4, y: 3, z: 0}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 5, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: 1.5000002}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
   - matchId: 7
-    gridCoordinate: {x: 5, y: 3, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 6, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 180}
   - matchId: 7
-    gridCoordinate: {x: 3, y: 3, z: 0}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 7, y: 1, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 8
-    gridCoordinate: {x: 0, y: 3, z: 2}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 0, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 2.375, z: 1.4300002}
+    localEulerAngles: {x: 90, y: 180, z: 0}
   - matchId: 8
-    gridCoordinate: {x: 1, y: 3, z: 6}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 1, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -2.13, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 0}
   - matchId: 9
+    gridCoordinate: {x: 2, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 1.425, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 9
+    gridCoordinate: {x: 3, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 1.425, z: -1.5}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 10
+    gridCoordinate: {x: 4, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.7199999, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 10
+    gridCoordinate: {x: 5, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 11
+    gridCoordinate: {x: 6, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 1.425, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 11
+    gridCoordinate: {x: 7, y: 2, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 12
+    gridCoordinate: {x: 0, y: 3, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 2.375, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 12
     gridCoordinate: {x: 1, y: 3, z: 0}
-    localEulerAngles: {x: 0, y: 0, z: 0}
-  - matchId: 9
-    gridCoordinate: {x: 3, y: 4, z: 4}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 10
-    gridCoordinate: {x: 0, y: 3, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 10
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 13
     gridCoordinate: {x: 2, y: 3, z: 0}
-    localEulerAngles: {x: 0, y: 0, z: 0}
-  - matchId: 11
-    gridCoordinate: {x: 2, y: 4, z: 4}
-    localEulerAngles: {x: 0, y: 0, z: 0}
-  - matchId: 11
-    gridCoordinate: {x: 5, y: 3, z: 4}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 12
-    gridCoordinate: {x: 3, y: 0, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
-  - matchId: 12
-    gridCoordinate: {x: 4, y: 4, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -1.425, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 13
-    gridCoordinate: {x: 4, y: 4, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 13
-    gridCoordinate: {x: 4, y: 2, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 3, y: 3, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.13, y: 0.4749999, z: -0.8999999}
+    localEulerAngles: {x: 0, y: 0, z: 90}
   - matchId: 14
-    gridCoordinate: {x: 1, y: 1, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 4, y: 3, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: -0.2999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
   - matchId: 14
-    gridCoordinate: {x: 1, y: 4, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 5, y: 3, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
   - matchId: 15
-    gridCoordinate: {x: 1, y: 0, z: 2}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 6, y: 3, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 2.375, z: -1.5}
+    localEulerAngles: {x: 0, y: 0, z: 270}
   - matchId: 15
-    gridCoordinate: {x: 4, y: 0, z: 3}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 7, y: 3, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 0.4749999, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 270}
   - matchId: 16
-    gridCoordinate: {x: 2, y: 1, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 0, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.7199999, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 0}
   - matchId: 16
-    gridCoordinate: {x: 1, y: 5, z: 5}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 1, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -0.47500002, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 17
-    gridCoordinate: {x: 1, y: 1, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 2, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: 0.30000013}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
   - matchId: 17
-    gridCoordinate: {x: 4, y: 0, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 3, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 18
-    gridCoordinate: {x: 2, y: 2, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 4, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: 0.30000013}
+    localEulerAngles: {x: 0, y: 0, z: 270}
   - matchId: 18
-    gridCoordinate: {x: 4, y: 1, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 5, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 90}
   - matchId: 19
-    gridCoordinate: {x: 1, y: 1, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 6, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 90, y: 180, z: 0}
   - matchId: 19
-    gridCoordinate: {x: 4, y: 0, z: 2}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 7, y: 4, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 0.4749999, z: -0.8999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
   - matchId: 20
-    gridCoordinate: {x: 4, y: 1, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 0, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.22999991, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 20
-    gridCoordinate: {x: 3, y: 0, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 1, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 0.4749999, z: -1.5}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
   - matchId: 21
-    gridCoordinate: {x: 4, y: 2, z: 5}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 2, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: -0.2999999}
+    localEulerAngles: {x: 0, y: 0, z: 270}
   - matchId: 21
-    gridCoordinate: {x: 4, y: 3, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 3, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
   - matchId: 22
-    gridCoordinate: {x: 1, y: 1, z: 4}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 4, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 1.425, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
   - matchId: 22
-    gridCoordinate: {x: 1, y: 0, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 5, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 23
-    gridCoordinate: {x: 3, y: 1, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 6, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.4749999, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 23
-    gridCoordinate: {x: 4, y: 5, z: 5}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 7, y: 5, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 24
-    gridCoordinate: {x: 3, y: 1, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 0, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.4749999, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 24
-    gridCoordinate: {x: 2, y: 0, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 1, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
   - matchId: 25
-    gridCoordinate: {x: 4, y: 1, z: 4}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 2, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 180}
   - matchId: 25
-    gridCoordinate: {x: 1, y: 0, z: 4}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 3, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
   - matchId: 26
-    gridCoordinate: {x: 2, y: 1, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 4, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 180, z: 0}
   - matchId: 26
-    gridCoordinate: {x: 2, y: 0, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 5, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 1.425, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 90}
   - matchId: 27
-    gridCoordinate: {x: 4, y: 1, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 6, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 0}
   - matchId: 27
-    gridCoordinate: {x: 1, y: 3, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 7, y: 6, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 90}
   - matchId: 28
-    gridCoordinate: {x: 1, y: 4, z: 5}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 0, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -0.47500002, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
   - matchId: 28
-    gridCoordinate: {x: 3, y: 2, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 1, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.4749999, z: 2.63}
+    localEulerAngles: {x: 90, y: 180, z: 0}
   - matchId: 29
-    gridCoordinate: {x: 1, y: 3, z: 5}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 2, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -0.23000003, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
   - matchId: 29
-    gridCoordinate: {x: 1, y: 2, z: 5}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 3, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 0, z: 180}
   - matchId: 30
-    gridCoordinate: {x: 1, y: 0, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 4, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 2.375, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 30
-    gridCoordinate: {x: 4, y: 5, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 5, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 180}
   - matchId: 31
-    gridCoordinate: {x: 1, y: 5, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 6, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 1.425, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
   - matchId: 31
-    gridCoordinate: {x: 4, y: 3, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 7, y: 7, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 270, y: 0, z: 0}
   - matchId: 32
-    gridCoordinate: {x: 4, y: 0, z: 4}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 0, y: 0, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 1.425, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 32
-    gridCoordinate: {x: 1, y: 1, z: 2}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 33
-    gridCoordinate: {x: 2, y: 3, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 33
-    gridCoordinate: {x: 3, y: 3, z: 3}
-    localEulerAngles: {x: 0, y: 0, z: 0}
-  - matchId: 34
-    gridCoordinate: {x: 4, y: 1, z: 2}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 34
     gridCoordinate: {x: 1, y: 0, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
-  - matchId: 35
-    gridCoordinate: {x: 1, y: 2, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 35
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: -1.425, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 33
+    gridCoordinate: {x: 2, y: 0, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 0.4749999, z: 3.3}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 33
+    gridCoordinate: {x: 3, y: 0, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -0.47500002, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 34
     gridCoordinate: {x: 4, y: 0, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: -0.2999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 34
+    gridCoordinate: {x: 5, y: 0, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.22999991, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 35
+    gridCoordinate: {x: 6, y: 0, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 35
+    gridCoordinate: {x: 7, y: 0, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 270, y: 180, z: 0}
   - matchId: 36
-    gridCoordinate: {x: 1, y: 2, z: 4}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 0, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -0.23000003, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 0}
   - matchId: 36
-    gridCoordinate: {x: 1, y: 2, z: 2}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 1, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 0.4749999, z: 2.7}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
   - matchId: 37
-    gridCoordinate: {x: 3, y: 2, z: 1}
-    localEulerAngles: {x: 0, y: 0, z: 0}
+    gridCoordinate: {x: 2, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: -1.5}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
   - matchId: 37
-    gridCoordinate: {x: 4, y: 2, z: 2}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 3, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 2.375, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
   - matchId: 38
-    gridCoordinate: {x: 4, y: 2, z: 4}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 4, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.22999991, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 180}
   - matchId: 38
-    gridCoordinate: {x: 4, y: 2, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    gridCoordinate: {x: 5, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 2.375, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 90}
   - matchId: 39
+    gridCoordinate: {x: 6, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.4749999, z: -0.9699999}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 39
+    gridCoordinate: {x: 7, y: 1, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -2.13, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 40
+    gridCoordinate: {x: 0, y: 2, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 40
+    gridCoordinate: {x: 1, y: 2, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.13, y: 0.4749999, z: 0.30000013}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 41
     gridCoordinate: {x: 2, y: 2, z: 1}
-    localEulerAngles: {x: 0, y: 180, z: 0}
-  - matchId: 39
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 1.425, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 41
+    gridCoordinate: {x: 3, y: 2, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.22999991, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 42
+    gridCoordinate: {x: 4, y: 2, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 42
+    gridCoordinate: {x: 5, y: 2, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 43
+    gridCoordinate: {x: 6, y: 2, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.7199999, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 43
+    gridCoordinate: {x: 7, y: 2, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 44
+    gridCoordinate: {x: 0, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 44
+    gridCoordinate: {x: 1, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.4749999, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 45
+    gridCoordinate: {x: 2, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 45
+    gridCoordinate: {x: 3, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: -0.8999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 46
+    gridCoordinate: {x: 4, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 46
+    gridCoordinate: {x: 5, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 2.375, z: 1.4300002}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 47
+    gridCoordinate: {x: 6, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 47
+    gridCoordinate: {x: 7, y: 3, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 48
+    gridCoordinate: {x: 0, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: -1.5}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 48
+    gridCoordinate: {x: 1, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 49
+    gridCoordinate: {x: 2, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.4749999, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 49
+    gridCoordinate: {x: 3, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 1.425, z: 0.90000015}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 50
+    gridCoordinate: {x: 4, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 1.425, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 50
+    gridCoordinate: {x: 5, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 1.425, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 51
+    gridCoordinate: {x: 6, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: -2.1}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 51
+    gridCoordinate: {x: 7, y: 4, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: -0.8999999}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 52
+    gridCoordinate: {x: 0, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 52
+    gridCoordinate: {x: 1, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 2.375, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 53
+    gridCoordinate: {x: 2, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: -0.8999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 53
+    gridCoordinate: {x: 3, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: -0.47500002, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 54
+    gridCoordinate: {x: 4, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -2.13, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 54
+    gridCoordinate: {x: 5, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: 0.90000015}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 55
+    gridCoordinate: {x: 6, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 55
+    gridCoordinate: {x: 7, y: 5, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: 2.1000001}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 56
+    gridCoordinate: {x: 0, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 56
+    gridCoordinate: {x: 1, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 1.67, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 57
+    gridCoordinate: {x: 2, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: -0.8999999}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 57
+    gridCoordinate: {x: 3, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 58
+    gridCoordinate: {x: 4, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 58
+    gridCoordinate: {x: 5, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 1.425, z: -0.8999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 59
+    gridCoordinate: {x: 6, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 0.4749999, z: -2.7}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 59
+    gridCoordinate: {x: 7, y: 6, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 0.4749999, z: 2.1000001}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 60
+    gridCoordinate: {x: 0, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 1.425, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 60
+    gridCoordinate: {x: 1, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.7199999, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 61
+    gridCoordinate: {x: 2, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -1.425, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 61
+    gridCoordinate: {x: 3, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 1.425, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 62
+    gridCoordinate: {x: 4, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 1.425, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 62
+    gridCoordinate: {x: 5, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: 0.90000015}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 63
+    gridCoordinate: {x: 6, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 63
+    gridCoordinate: {x: 7, y: 7, z: 1}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 1.425, z: -0.9699999}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 64
+    gridCoordinate: {x: 0, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.13, y: 0.4749999, z: -0.2999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 64
+    gridCoordinate: {x: 1, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.4749999, z: 2.63}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 65
+    gridCoordinate: {x: 2, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 65
+    gridCoordinate: {x: 3, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.4749999, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 66
+    gridCoordinate: {x: 4, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.4749999, z: -0.9699999}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 66
+    gridCoordinate: {x: 5, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 67
+    gridCoordinate: {x: 6, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 67
+    gridCoordinate: {x: 7, y: 0, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 1.67, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 68
+    gridCoordinate: {x: 0, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: 0.90000015}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 68
+    gridCoordinate: {x: 1, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.4749999, z: 2.63}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 69
+    gridCoordinate: {x: 2, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.22999991, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 69
+    gridCoordinate: {x: 3, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.22999991, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 70
+    gridCoordinate: {x: 4, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: -1.5}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 70
+    gridCoordinate: {x: 5, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.4749999, z: 1.4300002}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 71
+    gridCoordinate: {x: 6, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 71
+    gridCoordinate: {x: 7, y: 1, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 72
+    gridCoordinate: {x: 0, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.4749999, z: -0.9699999}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 72
+    gridCoordinate: {x: 1, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: 2.1000001}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 73
+    gridCoordinate: {x: 2, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 73
+    gridCoordinate: {x: 3, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.4749999, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 74
+    gridCoordinate: {x: 4, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -1.425, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 74
+    gridCoordinate: {x: 5, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.13, y: 0.4749999, z: -0.2999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 75
+    gridCoordinate: {x: 6, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 0.4749999, z: 0.30000013}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 75
+    gridCoordinate: {x: 7, y: 2, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: 2.1000001}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 76
+    gridCoordinate: {x: 0, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.4749999, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 76
+    gridCoordinate: {x: 1, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -1.425, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 77
+    gridCoordinate: {x: 2, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 77
+    gridCoordinate: {x: 3, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 78
+    gridCoordinate: {x: 4, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 2.375, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 78
+    gridCoordinate: {x: 5, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 0.4749999, z: -3.3}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 79
+    gridCoordinate: {x: 6, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.4749999, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 79
+    gridCoordinate: {x: 7, y: 3, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 2.375, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 80
+    gridCoordinate: {x: 0, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 2.375, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 80
+    gridCoordinate: {x: 1, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 81
+    gridCoordinate: {x: 2, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: -0.8999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 81
+    gridCoordinate: {x: 3, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 82
+    gridCoordinate: {x: 4, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.4749999, z: 1.4300002}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 82
+    gridCoordinate: {x: 5, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.7199999, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 83
+    gridCoordinate: {x: 6, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 83
+    gridCoordinate: {x: 7, y: 4, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: 0.30000013}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 84
+    gridCoordinate: {x: 0, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 84
+    gridCoordinate: {x: 1, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 1.425, z: 0.30000013}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 85
+    gridCoordinate: {x: 2, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.4749999, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 85
+    gridCoordinate: {x: 3, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: -0.47500002, z: 1.5000002}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 86
+    gridCoordinate: {x: 4, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 0.4749999, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 86
+    gridCoordinate: {x: 5, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: -0.8999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 87
+    gridCoordinate: {x: 6, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 1.425, z: 1.4300002}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 87
+    gridCoordinate: {x: 7, y: 5, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -0.23000003, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 88
+    gridCoordinate: {x: 0, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -0.23000003, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 88
+    gridCoordinate: {x: 1, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 1.425, z: -0.2999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 89
+    gridCoordinate: {x: 2, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 89
+    gridCoordinate: {x: 3, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 90
+    gridCoordinate: {x: 4, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: -2.1}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 90
+    gridCoordinate: {x: 5, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: 0.30000013}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 91
+    gridCoordinate: {x: 6, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 2.375, z: 1.4300002}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 91
+    gridCoordinate: {x: 7, y: 6, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 1.425, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 92
+    gridCoordinate: {x: 0, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: -1.5}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 92
+    gridCoordinate: {x: 1, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: 2.1000001}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 93
+    gridCoordinate: {x: 2, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 1.425, z: -0.9699999}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 93
+    gridCoordinate: {x: 3, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 1.425, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 94
+    gridCoordinate: {x: 4, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 2.375, z: -1.43}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 94
+    gridCoordinate: {x: 5, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 95
+    gridCoordinate: {x: 6, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 1.425, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 95
+    gridCoordinate: {x: 7, y: 7, z: 2}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.7199999, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 96
+    gridCoordinate: {x: 0, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: 0.30000013}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 96
+    gridCoordinate: {x: 1, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 97
+    gridCoordinate: {x: 2, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 97
+    gridCoordinate: {x: 3, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 98
+    gridCoordinate: {x: 4, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 0.4749999, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 98
+    gridCoordinate: {x: 5, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 99
+    gridCoordinate: {x: 6, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 99
+    gridCoordinate: {x: 7, y: 0, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 1.425, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 100
+    gridCoordinate: {x: 0, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: 0.90000015}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 100
+    gridCoordinate: {x: 1, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 1.67, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 101
+    gridCoordinate: {x: 2, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.4749999, z: -2.63}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 101
+    gridCoordinate: {x: 3, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 1.425, z: -0.9699999}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 102
+    gridCoordinate: {x: 4, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 1.425, z: -2.1}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 102
+    gridCoordinate: {x: 5, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.13, y: 0.4749999, z: 0.30000013}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 103
+    gridCoordinate: {x: 6, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.4749999, z: 1.4300002}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 103
+    gridCoordinate: {x: 7, y: 1, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: -2.1}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 104
+    gridCoordinate: {x: 0, y: 2, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 0.4749999, z: 3.3}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 104
     gridCoordinate: {x: 1, y: 2, z: 3}
-    localEulerAngles: {x: 0, y: 180, z: 0}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 105
+    gridCoordinate: {x: 2, y: 2, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 105
+    gridCoordinate: {x: 3, y: 2, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.7199999, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 106
+    gridCoordinate: {x: 4, y: 2, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 2.375, z: -1.5}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 106
+    gridCoordinate: {x: 5, y: 2, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 107
+    gridCoordinate: {x: 6, y: 2, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.7199999, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 107
+    gridCoordinate: {x: 7, y: 2, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: 0.30000013}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 108
+    gridCoordinate: {x: 0, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 108
+    gridCoordinate: {x: 1, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 1.67, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 109
+    gridCoordinate: {x: 2, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -0.47500002, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 109
+    gridCoordinate: {x: 3, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 110
+    gridCoordinate: {x: 4, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 110
+    gridCoordinate: {x: 5, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.22999991, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 111
+    gridCoordinate: {x: 6, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 2.375, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 111
+    gridCoordinate: {x: 7, y: 3, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 112
+    gridCoordinate: {x: 0, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.22999991, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 112
+    gridCoordinate: {x: 1, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 113
+    gridCoordinate: {x: 2, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 1.425, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 113
+    gridCoordinate: {x: 3, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 1.425, z: -2.1}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 114
+    gridCoordinate: {x: 4, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: -0.2999999}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 114
+    gridCoordinate: {x: 5, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 0.4749999, z: -0.8999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 115
+    gridCoordinate: {x: 6, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 115
+    gridCoordinate: {x: 7, y: 4, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.13, y: 0.4749999, z: 0.90000015}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 116
+    gridCoordinate: {x: 0, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.4749999, z: 1.4300002}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 116
+    gridCoordinate: {x: 1, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 2.375, z: 2.1000001}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 117
+    gridCoordinate: {x: 2, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.4749999, z: -2.63}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 117
+    gridCoordinate: {x: 3, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 118
+    gridCoordinate: {x: 4, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.7199999, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 118
+    gridCoordinate: {x: 5, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: 0.30000013}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 119
+    gridCoordinate: {x: 6, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 0.4749999, z: 2.7}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 119
+    gridCoordinate: {x: 7, y: 5, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 2.375, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 120
+    gridCoordinate: {x: 0, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 120
+    gridCoordinate: {x: 1, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.4749999, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 121
+    gridCoordinate: {x: 2, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.4749999, z: -2.63}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 121
+    gridCoordinate: {x: 3, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -0.23000003, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 122
+    gridCoordinate: {x: 4, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 122
+    gridCoordinate: {x: 5, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 0.4749999, z: 0.90000015}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 123
+    gridCoordinate: {x: 6, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: -1.425, z: 2.1000001}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 123
+    gridCoordinate: {x: 7, y: 6, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 1.425, z: -1.43}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 124
+    gridCoordinate: {x: 0, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: -0.2999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 124
+    gridCoordinate: {x: 1, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 1.425, z: -1.5}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 125
+    gridCoordinate: {x: 2, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -1.425, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 125
+    gridCoordinate: {x: 3, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 1.425, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 126
+    gridCoordinate: {x: 4, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 126
+    gridCoordinate: {x: 5, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: -1.5}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 127
+    gridCoordinate: {x: 6, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 127
+    gridCoordinate: {x: 7, y: 7, z: 3}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 128
+    gridCoordinate: {x: 0, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 0.4749999, z: -1.5}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 128
+    gridCoordinate: {x: 1, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.4749999, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 129
+    gridCoordinate: {x: 2, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 2.375, z: 1.4300002}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 129
+    gridCoordinate: {x: 3, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 130
+    gridCoordinate: {x: 4, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 1.425, z: 0.30000013}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 130
+    gridCoordinate: {x: 5, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 1.425, z: 1.4300002}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 131
+    gridCoordinate: {x: 6, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 131
+    gridCoordinate: {x: 7, y: 0, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: -0.47500002, z: 1.5000002}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 132
+    gridCoordinate: {x: 0, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 132
+    gridCoordinate: {x: 1, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 2.375, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 133
+    gridCoordinate: {x: 2, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 133
+    gridCoordinate: {x: 3, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 134
+    gridCoordinate: {x: 4, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: -0.8999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 134
+    gridCoordinate: {x: 5, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -0.47500002, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 135
+    gridCoordinate: {x: 6, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.22999991, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 135
+    gridCoordinate: {x: 7, y: 1, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 1.425, z: 2.1000001}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 136
+    gridCoordinate: {x: 0, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -0.47500002, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 136
+    gridCoordinate: {x: 1, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 137
+    gridCoordinate: {x: 2, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 137
+    gridCoordinate: {x: 3, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 0.4749999, z: -2.7}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 138
+    gridCoordinate: {x: 4, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 1.425, z: 1.4300002}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 138
+    gridCoordinate: {x: 5, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 139
+    gridCoordinate: {x: 6, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -0.23000003, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 139
+    gridCoordinate: {x: 7, y: 2, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 140
+    gridCoordinate: {x: 0, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 140
+    gridCoordinate: {x: 1, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 141
+    gridCoordinate: {x: 2, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 2.375, z: -1.5}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 141
+    gridCoordinate: {x: 3, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: 0.90000015}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 142
+    gridCoordinate: {x: 4, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 2.375, z: -1.5}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 142
+    gridCoordinate: {x: 5, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -0.23000003, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 143
+    gridCoordinate: {x: 6, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 143
+    gridCoordinate: {x: 7, y: 3, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 1.425, z: -0.8999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 144
+    gridCoordinate: {x: 0, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: -1.5}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 144
+    gridCoordinate: {x: 1, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: -0.2999999}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 145
+    gridCoordinate: {x: 2, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 0.4749999, z: -0.2999999}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 145
+    gridCoordinate: {x: 3, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.22999991, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 146
+    gridCoordinate: {x: 4, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.13, y: 0.4749999, z: 0.90000015}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 146
+    gridCoordinate: {x: 5, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 147
+    gridCoordinate: {x: 6, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 0.4749999, z: 0.90000015}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 147
+    gridCoordinate: {x: 7, y: 4, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -2.13, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 148
+    gridCoordinate: {x: 0, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -0.23000003, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 148
+    gridCoordinate: {x: 1, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 149
+    gridCoordinate: {x: 2, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 0.4749999, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 149
+    gridCoordinate: {x: 3, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 0.4749999, z: 0.30000013}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 150
+    gridCoordinate: {x: 4, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 0.4749999, z: 1.5000002}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 150
+    gridCoordinate: {x: 5, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 1.67, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 151
+    gridCoordinate: {x: 6, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: -1.425, z: 2.1000001}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 151
+    gridCoordinate: {x: 7, y: 5, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.7199999, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 152
+    gridCoordinate: {x: 0, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 152
+    gridCoordinate: {x: 1, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: -0.8999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 153
+    gridCoordinate: {x: 2, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 153
+    gridCoordinate: {x: 3, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -2.375, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 154
+    gridCoordinate: {x: 4, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.2625, y: 0.7199999, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 154
+    gridCoordinate: {x: 5, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -0.47500002, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 155
+    gridCoordinate: {x: 6, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 155
+    gridCoordinate: {x: 7, y: 6, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: -0.2999999}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 156
+    gridCoordinate: {x: 0, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: -2.1}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 156
+    gridCoordinate: {x: 1, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 157
+    gridCoordinate: {x: 2, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 157
+    gridCoordinate: {x: 3, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 1.67, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 158
+    gridCoordinate: {x: 4, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 158
+    gridCoordinate: {x: 5, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.7199999, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 159
+    gridCoordinate: {x: 6, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 1.425, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 159
+    gridCoordinate: {x: 7, y: 7, z: 4}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 160
+    gridCoordinate: {x: 0, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: 1.5000002}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 160
+    gridCoordinate: {x: 1, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.4749999, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 161
+    gridCoordinate: {x: 2, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 161
+    gridCoordinate: {x: 3, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -1.425, z: 0.90000015}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 162
+    gridCoordinate: {x: 4, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.22999991, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 162
+    gridCoordinate: {x: 5, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: -2.375, z: 0.90000015}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 163
+    gridCoordinate: {x: 6, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 163
+    gridCoordinate: {x: 7, y: 0, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 0.4749999, z: -3.3}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 164
+    gridCoordinate: {x: 0, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 164
+    gridCoordinate: {x: 1, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 165
+    gridCoordinate: {x: 2, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 165
+    gridCoordinate: {x: 3, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.7199999, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 166
+    gridCoordinate: {x: 4, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.22999991, z: -1.8}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 166
+    gridCoordinate: {x: 5, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 1.425, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 167
+    gridCoordinate: {x: 6, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.22999991, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 167
+    gridCoordinate: {x: 7, y: 1, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 168
+    gridCoordinate: {x: 0, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 1.425, z: -1.5}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 168
+    gridCoordinate: {x: 1, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 169
+    gridCoordinate: {x: 2, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 2.375, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 169
+    gridCoordinate: {x: 3, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 1.425, z: -0.2999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 170
+    gridCoordinate: {x: 4, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: -1.5}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 170
+    gridCoordinate: {x: 5, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 171
+    gridCoordinate: {x: 6, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 1.425, z: 1.4300002}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 171
+    gridCoordinate: {x: 7, y: 2, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 172
+    gridCoordinate: {x: 0, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 2.375, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 172
+    gridCoordinate: {x: 1, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 173
+    gridCoordinate: {x: 2, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 0.4749999, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 173
+    gridCoordinate: {x: 3, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 1.425, z: 2.1000001}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 174
+    gridCoordinate: {x: 4, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.2200004, y: 0.4749999, z: -0.2999999}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 174
+    gridCoordinate: {x: 5, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 2.375, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 175
+    gridCoordinate: {x: 6, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 4.12, y: 0.4749999, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 175
+    gridCoordinate: {x: 7, y: 3, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 176
+    gridCoordinate: {x: 0, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: -1.425, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 176
+    gridCoordinate: {x: 1, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.4749999, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 177
+    gridCoordinate: {x: 2, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 0.22999991, z: 3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 177
+    gridCoordinate: {x: 3, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 2.375, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 178
+    gridCoordinate: {x: 4, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -1.425, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 178
+    gridCoordinate: {x: 5, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 1.425, z: -1.5}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 179
+    gridCoordinate: {x: 6, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -0.47500002, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 179
+    gridCoordinate: {x: 7, y: 4, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -1.425, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 180
+    gridCoordinate: {x: 0, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 2.62, z: 1.8000002}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 180
+    gridCoordinate: {x: 1, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.4749999, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 181
+    gridCoordinate: {x: 2, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 1.67, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 181
+    gridCoordinate: {x: 3, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.4749999, z: -2.63}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 182
+    gridCoordinate: {x: 4, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -2.62, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 182
+    gridCoordinate: {x: 5, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: 1.425, z: -1.43}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 183
+    gridCoordinate: {x: 6, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -1.425, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 183
+    gridCoordinate: {x: 7, y: 5, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -1.425, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 184
+    gridCoordinate: {x: 0, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 184
+    gridCoordinate: {x: 1, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -0.23000003, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 185
+    gridCoordinate: {x: 2, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: -0.23000003, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 185
+    gridCoordinate: {x: 3, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 186
+    gridCoordinate: {x: 4, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.9875, y: 0.22999991, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 186
+    gridCoordinate: {x: 5, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.2199999, y: 1.425, z: 0.90000015}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 187
+    gridCoordinate: {x: 6, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 2.375, z: 2.1000001}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 187
+    gridCoordinate: {x: 7, y: 6, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -4.12, y: 0.4749999, z: -0.2999999}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 188
+    gridCoordinate: {x: 0, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 188
+    gridCoordinate: {x: 1, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.68, y: 2.375, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 189
+    gridCoordinate: {x: 2, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: 0.7199999, z: 3}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 189
+    gridCoordinate: {x: 3, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 190
+    gridCoordinate: {x: 4, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -1.425, z: -2.1}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 190
+    gridCoordinate: {x: 5, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.22999991, z: -3}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 191
+    gridCoordinate: {x: 6, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 0.4749999, z: 0.97000015}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 191
+    gridCoordinate: {x: 7, y: 7, z: 5}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 2.375, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 192
+    gridCoordinate: {x: 0, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 1.425, z: -0.9699999}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 192
+    gridCoordinate: {x: 1, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 0.7199999, z: -3}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 193
+    gridCoordinate: {x: 2, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.6800002, y: 2.375, z: 1.5000002}
+    localEulerAngles: {x: 0.000005008957, y: 180, z: 270}
+  - matchId: 193
+    gridCoordinate: {x: 3, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}
+  - matchId: 194
+    gridCoordinate: {x: 4, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: -0.47500002, z: 0.90000015}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 194
+    gridCoordinate: {x: 5, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.7199999, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 195
+    gridCoordinate: {x: 6, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: -0.47500002, z: 0.97000015}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 195
+    gridCoordinate: {x: 7, y: 0, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.5375001, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 196
+    gridCoordinate: {x: 0, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -0.3624999, y: -0.47500002, z: -2.1699998}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 196
+    gridCoordinate: {x: 1, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.4749999, z: 2.63}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 197
+    gridCoordinate: {x: 2, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.6699998, y: 1.425, z: -2.1}
+    localEulerAngles: {x: 0, y: 0, z: 90}
+  - matchId: 197
+    gridCoordinate: {x: 3, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.9875, y: 0.22999991, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 180}
+  - matchId: 198
+    gridCoordinate: {x: 4, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.0875003, y: 1.67, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 0, z: 0}
+  - matchId: 198
+    gridCoordinate: {x: 5, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: 2.375, z: 2.17}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 199
+    gridCoordinate: {x: 6, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.0874999, y: 0.4749999, z: 3.37}
+    localEulerAngles: {x: 90, y: 0, z: 0}
+  - matchId: 199
+    gridCoordinate: {x: 7, y: 1, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 2.67, y: 1.425, z: 1.5000002}
+    localEulerAngles: {x: 0, y: 0, z: 270}
+  - matchId: 200
+    gridCoordinate: {x: 0, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 0.36250037, y: -2.375, z: -2.1699998}
+    localEulerAngles: {x: 90, y: 180, z: 0}
+  - matchId: 200
+    gridCoordinate: {x: 1, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -3.13, y: 0.4749999, z: -0.8999999}
+    localEulerAngles: {x: -0.000005008957, y: 180, z: 90}
+  - matchId: 201
+    gridCoordinate: {x: 2, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -1.8125, y: -0.23000003, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 201
+    gridCoordinate: {x: 3, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: 2.62, z: -1.8}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 202
+    gridCoordinate: {x: 4, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 3.2625, y: 0.7199999, z: 0.60000014}
+    localEulerAngles: {x: -0, y: 180, z: 0}
+  - matchId: 202
+    gridCoordinate: {x: 5, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -2.62, z: -0.5999999}
+    localEulerAngles: {x: -0, y: 0, z: 180}
+  - matchId: 203
+    gridCoordinate: {x: 6, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: 1.8125002, y: 0.4749999, z: -3.37}
+    localEulerAngles: {x: 270, y: 0, z: 0}
+  - matchId: 203
+    gridCoordinate: {x: 7, y: 2, z: 6}
+    useCustomLocalPosition: 1
+    localPosition: {x: -2.5375, y: -2.375, z: 2.17}
+    localEulerAngles: {x: 270, y: 180, z: 0}

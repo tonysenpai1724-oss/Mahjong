@@ -205,7 +205,7 @@ namespace MahjongOut3D.LevelSystem
             /// <summary>
             /// Gets or sets the shell list from outside to inside.
             /// </summary>
-            public List<List<Vector3Int>> Shells { get; set; } = new List<List<Vector3Int>>();
+            public List<List<TilePlacementData>> Shells { get; set; } = new List<List<TilePlacementData>>();
 
             /// <summary>
             /// Gets the total amount of voxels represented by the candidate.
@@ -259,6 +259,27 @@ namespace MahjongOut3D.LevelSystem
             /// Gets or sets the generated tile list.
             /// </summary>
             public List<LevelTileDefinition> Tiles { get; set; } = new List<LevelTileDefinition>();
+        }
+
+        /// <summary>
+        /// Stores one generated tile placement including its outward-facing shell direction.
+        /// </summary>
+        private sealed class TilePlacementData
+        {
+            /// <summary>
+            /// Gets or sets the source voxel coordinate that owns this face slot.
+            /// </summary>
+            public Vector3Int Coordinate { get; set; }
+
+            /// <summary>
+            /// Gets or sets the direction the tile face should point toward.
+            /// </summary>
+            public VoxelGridDirection FacingDirection { get; set; }
+
+            /// <summary>
+            /// Gets or sets the split-slot index on a single exposed face.
+            /// </summary>
+            public int SurfaceSlotIndex { get; set; }
         }
 
         /// <summary>
@@ -342,13 +363,14 @@ namespace MahjongOut3D.LevelSystem
                 sequence++;
                 ShapeCandidate candidate = CreateShapeCandidate(settings, random);
                 int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.Shape, random);
-                List<Vector3Int> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
-                List<LevelTileDefinition> tileDefinitions = BuildTileDefinitions(occupiedCoordinates, settings, random);
+                List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
+                VoxelGridSize logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
+                List<LevelTileDefinition> tileDefinitions = BuildTileDefinitions(occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random);
 
                 results.Add(new GeneratedLevelData
                 {
                     LevelName = $"{levelNamePrefix}_{settings.Label}_{sequence:000}",
-                    GridSize = candidate.GridSize,
+                    GridSize = logicalGridSize,
                     LayoutOverride = layoutOverride,
                     Shape = candidate.Shape,
                     Difficulty = settings.Difficulty,
@@ -389,7 +411,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Chooses a compact tile count that preserves full outer layers whenever possible.
         /// </summary>
-        private static int GetTargetTileCount(DifficultyBatchDefinition settings, List<List<Vector3Int>> shells, LevelShapeType shape, System.Random random)
+        private static int GetTargetTileCount(DifficultyBatchDefinition settings, List<List<TilePlacementData>> shells, LevelShapeType shape, System.Random random)
         {
             if (shells == null || shells.Count == 0)
             {
@@ -472,7 +494,7 @@ namespace MahjongOut3D.LevelSystem
             {
                 LevelShapeType selectedShape = settings.GetRandomShape(random);
                 VoxelGridSize gridSize = AdjustGridSizeForShape(GetRandomGridSize(settings, random), selectedShape);
-                List<List<Vector3Int>> shells = BuildShapeShells(gridSize, selectedShape);
+                List<List<TilePlacementData>> shells = BuildShapeShells(gridSize, selectedShape);
                 if (GetShellTileCapacity(shells) < 2)
                 {
                     continue;
@@ -513,12 +535,12 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the occupied coordinates by taking shell layers from outside to inside.
         /// </summary>
-        private static List<Vector3Int> BuildOccupiedCoordinates(List<List<Vector3Int>> shells, int tileCount, System.Random random)
+        private static List<TilePlacementData> BuildOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random)
         {
-            List<Vector3Int> orderedCoordinates = new List<Vector3Int>(tileCount);
+            List<TilePlacementData> orderedCoordinates = new List<TilePlacementData>(tileCount);
             for (int shellIndex = 0; shellIndex < shells.Count && orderedCoordinates.Count < tileCount; shellIndex++)
             {
-                List<Vector3Int> shellCoordinates = new List<Vector3Int>(shells[shellIndex]);
+                List<TilePlacementData> shellCoordinates = new List<TilePlacementData>(shells[shellIndex]);
                 Shuffle(shellCoordinates, random);
 
                 for (int coordinateIndex = 0; coordinateIndex < shellCoordinates.Count && orderedCoordinates.Count < tileCount; coordinateIndex++)
@@ -538,22 +560,15 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the shell list for the requested shape.
         /// </summary>
-        private static List<List<Vector3Int>> BuildShapeShells(VoxelGridSize gridSize, LevelShapeType shape)
+        private static List<List<TilePlacementData>> BuildShapeShells(VoxelGridSize gridSize, LevelShapeType shape)
         {
-            switch (shape)
-            {
-                case LevelShapeType.Heart:
-                case LevelShapeType.Castle:
-                    return BuildNestedSilhouetteShells(gridSize, shape);
-                default:
-                    return BuildShells(BuildShapeCoordinates(gridSize, shape));
-            }
+            return BuildShells(BuildShapeCoordinates(gridSize, shape));
         }
 
         /// <summary>
         /// Calculates the total tile capacity across all shell layers.
         /// </summary>
-        private static int GetShellTileCapacity(List<List<Vector3Int>> shells)
+        private static int GetShellTileCapacity(List<List<TilePlacementData>> shells)
         {
             int total = 0;
             for (int index = 0; index < shells.Count; index++)
@@ -567,58 +582,9 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds shells as nested complete silhouettes where each inner silhouette is smaller than the outer one.
         /// </summary>
-        private static List<List<Vector3Int>> BuildNestedSilhouetteShells(VoxelGridSize gridSize, LevelShapeType shape)
+        private static List<List<TilePlacementData>> BuildNestedSilhouetteShells(VoxelGridSize gridSize, LevelShapeType shape)
         {
-            int layerCount = GetNestedLayerCount(gridSize, shape);
-            List<HashSet<Vector3Int>> nestedVolumes = new List<HashSet<Vector3Int>>(layerCount);
-
-            for (int layerIndex = 0; layerIndex < layerCount; layerIndex++)
-            {
-                float scale = GetNestedLayerScale(layerIndex, layerCount, shape);
-                HashSet<Vector3Int> layerVolume = BuildScaledShapeCoordinateSet(gridSize, shape, scale);
-                if (nestedVolumes.Count > 0)
-                {
-                    layerVolume.IntersectWith(nestedVolumes[nestedVolumes.Count - 1]);
-                }
-
-                if (layerVolume.Count < 2)
-                {
-                    continue;
-                }
-
-                if (nestedVolumes.Count > 0 && layerVolume.Count >= nestedVolumes[nestedVolumes.Count - 1].Count)
-                {
-                    continue;
-                }
-
-                nestedVolumes.Add(layerVolume);
-            }
-
-            if (nestedVolumes.Count <= 1)
-            {
-                return BuildShells(BuildShapeCoordinates(gridSize, shape));
-            }
-
-            List<List<Vector3Int>> shells = new List<List<Vector3Int>>(nestedVolumes.Count);
-            for (int volumeIndex = 0; volumeIndex < nestedVolumes.Count - 1; volumeIndex++)
-            {
-                List<Vector3Int> shell = new List<Vector3Int>();
-                foreach (Vector3Int coordinate in nestedVolumes[volumeIndex])
-                {
-                    if (!nestedVolumes[volumeIndex + 1].Contains(coordinate))
-                    {
-                        shell.Add(coordinate);
-                    }
-                }
-
-                if (shell.Count > 0)
-                {
-                    shells.Add(shell);
-                }
-            }
-
-            shells.Add(new List<Vector3Int>(nestedVolumes[nestedVolumes.Count - 1]));
-            return shells;
+            return BuildShells(BuildShapeCoordinates(gridSize, shape));
         }
 
         /// <summary>
@@ -752,7 +718,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds tile definitions and assigns match ids in pairs.
         /// </summary>
-        private static List<LevelTileDefinition> BuildTileDefinitions(List<Vector3Int> occupiedCoordinates, DifficultyBatchDefinition settings, System.Random random)
+        private List<LevelTileDefinition> BuildTileDefinitions(List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, DifficultyBatchDefinition settings, System.Random random)
         {
             List<LevelTileDefinition> tileDefinitions = new List<LevelTileDefinition>(occupiedCoordinates.Count);
             int pairCount = occupiedCoordinates.Count / 2;
@@ -761,8 +727,8 @@ namespace MahjongOut3D.LevelSystem
             {
                 int firstIndex = pairIndex * 2;
                 int secondIndex = firstIndex + 1;
-                tileDefinitions.Add(CreateTileDefinition(pairIndex, occupiedCoordinates[firstIndex], settings.FlippedTileChance, random));
-                tileDefinitions.Add(CreateTileDefinition(pairIndex, occupiedCoordinates[secondIndex], settings.FlippedTileChance, random));
+                tileDefinitions.Add(CreateTileDefinition(pairIndex, firstIndex, occupiedCoordinates[firstIndex], shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+                tileDefinitions.Add(CreateTileDefinition(pairIndex, secondIndex, occupiedCoordinates[secondIndex], shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
             }
 
             return tileDefinitions;
@@ -771,28 +737,30 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Creates a single tile definition with an optional 180-degree Y flip.
         /// </summary>
-        private static LevelTileDefinition CreateTileDefinition(int matchId, Vector3Int coordinate, float flippedTileChance, System.Random random)
+        private LevelTileDefinition CreateTileDefinition(int matchId, int tileIndex, TilePlacementData placement, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, float flippedTileChance, System.Random random)
         {
             bool flipTile = random.NextDouble() <= flippedTileChance;
             return new LevelTileDefinition
             {
                 MatchId = matchId,
-                GridCoordinate = coordinate,
-                LocalEulerAngles = flipTile ? new Vector3(0f, 180f, 0f) : Vector3.zero,
+                GridCoordinate = GetLogicalGridCoordinate(tileIndex, logicalGridSize),
+                UseCustomLocalPosition = true,
+                LocalPosition = GetSurfaceTileLocalPosition(placement, shapeGridSize),
+                LocalEulerAngles = GetFacingRotationEuler(placement.FacingDirection, flipTile),
             };
         }
 
         /// <summary>
         /// Extracts the shell layers from a filled voxel shape.
         /// </summary>
-        private static List<List<Vector3Int>> BuildShells(List<Vector3Int> occupiedCoordinates)
+        private static List<List<TilePlacementData>> BuildShells(List<Vector3Int> occupiedCoordinates)
         {
-            List<List<Vector3Int>> shells = new List<List<Vector3Int>>();
+            List<List<TilePlacementData>> shells = new List<List<TilePlacementData>>();
             HashSet<Vector3Int> remaining = new HashSet<Vector3Int>(occupiedCoordinates);
 
             while (remaining.Count > 0)
             {
-                List<Vector3Int> shell = ExtractSurfaceShell(remaining);
+                List<TilePlacementData> shell = ExtractSurfaceShell(remaining);
                 if (shell.Count == 0)
                 {
                     break;
@@ -801,7 +769,7 @@ namespace MahjongOut3D.LevelSystem
                 shells.Add(shell);
                 for (int index = 0; index < shell.Count; index++)
                 {
-                    remaining.Remove(shell[index]);
+                    remaining.Remove(shell[index].Coordinate);
                 }
             }
 
@@ -811,9 +779,9 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Finds the current surface voxels of the supplied volume.
         /// </summary>
-        private static List<Vector3Int> ExtractSurfaceShell(HashSet<Vector3Int> occupiedCoordinates)
+        private static List<TilePlacementData> ExtractSurfaceShell(HashSet<Vector3Int> occupiedCoordinates)
         {
-            List<Vector3Int> shell = new List<Vector3Int>();
+            List<TilePlacementData> shell = new List<TilePlacementData>();
             foreach (Vector3Int coordinate in occupiedCoordinates)
             {
                 for (int directionIndex = 0; directionIndex < NeighborDirections.Length; directionIndex++)
@@ -821,13 +789,235 @@ namespace MahjongOut3D.LevelSystem
                     Vector3Int neighbor = coordinate + NeighborDirections[directionIndex];
                     if (!occupiedCoordinates.Contains(neighbor))
                     {
-                        shell.Add(coordinate);
-                        break;
+                        VoxelGridDirection facingDirection = ToGridDirection(NeighborDirections[directionIndex]);
+                        shell.Add(new TilePlacementData
+                        {
+                            Coordinate = coordinate,
+                            FacingDirection = facingDirection,
+                            SurfaceSlotIndex = 0,
+                        });
+
+                        shell.Add(new TilePlacementData
+                        {
+                            Coordinate = coordinate,
+                            FacingDirection = facingDirection,
+                            SurfaceSlotIndex = 1,
+                        });
                     }
                 }
             }
 
             return shell;
+        }
+
+        /// <summary>
+        /// Resolves the face direction a shell tile should point toward.
+        /// </summary>
+        private static VoxelGridDirection ResolveFacingDirection(Vector3Int coordinate, List<VoxelGridDirection> exposedDirections, Vector3 center)
+        {
+            if (exposedDirections == null || exposedDirections.Count == 0)
+            {
+                return VoxelGridDirection.Up;
+            }
+
+            if (exposedDirections.Count == 1)
+            {
+                return exposedDirections[0];
+            }
+
+            Vector3 outwardVector = ((Vector3)coordinate - center).normalized;
+            float bestScore = float.NegativeInfinity;
+            VoxelGridDirection bestDirection = exposedDirections[0];
+
+            for (int index = 0; index < exposedDirections.Count; index++)
+            {
+                VoxelGridDirection direction = exposedDirections[index];
+                float score = Vector3.Dot(outwardVector, ((Vector3)VoxelGridDirections.GetOffset(direction)).normalized);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestDirection = direction;
+                }
+            }
+
+            return bestDirection;
+        }
+
+        /// <summary>
+        /// Calculates the center of a coordinate set for outward-direction scoring.
+        /// </summary>
+        private static Vector3 CalculateCoordinateSetCenter(HashSet<Vector3Int> coordinates)
+        {
+            if (coordinates == null || coordinates.Count == 0)
+            {
+                return Vector3.zero;
+            }
+
+            Vector3 sum = Vector3.zero;
+            foreach (Vector3Int coordinate in coordinates)
+            {
+                sum += coordinate;
+            }
+
+            return sum / coordinates.Count;
+        }
+
+        /// <summary>
+        /// Converts a cardinal offset into the corresponding voxel-grid direction.
+        /// </summary>
+        private static VoxelGridDirection ToGridDirection(Vector3Int offset)
+        {
+            if (offset == Vector3Int.left)
+            {
+                return VoxelGridDirection.Left;
+            }
+
+            if (offset == Vector3Int.right)
+            {
+                return VoxelGridDirection.Right;
+            }
+
+            if (offset == Vector3Int.down)
+            {
+                return VoxelGridDirection.Down;
+            }
+
+            if (offset == Vector3Int.up)
+            {
+                return VoxelGridDirection.Up;
+            }
+
+            if (offset == new Vector3Int(0, 0, -1))
+            {
+                return VoxelGridDirection.Back;
+            }
+
+            return VoxelGridDirection.Forward;
+        }
+
+        /// <summary>
+        /// Builds an outward-facing tile rotation, with optional spin around the face normal.
+        /// </summary>
+        private static Vector3 GetFacingRotationEuler(VoxelGridDirection facingDirection, bool flipTile)
+        {
+            Vector3 outwardNormal = VoxelGridDirections.GetOffset(facingDirection);
+            Quaternion outwardRotation = Quaternion.FromToRotation(Vector3.up, outwardNormal);
+            if (flipTile)
+            {
+                outwardRotation = Quaternion.AngleAxis(180f, outwardNormal) * outwardRotation;
+            }
+
+            return outwardRotation.eulerAngles;
+        }
+
+        /// <summary>
+        /// Converts a sequential tile index into a compact logical runtime coordinate.
+        /// </summary>
+        private static Vector3Int GetLogicalGridCoordinate(int tileIndex, VoxelGridSize logicalGridSize)
+        {
+            int width = Mathf.Max(1, logicalGridSize.Width);
+            int height = Mathf.Max(1, logicalGridSize.Height);
+            int area = width * height;
+            int x = tileIndex % width;
+            int y = (tileIndex / width) % height;
+            int z = tileIndex / area;
+            return new Vector3Int(x, y, z);
+        }
+
+        /// <summary>
+        /// Builds a compact cube-like logical grid large enough for every generated tile.
+        /// </summary>
+        private static VoxelGridSize BuildLogicalGridSize(int tileCount)
+        {
+            int safeTileCount = Mathf.Max(1, tileCount);
+            int side = Mathf.Max(1, Mathf.CeilToInt(Mathf.Pow(safeTileCount, 1f / 3f)));
+
+            while (side * side * side < safeTileCount)
+            {
+                side++;
+            }
+
+            return new VoxelGridSize(side, side, side);
+        }
+
+        /// <summary>
+        /// Calculates the custom local-space position of a tile slot wrapped on an exposed face.
+        /// </summary>
+        private Vector3 GetSurfaceTileLocalPosition(TilePlacementData placement, VoxelGridSize shapeGridSize)
+        {
+            Vector3 cellSize = layoutOverride != null ? layoutOverride.CellSize : Vector3.one;
+            Vector3 cellSpacing = layoutOverride != null ? layoutOverride.CellSpacing : Vector3.zero;
+            Vector3 originOffset = layoutOverride != null ? layoutOverride.OriginOffset : Vector3.zero;
+            VoxelGridPivotMode pivotMode = layoutOverride != null ? layoutOverride.PivotMode : VoxelGridPivotMode.Center;
+            Vector3 step = cellSize + cellSpacing;
+            Vector3 voxelCenter = GetStaticLocalPosition(placement.Coordinate, shapeGridSize, step, originOffset, pivotMode);
+
+            Vector3 faceNormal = ((Vector3)VoxelGridDirections.GetOffset(placement.FacingDirection)).normalized;
+            Vector3 tangent = GetSurfaceTangent(placement.FacingDirection);
+            Vector3 halfFaceOffset = Vector3.Scale(faceNormal, cellSize) * 0.5f;
+            Vector3 paddingOffset = faceNormal * 0.02f;
+            Vector3 slotOffset = tangent * GetSurfaceSlotDistance(placement.FacingDirection, step) * (placement.SurfaceSlotIndex == 0 ? -1f : 1f);
+
+            return voxelCenter + halfFaceOffset + paddingOffset + slotOffset;
+        }
+
+        /// <summary>
+        /// Recreates centered local-space grid math without allocating a runtime voxel grid.
+        /// </summary>
+        private static Vector3 GetStaticLocalPosition(Vector3Int coordinate, VoxelGridSize gridSize, Vector3 step, Vector3 originOffset, VoxelGridPivotMode pivotMode)
+        {
+            Vector3 position = Vector3.Scale((Vector3)coordinate, step);
+            if (pivotMode == VoxelGridPivotMode.Center)
+            {
+                Vector3 centerOffset = new Vector3(
+                    (gridSize.Width - 1) * step.x,
+                    (gridSize.Height - 1) * step.y,
+                    (gridSize.Depth - 1) * step.z) * 0.5f;
+
+                position -= centerOffset;
+            }
+
+            return position + originOffset;
+        }
+
+        /// <summary>
+        /// Resolves the tangent axis used to split one face into two side-by-side slots.
+        /// </summary>
+        private static Vector3 GetSurfaceTangent(VoxelGridDirection facingDirection)
+        {
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return Vector3.forward;
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return Vector3.right;
+            }
+        }
+
+        /// <summary>
+        /// Resolves the half-lane spacing used by the two surface slots on one face.
+        /// </summary>
+        private static float GetSurfaceSlotDistance(VoxelGridDirection facingDirection, Vector3 step)
+        {
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return Mathf.Max(0.01f, step.z * 0.25f);
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return Mathf.Max(0.01f, step.x * 0.25f);
+            }
         }
 
         /// <summary>
@@ -1124,6 +1314,7 @@ namespace MahjongOut3D.LevelSystem
 
             serializedObject.FindProperty("<LayoutOverride>k__BackingField").objectReferenceValue = data.LayoutOverride;
             serializedObject.FindProperty("<Shape>k__BackingField").enumValueIndex = (int)data.Shape;
+            serializedObject.FindProperty("<UseSurfaceTilePlacement>k__BackingField").boolValue = true;
             serializedObject.FindProperty("<Difficulty>k__BackingField").enumValueIndex = (int)data.Difficulty;
 
             SerializedProperty tilesProperty = serializedObject.FindProperty("<Tiles>k__BackingField");
@@ -1139,6 +1330,11 @@ namespace MahjongOut3D.LevelSystem
                 coordinateProperty.FindPropertyRelative("x").intValue = tile.GridCoordinate.x;
                 coordinateProperty.FindPropertyRelative("y").intValue = tile.GridCoordinate.y;
                 coordinateProperty.FindPropertyRelative("z").intValue = tile.GridCoordinate.z;
+
+                tileProperty.FindPropertyRelative("useCustomLocalPosition").boolValue = tile.UseCustomLocalPosition;
+
+                SerializedProperty localPositionProperty = tileProperty.FindPropertyRelative("localPosition");
+                localPositionProperty.vector3Value = tile.LocalPosition;
 
                 SerializedProperty eulerProperty = tileProperty.FindPropertyRelative("localEulerAngles");
                 eulerProperty.vector3Value = tile.LocalEulerAngles;
