@@ -27,13 +27,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 896149650270164220}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0.00209, z: 0}
+  m_LocalRotation: {x: 0.49360245, y: 0.53672594, z: -0.46251178, w: 0.50434583}
+  m_LocalPosition: {x: -4.411263e-11, y: 0.00209, z: 6.332579e-12}
   m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 5448961886125422897}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 83.921, y: 126.8, z: 36.726}
 --- !u!33 &8564085318911955562
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -128,7 +128,6 @@ GameObject:
   - component: {fileID: 8141867978421522323}
   - component: {fileID: -5892857342694290962}
   - component: {fileID: 7965143472882601685}
-  - component: {fileID: -2574787989319143773}
   m_Layer: 0
   m_Name: Circle_5_red
   m_TagString: Untagged
@@ -225,6 +224,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.TileSystem.TileOutlinePresenter
   outlineBehaviours: []
   outlineObjects: []
+  outlineMaterial: {fileID: 2100000, guid: 9fa4385ce8d3ae54aac5bcb34467ac0d, type: 2}
 --- !u!114 &8141867978421522323
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -257,6 +257,11 @@ MonoBehaviour:
   tileId: 0
   matchId: 0
   gridCoordinate: {x: 0, y: 0, z: 0}
+  surfaceShellIndex: 0
+  boardLocalPosition: {x: 0, y: 0, z: 0}
+  boardLocalEulerAngles: {x: 0, y: 0, z: 0}
+  isBufferedSelection: 0
+  boardParent: {fileID: 0}
   meshRenderer: {fileID: 4305400420727865576}
   matchIndicatorRenderer: {fileID: 2055022047027789211}
   tileCollider: {fileID: 7965143472882601685}
@@ -285,17 +290,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.018000001, y: 0.0039999997, z: 0.012000008}
   m_Center: {x: 0.000000004656613, y: -0.00014865503, z: 0}
---- !u!114 &-2574787989319143773
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3813479592856476642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cc99041c9cc842595a96e828bb8edea1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.TileSystem.TileOutlinePresenter
-  outlineBehaviours: []
-  outlineObjects: []

@@ -246,6 +246,12 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
+                if (tile.IsBufferedSelection)
+                {
+                    UpdateExposureState(tile, false);
+                    continue;
+                }
+
                 bool shouldExpose = ShouldExposeTile(tile, levelManager.ActiveGrid, xrayActive, useSurfaceRules);
                 bool shouldReveal = useSurfaceRules || shouldExpose;
                 UpdateExposureState(tile, shouldExpose);
@@ -298,6 +304,11 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
+            if (tile.IsBufferedSelection)
+            {
+                return false;
+            }
+
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
@@ -325,6 +336,11 @@ namespace MahjongOut3D.Managers
         public bool IsTileHintSelectable(MahjongTile tile)
         {
             if (tile == null || !tile.IsInteractable)
+            {
+                return false;
+            }
+
+            if (tile.IsBufferedSelection)
             {
                 return false;
             }

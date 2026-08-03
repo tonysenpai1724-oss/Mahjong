@@ -17,6 +17,10 @@ MonoBehaviour:
   <MatchRotationDegrees>k__BackingField: 55
   <HintDurationSeconds>k__BackingField: 0.7
   <MismatchDelaySeconds>k__BackingField: 0.2
+  <TrayMoveDurationSeconds>k__BackingField: 0.22
+  <TrayViewportY>k__BackingField: 0.84
+  <TrayViewportSlotSpacing>k__BackingField: 0.2
+  <TrayDistanceFromCamera>k__BackingField: 6
   <ShakeDurationSeconds>k__BackingField: 0.18
   <ShakeAmplitude>k__BackingField: 0.12
   <MatchParticlePrefab>k__BackingField: {fileID: 5024009746357069192, guid: ec3f674830402cc45bce805cf6493db7, type: 3}

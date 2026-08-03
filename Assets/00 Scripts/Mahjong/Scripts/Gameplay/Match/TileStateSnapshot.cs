@@ -16,5 +16,6 @@ namespace MahjongOut3D.Gameplay
         public Vector3 localPosition;
         public Vector3 localEulerAngles;
         public TileState state;
+        public bool isBufferedSelection;
     }
 }

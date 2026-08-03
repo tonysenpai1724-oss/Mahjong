@@ -14,6 +14,10 @@ namespace MahjongOut3D.TileSystem
         [SerializeField] private int matchId;
         [SerializeField] private Vector3Int gridCoordinate;
         [SerializeField] private int surfaceShellIndex;
+        [SerializeField] private Vector3 boardLocalPosition;
+        [SerializeField] private Vector3 boardLocalEulerAngles;
+        [SerializeField] private bool isBufferedSelection;
+        [SerializeField] private Transform boardParent;
 
         [Header("Components")]
         [SerializeField] private MeshRenderer meshRenderer;
@@ -62,6 +66,21 @@ namespace MahjongOut3D.TileSystem
         /// Gets the nested shell depth for surface-generated levels, where zero is outermost.
         /// </summary>
         public int SurfaceShellIndex => Mathf.Max(0, surfaceShellIndex);
+
+        /// <summary>
+        /// Gets the authored board-local position used when restoring the tile from the selection tray.
+        /// </summary>
+        public Vector3 BoardLocalPosition => boardLocalPosition;
+
+        /// <summary>
+        /// Gets the authored board-local Euler rotation used when restoring the tile from the selection tray.
+        /// </summary>
+        public Vector3 BoardLocalEulerAngles => boardLocalEulerAngles;
+
+        /// <summary>
+        /// Gets a value indicating whether the tile is currently parked in the temporary selection tray.
+        /// </summary>
+        public bool IsBufferedSelection => isBufferedSelection;
 
         /// <summary>
         /// Gets the primary tile renderer.
@@ -145,6 +164,10 @@ namespace MahjongOut3D.TileSystem
             matchId = runtimeData.MatchId;
             gridCoordinate = runtimeData.GridCoordinate;
             surfaceShellIndex = runtimeData.SurfaceShellIndex;
+            boardLocalPosition = runtimeData.LocalPosition;
+            boardLocalEulerAngles = runtimeData.LocalEulerAngles;
+            isBufferedSelection = false;
+            boardParent = transform.parent;
             transform.localPosition = runtimeData.LocalPosition;
             transform.localRotation = Quaternion.Euler(runtimeData.LocalEulerAngles);
             gameObject.name = $"MahjongTile_{tileId}_{matchId}";
@@ -157,8 +180,43 @@ namespace MahjongOut3D.TileSystem
         /// <param name="localEulerAngles">Local-space rotation to apply.</param>
         public void SetLocalPose(Vector3 localPosition, Vector3 localEulerAngles)
         {
+            boardLocalPosition = localPosition;
+            boardLocalEulerAngles = localEulerAngles;
             transform.localPosition = localPosition;
             transform.localRotation = Quaternion.Euler(localEulerAngles);
+        }
+
+        /// <summary>
+        /// Restores the current transform back to the cached board-local pose without changing board metadata.
+        /// </summary>
+        public void RestoreBoardPose()
+        {
+            transform.localPosition = boardLocalPosition;
+            transform.localRotation = Quaternion.Euler(boardLocalEulerAngles);
+        }
+
+        /// <summary>
+        /// Detaches the tile from the rotating board hierarchy while preserving world pose.
+        /// </summary>
+        public void DetachFromBoardParent()
+        {
+            if (boardParent == null)
+            {
+                boardParent = transform.parent;
+            }
+
+            transform.SetParent(null, true);
+        }
+
+        /// <summary>
+        /// Reattaches the tile to its authored board parent while preserving world pose.
+        /// </summary>
+        public void RestoreBoardParent()
+        {
+            if (boardParent != null)
+            {
+                transform.SetParent(boardParent, true);
+            }
         }
 
         /// <summary>
@@ -231,7 +289,20 @@ namespace MahjongOut3D.TileSystem
         /// <param name="isVisible">True to restore the tile as visible; otherwise hidden.</param>
         public void Restore(bool isVisible)
         {
+            isBufferedSelection = false;
             SetState(isVisible ? TileState.Visible : TileState.Hidden, true);
+        }
+
+        /// <summary>
+        /// Marks whether the tile is currently parked inside the temporary selection tray.
+        /// </summary>
+        public void SetBufferedSelection(bool isBuffered)
+        {
+            isBufferedSelection = isBuffered;
+            if (!isBuffered)
+            {
+                CacheReferences();
+            }
         }
 
         /// <summary>

@@ -85,6 +85,28 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Moves a tile into one of the temporary selection tray slots used for gameplay testing.
+        /// </summary>
+        public Coroutine PlayMoveToTray(MahjongTile tile, int slotIndex, Action onCompleted = null)
+        {
+            return StartCoroutine(PlayMoveToTrayRoutine(tile, slotIndex, onCompleted));
+        }
+
+        /// <summary>
+        /// Snaps a tile directly into one of the temporary selection tray slots.
+        /// </summary>
+        public bool SnapToTray(MahjongTile tile, int slotIndex)
+        {
+            if (tile == null || !TryGetTraySlotPose(slotIndex, out Vector3 position, out Quaternion rotation))
+            {
+                return false;
+            }
+
+            tile.transform.SetPositionAndRotation(position, rotation);
+            return true;
+        }
+
+        /// <summary>
         /// Updates the current animation lock state.
         /// </summary>
         /// <param name="isLocked">New animation lock state.</param>
@@ -120,7 +142,7 @@ namespace MahjongOut3D.Managers
 
             cameraForward.Normalize();
 
-            Quaternion uprightCardRotation = Quaternion.LookRotation(Vector3.up, -cameraForward);
+            Quaternion uprightCardRotation = GetTrayFacingRotation(cameraForward, Vector3.up);
 
             float slideDistance = GetMatchSlideDistance();
             float stageOffset = Mathf.Max(0.45f, slideDistance * 0.45f);
@@ -246,6 +268,76 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Animates a tile from the board into a temporary tray slot near the top of the camera view.
+        /// </summary>
+        private IEnumerator PlayMoveToTrayRoutine(MahjongTile tile, int slotIndex, Action onCompleted)
+        {
+            if (tile == null || !TryGetTraySlotPose(slotIndex, out Vector3 targetPosition, out Quaternion targetRotation))
+            {
+                onCompleted?.Invoke();
+                yield break;
+            }
+
+            SetAnimationLock(true);
+
+            Vector3 startPosition = tile.transform.position;
+            Quaternion startRotation = tile.transform.rotation;
+            float duration = GetTrayMoveDurationSeconds();
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += GetDeltaTime();
+                float t = Mathf.Clamp01(elapsed / duration);
+                float easedT = 1f - Mathf.Pow(1f - t, 3f);
+                tile.transform.SetPositionAndRotation(
+                    Vector3.LerpUnclamped(startPosition, targetPosition, easedT),
+                    Quaternion.SlerpUnclamped(startRotation, targetRotation, easedT));
+                yield return null;
+            }
+
+            tile.transform.SetPositionAndRotation(targetPosition, targetRotation);
+            onCompleted?.Invoke();
+            SetAnimationLock(false);
+        }
+
+        /// <summary>
+        /// Resolves a temporary tray slot pose relative to the active gameplay camera.
+        /// </summary>
+        private bool TryGetTraySlotPose(int slotIndex, out Vector3 position, out Quaternion rotation)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+
+            if (!Context.Services.TryGet(out CameraManager cameraManager) || cameraManager.ActiveCamera == null)
+            {
+                return false;
+            }
+
+            Camera activeCamera = cameraManager.ActiveCamera;
+            float x = 0.5f + ((Mathf.Clamp(slotIndex, 0, 3) - 1.5f) * GetTrayViewportSlotSpacing());
+            float y = GetTrayViewportY();
+            float z = GetTrayDistanceFromCamera();
+
+            position = activeCamera.ViewportToWorldPoint(new Vector3(x, y, z));
+            rotation = GetTrayFacingRotation(activeCamera.transform.forward, activeCamera.transform.up);
+            return true;
+        }
+
+        /// <summary>
+        /// Resolves the upright-facing rotation used by tray and match-flight presentation.
+        /// </summary>
+        private static Quaternion GetTrayFacingRotation(Vector3 cameraForward, Vector3 cameraUp)
+        {
+            Vector3 resolvedForward = cameraForward.sqrMagnitude > Mathf.Epsilon ? cameraForward.normalized : Vector3.forward;
+            Vector3 resolvedUp = cameraUp.sqrMagnitude > Mathf.Epsilon ? cameraUp.normalized : Vector3.up;
+
+            return Quaternion.AngleAxis(180f, -resolvedForward)
+                * Quaternion.AngleAxis(90f, -resolvedForward)
+                * Quaternion.LookRotation(resolvedUp, -resolvedForward);
+        }
+
+        /// <summary>
         /// Gets the local delta time chosen by the animation settings.
         /// </summary>
         private float GetDeltaTime()
@@ -367,6 +459,10 @@ namespace MahjongOut3D.Managers
         private float GetMatchRotationDegrees() => animationSettings != null ? animationSettings.MatchRotationDegrees : 55f;
         private float GetHintDurationSeconds() => animationSettings != null ? animationSettings.HintDurationSeconds : 0.7f;
         private float GetMismatchDelaySeconds() => animationSettings != null ? animationSettings.MismatchDelaySeconds : 0.2f;
+        private float GetTrayMoveDurationSeconds() => animationSettings != null ? animationSettings.TrayMoveDurationSeconds : 0.22f;
+        private float GetTrayViewportY() => animationSettings != null ? animationSettings.TrayViewportY : 0.84f;
+        private float GetTrayViewportSlotSpacing() => animationSettings != null ? animationSettings.TrayViewportSlotSpacing : 0.1f;
+        private float GetTrayDistanceFromCamera() => animationSettings != null ? animationSettings.TrayDistanceFromCamera : 6f;
         private float GetShakeDurationSeconds() => animationSettings != null ? animationSettings.ShakeDurationSeconds : 0.18f;
         private float GetShakeAmplitude() => animationSettings != null ? animationSettings.ShakeAmplitude : 0.12f;
     }

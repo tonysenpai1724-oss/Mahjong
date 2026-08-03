@@ -24,6 +24,19 @@ namespace MahjongOut3D.Data
         [field: SerializeField, Min(0.05f)]
         public float MismatchDelaySeconds { get; private set; } = 0.2f;
 
+        [field: Header("Tray")]
+        [field: SerializeField, Min(0.05f)]
+        public float TrayMoveDurationSeconds { get; private set; } = 0.22f;
+
+        [field: SerializeField, Range(0.1f, 0.95f)]
+        public float TrayViewportY { get; private set; } = 0.84f;
+
+        [field: SerializeField, Range(0.02f, 0.3f)]
+        public float TrayViewportSlotSpacing { get; private set; } = 0.15f;
+
+        [field: SerializeField, Min(0.5f)]
+        public float TrayDistanceFromCamera { get; private set; } = 6f;
+
         [field: Header("Camera Shake")]
         [field: SerializeField, Min(0f)]
         public float ShakeDurationSeconds { get; private set; } = 0.18f;
