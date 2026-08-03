@@ -36,6 +36,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private Material[] matchIndicatorMaterials;
 
         [Header("Tile Tuning")]
+        [SerializeField] private bool applyTileBaseColor = true;
         [SerializeField] private Color tileBaseColor = Color.white;
         [SerializeField] private Vector3 tileSpacingOffset;
 
@@ -485,17 +486,28 @@ namespace MahjongOut3D.LevelSystem
             Transform parent = tileRoot == null ? transform : tileRoot;
             MahjongTile template = tilePrefab != null ? tilePrefab : runtimeFallbackTilePrefab;
             MahjongTile tile = usePooling && tilePool != null ? tilePool.Get(parent) : Instantiate(template, parent);
+            Quaternion spawnRotation = Quaternion.Euler(definition.LocalEulerAngles);
+            Vector3 baseLocalPosition = ApplyTileSpacing(definition.UseCustomLocalPosition ? definition.LocalPosition : grid.GetLocalPosition(definition.GridCoordinate));
+            Vector3 placementOffset = spawnRotation * tile.GetPlacementOffset();
             TileRuntimeData runtimeData = new TileRuntimeData
             {
                 TileId = nextTileId++,
                 MatchId = definition.MatchId,
                 GridCoordinate = definition.GridCoordinate,
-                LocalPosition = ApplyTileSpacing(definition.UseCustomLocalPosition ? definition.LocalPosition : grid.GetLocalPosition(definition.GridCoordinate)),
+                LocalPosition = baseLocalPosition - placementOffset,
                 LocalEulerAngles = definition.LocalEulerAngles,
             };
 
             tile.ApplyRuntimeData(runtimeData);
-            tile.SetDebugMatchColor(tileBaseColor);
+            if (applyTileBaseColor)
+            {
+                tile.SetDebugMatchColor(tileBaseColor);
+            }
+            else
+            {
+                tile.ClearDebugMatchColor();
+            }
+
             tile.SetMatchIndicatorMaterial(GetMatchIndicatorMaterial(definition.MatchId));
             tile.ResetTile();
             grid.TryPlaceTile(tile.TileId, definition.GridCoordinate);

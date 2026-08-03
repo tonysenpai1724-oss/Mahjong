@@ -237,6 +237,22 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Resolves the offset between the tile root and the visual or collider center.
+        /// </summary>
+        /// <returns>Root-space offset that should be subtracted from spawn placement.</returns>
+        public Vector3 GetPlacementOffset()
+        {
+            CacheReferences();
+
+            if (TryGetPlacementBounds(out Bounds placementBounds))
+            {
+                return Quaternion.Inverse(transform.rotation) * (placementBounds.center - transform.position);
+            }
+
+            return Vector3.zero;
+        }
+
+        /// <summary>
         /// Applies a runtime base color override used to visually distinguish matched pairs.
         /// </summary>
         /// <param name="color">Base color for this tile instance.</param>
@@ -252,6 +268,27 @@ namespace MahjongOut3D.TileSystem
             visualController?.SetRuntimeBaseColor(color);
             visualController?.ApplyState(state, true);
             ApplyDirectBaseColorOverride();
+        }
+
+        /// <summary>
+        /// Clears the runtime base color override and restores the tile's default material colors.
+        /// </summary>
+        public void ClearDebugMatchColor()
+        {
+            if (visualController == null)
+            {
+                CacheReferences();
+            }
+
+            hasDebugBaseColor = false;
+            debugBaseColor = Color.white;
+            visualController?.ClearRuntimeBaseColor();
+            visualController?.ApplyState(state, true);
+
+            if (meshRenderer != null)
+            {
+                meshRenderer.SetPropertyBlock(null);
+            }
         }
 
         /// <summary>
@@ -361,6 +398,30 @@ namespace MahjongOut3D.TileSystem
             {
                 outlinePresenter = visualController != null ? visualController.GetOutlinePresenter() : GetComponentInChildren<TileOutlinePresenter>(true);
             }
+        }
+
+        /// <summary>
+        /// Tries to resolve a stable bounds source for placement alignment.
+        /// </summary>
+        /// <param name="placementBounds">Resolved bounds when available.</param>
+        /// <returns>True when a non-empty bounds source was found; otherwise false.</returns>
+        private bool TryGetPlacementBounds(out Bounds placementBounds)
+        {
+            placementBounds = default;
+
+            if (tileCollider != null && tileCollider.bounds.size.sqrMagnitude > Mathf.Epsilon)
+            {
+                placementBounds = tileCollider.bounds;
+                return true;
+            }
+
+            if (meshRenderer != null && meshRenderer.bounds.size.sqrMagnitude > Mathf.Epsilon)
+            {
+                placementBounds = meshRenderer.bounds;
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>

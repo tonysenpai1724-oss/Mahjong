@@ -19,5 +19,5 @@ MonoBehaviour:
   <MismatchDelaySeconds>k__BackingField: 0.2
   <ShakeDurationSeconds>k__BackingField: 0.18
   <ShakeAmplitude>k__BackingField: 0.12
-  <MatchParticlePrefab>k__BackingField: {fileID: 0}
+  <MatchParticlePrefab>k__BackingField: {fileID: 5024009746357069192, guid: ec3f674830402cc45bce805cf6493db7, type: 3}
   <UseUnscaledTime>k__BackingField: 1

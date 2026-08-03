@@ -113,12 +113,18 @@ namespace MahjongOut3D.Managers
             Vector3 worldCenter = GetWorldFocusPoint();
             Vector3 cameraRight = GetCameraRight();
             Vector3 cameraForward = GetCameraForward();
-            Quaternion faceCameraRotation = Quaternion.LookRotation(-cameraForward, Vector3.up);
-            Quaternion uprightCardRotation = faceCameraRotation * Quaternion.Euler(180f, 90f, -90f);
+            if (cameraForward.sqrMagnitude <= Mathf.Epsilon)
+            {
+                cameraForward = Vector3.forward;
+            }
+
+            cameraForward.Normalize();
+
+            Quaternion uprightCardRotation = Quaternion.LookRotation(Vector3.up, -cameraForward);
 
             float slideDistance = GetMatchSlideDistance();
             float stageOffset = Mathf.Max(0.45f, slideDistance * 0.45f);
-            float liftHeight = Mathf.Max(0.75f, slideDistance * 0.9f);
+            float liftHeight = Mathf.Max(0.75f, slideDistance * 3f);
 
             Vector3 impactWorld = worldCenter + (Vector3.up * liftHeight);
             Vector3 firstStageWorld = impactWorld - (cameraRight * stageOffset);

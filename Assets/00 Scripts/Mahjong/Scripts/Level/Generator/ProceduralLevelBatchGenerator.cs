@@ -875,16 +875,23 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         private static float GetRecessedCubeFaceNormalOffset(float cubeSideLength, CubeTileMetrics metrics)
         {
-            float centeredOffset = (cubeSideLength - metrics.Thickness) * 0.5f;
-            float inwardRecess = metrics.Thickness * 1f;
+            float centeredOffset = (cubeSideLength - metrics.Thickness) * 0.55f;
+            float inwardRecess = metrics.Thickness * 0.5f;
             return Mathf.Max(0f, centeredOffset - inwardRecess);
         }
 
         /// <summary>
-        /// Resolves the two in-plane face dimensions and thickness directly from the configured tile prefab, with layout settings as fallback.
+        /// Resolves the two in-plane face dimensions and thickness.
+        /// Layout settings take priority so swapping tile art does not reshape generated levels.
         /// </summary>
         private CubeTileMetrics ResolveCubeTileMetrics()
         {
+            if (layoutOverride != null)
+            {
+                Vector3 layoutCellSize = layoutOverride.CellSize;
+                return new CubeTileMetrics(layoutCellSize.x, layoutCellSize.z, layoutCellSize.y);
+            }
+
             if (TryGetTilePrefabBounds(out Bounds prefabBounds))
             {
                 return new CubeTileMetrics(prefabBounds.size.x, prefabBounds.size.z, prefabBounds.size.y);

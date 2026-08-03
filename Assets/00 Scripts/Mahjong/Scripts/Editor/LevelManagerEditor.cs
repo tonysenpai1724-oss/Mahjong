@@ -56,12 +56,25 @@ namespace MahjongOut3D.Editor
                             Debug.LogWarning("Hint failed. There may be no valid exposed pair right now.", levelManager);
                         }
                     }
+
+                    if (GUILayout.Button("Auto Match"))
+                    {
+                        MatchManager matchManager = Object.FindFirstObjectByType<MatchManager>(FindObjectsInactive.Exclude);
+                        if (matchManager == null)
+                        {
+                            Debug.LogWarning("Could not find an active MatchManager in the scene.", levelManager);
+                        }
+                        else if (!matchManager.DebugAutoMatch())
+                        {
+                            Debug.LogWarning("Auto Match failed. There may be no valid exposed pair right now or a resolution is already running.", levelManager);
+                        }
+                    }
                 }
             }
 
             if (!Application.isPlaying)
             {
-                EditorGUILayout.HelpBox("Nút Load Level và Hint chỉ hoạt động trong Play Mode.", MessageType.None);
+                EditorGUILayout.HelpBox("Nút Load Level, Hint và Auto Match chỉ hoạt động trong Play Mode.", MessageType.None);
             }
         }
     }

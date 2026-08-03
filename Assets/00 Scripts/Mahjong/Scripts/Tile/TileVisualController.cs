@@ -13,7 +13,10 @@ namespace MahjongOut3D.TileSystem
         [SerializeField] private Transform scaleRoot;
 
         private bool hasInitializedScaleState;
-        private Color[] cachedBaseColors;
+        private Color[] cachedPrimaryBaseColors;
+        private Color[] cachedSecondaryBaseColors;
+        private bool[] cachedHasPrimaryBaseColor;
+        private bool[] cachedHasSecondaryBaseColor;
         private MaterialPropertyBlock propertyBlock;
         private Vector3 baseScale;
         private Vector3 currentScale;
@@ -87,6 +90,15 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Clears any runtime base color override and restores material-driven colors.
+        /// </summary>
+        public void ClearRuntimeBaseColor()
+        {
+            hasRuntimeBaseColorOverride = false;
+            runtimeBaseColorOverride = Color.white;
+        }
+
+        /// <summary>
         /// Caches references and base material colors once the component wakes.
         /// </summary>
         private void Awake()
@@ -107,7 +119,13 @@ namespace MahjongOut3D.TileSystem
                 Mathf.SmoothDamp(currentScale.y, targetScale.y, ref scaleYSmoothVelocity, GetScaleSmoothing(), Mathf.Infinity, deltaTime),
                 Mathf.SmoothDamp(currentScale.z, targetScale.z, ref scaleZSmoothVelocity, GetScaleSmoothing(), Mathf.Infinity, deltaTime));
 
-            ApplyScale(currentScale);
+            Vector3 displayScale = currentScale;
+            if (isHintHighlighted)
+            {
+                displayScale *= GetHintPulseScaleMultiplier();
+            }
+
+            ApplyScale(displayScale);
         }
 
         /// <summary>
@@ -164,12 +182,18 @@ namespace MahjongOut3D.TileSystem
                 hasInitializedScaleState = true;
             }
 
-            if (cachedBaseColors == null || cachedBaseColors.Length != targetRenderers.Length)
+            if (cachedPrimaryBaseColors == null || cachedPrimaryBaseColors.Length != targetRenderers.Length)
             {
-                cachedBaseColors = new Color[targetRenderers.Length];
+                cachedPrimaryBaseColors = new Color[targetRenderers.Length];
+                cachedSecondaryBaseColors = new Color[targetRenderers.Length];
+                cachedHasPrimaryBaseColor = new bool[targetRenderers.Length];
+                cachedHasSecondaryBaseColor = new bool[targetRenderers.Length];
+
                 for (int index = 0; index < targetRenderers.Length; index++)
                 {
-                    cachedBaseColors[index] = ResolveBaseColor(targetRenderers[index]);
+                    MeshRenderer renderer = targetRenderers[index];
+                    cachedHasPrimaryBaseColor[index] = TryResolveBaseColor(renderer, GetBaseColorProperty(), out cachedPrimaryBaseColors[index]);
+                    cachedHasSecondaryBaseColor[index] = TryResolveBaseColor(renderer, GetSecondaryBaseColorProperty(), out cachedSecondaryBaseColors[index]);
                 }
             }
         }
@@ -209,29 +233,30 @@ namespace MahjongOut3D.TileSystem
                 }
 
                 propertyBlock.Clear();
-                Color baseColor = hasRuntimeBaseColorOverride ? runtimeBaseColorOverride : cachedBaseColors[index];
-                Color tintColor = baseColor;
                 Color emissionColor = Color.black;
+
+                if (hasRuntimeBaseColorOverride)
+                {
+                    Color overrideTintColor = ResolveTintColor(runtimeBaseColorOverride, state);
+                    SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetBaseColorProperty(), overrideTintColor);
+                    SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetSecondaryBaseColorProperty(), overrideTintColor);
+                }
 
                 if (state == TileState.Selected)
                 {
-                    tintColor = Color.Lerp(baseColor, GetSelectedTintColor(), GetSelectedTintStrength());
                     emissionColor = GetSelectedEmissionColor() * GetSelectedEmissionIntensity();
                 }
                 else if (isHintHighlighted)
                 {
-                    tintColor = Color.Lerp(baseColor, GetHintTintColor(), GetHintTintStrength());
                     emissionColor = GetHintEmissionColor() * GetHintEmissionIntensity();
                 }
                 else if (state == TileState.Matched)
                 {
-                    tintColor = baseColor;
                     emissionColor = GetMatchedEmissionColor() * GetMatchedEmissionIntensity();
                 }
 
-                ApplyColorProperty(renderer, GetBaseColorProperty(), tintColor);
-                ApplyColorProperty(renderer, GetSecondaryBaseColorProperty(), tintColor);
-                ApplyColorProperty(renderer, GetEmissionColorProperty(), emissionColor);
+                SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetEmissionColorProperty(), emissionColor);
+                renderer.SetPropertyBlock(propertyBlock);
             }
         }
 
@@ -241,16 +266,14 @@ namespace MahjongOut3D.TileSystem
         /// <param name="renderer">Renderer to update.</param>
         /// <param name="propertyName">Shader property name.</param>
         /// <param name="color">Color value to assign.</param>
-        private void ApplyColorProperty(Renderer renderer, string propertyName, Color color)
+        private void SetColorPropertyOnCurrentBlock(Material material, string propertyName, Color color)
         {
-            if (string.IsNullOrWhiteSpace(propertyName) || renderer.sharedMaterial == null || !renderer.sharedMaterial.HasProperty(propertyName))
+            if (string.IsNullOrWhiteSpace(propertyName) || material == null || !material.HasProperty(propertyName))
             {
                 return;
             }
 
-            renderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetColor(propertyName, color);
-            renderer.SetPropertyBlock(propertyBlock);
         }
 
         /// <summary>
@@ -258,24 +281,89 @@ namespace MahjongOut3D.TileSystem
         /// </summary>
         /// <param name="renderer">Renderer to inspect.</param>
         /// <returns>Base color for later highlight blending.</returns>
-        private Color ResolveBaseColor(Renderer renderer)
+        private bool TryResolveBaseColor(Renderer renderer, string propertyName, out Color color)
         {
+            color = Color.white;
             if (renderer == null || renderer.sharedMaterial == null)
             {
-                return Color.white;
+                return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(GetBaseColorProperty()) && renderer.sharedMaterial.HasProperty(GetBaseColorProperty()))
+            if (string.IsNullOrWhiteSpace(propertyName) || !renderer.sharedMaterial.HasProperty(propertyName))
             {
-                return renderer.sharedMaterial.GetColor(GetBaseColorProperty());
+                return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(GetSecondaryBaseColorProperty()) && renderer.sharedMaterial.HasProperty(GetSecondaryBaseColorProperty()))
+            color = renderer.sharedMaterial.GetColor(propertyName);
+            color = NormalizeBaseColor(renderer.sharedMaterial, color);
+            return true;
+        }
+
+        /// <summary>
+        /// Normalizes imported material tint colors so texture-driven tiles keep their authored appearance.
+        /// Some imported Mahjong materials store black tint values while relying on the texture; in that case white is the neutral multiplier.
+        /// </summary>
+        private static Color NormalizeBaseColor(Material material, Color color)
+        {
+            if (material == null)
             {
-                return renderer.sharedMaterial.GetColor(GetSecondaryBaseColorProperty());
+                return color;
+            }
+
+            if (color.maxColorComponent > 0.0001f)
+            {
+                return color;
+            }
+
+            bool hasBaseMap = material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap") != null;
+            bool hasMainTex = material.HasProperty("_MainTex") && material.GetTexture("_MainTex") != null;
+            if (!hasBaseMap && !hasMainTex)
+            {
+                return color;
+            }
+
+            return new Color(1f, 1f, 1f, Mathf.Approximately(color.a, 0f) ? 1f : color.a);
+        }
+
+        /// <summary>
+        /// Resolves which cached base color should drive highlight blending when multiple shader color properties exist.
+        /// </summary>
+        private static Color ResolveFallbackBaseColor(Color primaryBaseColor, bool hasPrimaryBaseColor, Color secondaryBaseColor, bool hasSecondaryBaseColor)
+        {
+            if (hasPrimaryBaseColor && primaryBaseColor.maxColorComponent > 0.0001f)
+            {
+                return primaryBaseColor;
+            }
+
+            if (hasSecondaryBaseColor)
+            {
+                return secondaryBaseColor;
+            }
+
+            if (hasPrimaryBaseColor)
+            {
+                return primaryBaseColor;
             }
 
             return Color.white;
+        }
+
+        /// <summary>
+        /// Builds the final tint color for the supplied tile state without losing the renderer's original base color.
+        /// </summary>
+        private Color ResolveTintColor(Color baseColor, TileState state)
+        {
+            if (state == TileState.Selected)
+            {
+                return Color.Lerp(baseColor, GetSelectedTintColor(), GetSelectedTintStrength());
+            }
+
+            if (isHintHighlighted)
+            {
+                return Color.Lerp(baseColor, GetHintTintColor(), GetHintTintStrength());
+            }
+
+            return baseColor;
         }
 
         /// <summary>
@@ -352,6 +440,17 @@ namespace MahjongOut3D.TileSystem
         private float GetMatchedScaleMultiplier()
         {
             return settings != null ? settings.MatchedScaleMultiplier : 1.02f;
+        }
+
+        /// <summary>
+        /// Gets the temporary pulse multiplier used by hint feedback.
+        /// </summary>
+        /// <returns>Animated hint pulse scale multiplier.</returns>
+        private float GetHintPulseScaleMultiplier()
+        {
+            float pulseTime = settings != null && settings.UseUnscaledTime ? Time.unscaledTime : Time.time;
+            float wave = 0.5f + (0.5f * Mathf.Sin(pulseTime * 8f));
+            return Mathf.Lerp(1.04f, 1.12f, wave);
         }
 
         /// <summary>

@@ -504,7 +504,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.VoxelLevelGenerator
   levelDefinition: {fileID: 11400000, guid: a61ab51a01044b2a8f158d1e00b0b5a4, type: 2}
-  tilePrefab: {fileID: 2112072835, guid: 6e5d8adad2fe4d1bb20f57ce3cb1648c, type: 3}
+  tilePrefab: {fileID: -5892857342694290962, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
   tileRoot: {fileID: 176450052}
   fallbackVisualSource: {fileID: 3849202022951820079, guid: fa344e7a7a64930119ebc8361022852a, type: 3}
   fallbackTileVisualSettings: {fileID: 11400000, guid: 07ad9084b37f4ca59ad76a9b1efa812f, type: 2}
@@ -517,6 +517,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: cd359387c4a6db63b862b33fe851fcf1, type: 2}
   - {fileID: 2100000, guid: d73a71a373099303aa6f44f0d6b380c6, type: 2}
   - {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
+  applyTileBaseColor: 0
   tileBaseColor: {r: 0.8867924, g: 0.7942281, b: 0.7905838, a: 1}
   tileSpacingOffset: {x: 0, y: 0, z: 0}
   generateOnStart: 1
@@ -8640,6 +8641,98 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &101389099361808463
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8516176759767879714}
+  - component: {fileID: 3007333372906559491}
+  - component: {fileID: 3937459619564783110}
+  m_Layer: 0
+  m_Name: Bamboo_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!33 &3007333372906559491
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101389099361808463}
+  m_Mesh: {fileID: 2451039348947988697, guid: 364b8354b91ce2c35b2492ad92ad8d04, type: 3}
+--- !u!23 &3937459619564783110
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101389099361808463}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -7501213079140947745, guid: 364b8354b91ce2c35b2492ad92ad8d04, type: 3}
+  - {fileID: 7922251121040759823, guid: 364b8354b91ce2c35b2492ad92ad8d04, type: 3}
+  - {fileID: -6478536213147159724, guid: 364b8354b91ce2c35b2492ad92ad8d04, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!4 &8516176759767879714
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101389099361808463}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00000003774895, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.79085, y: 0, z: -2.42196}
+  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -8655,3 +8748,4 @@ SceneRoots:
   - {fileID: 1853129372}
   - {fileID: 758055964}
   - {fileID: 176450052}
+  - {fileID: 8516176759767879714}

@@ -3,6 +3,7 @@ using MahjongOut3D.Data;
 using MahjongOut3D.Gameplay;
 using MahjongOut3D.LevelSystem;
 using MahjongOut3D.TileSystem;
+using MahjongOut3D.Utilities;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +15,8 @@ namespace MahjongOut3D.Managers
     /// </summary>
     public sealed class MatchManager : ManagerBehaviour
     {
+        private const float AnimationCompletionTimeoutSeconds = 5f;
+
         [SerializeField] private PowerUpSettings powerUpSettings;
 
         private readonly List<MahjongTile> selectedTiles = new List<MahjongTile>(2);
@@ -201,6 +204,22 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Debug helper that automatically resolves any currently valid pair without consuming resources.
+        /// </summary>
+        /// <returns>True when a valid pair was found and scheduled for removal; otherwise false.</returns>
+        public bool DebugAutoMatch()
+        {
+            if (IsResolvingMatch || !TryFindAnySelectablePair(out MahjongTile firstTile, out MahjongTile secondTile))
+            {
+                return false;
+            }
+
+            DeselectAll();
+            StartCoroutine(ResolveMatchedPair(firstTile, secondTile, false));
+            return true;
+        }
+
+        /// <summary>
         /// Uses the X-Ray power-up to temporarily reveal one extra inner layer.
         /// </summary>
         /// <returns>True when X-Ray succeeds; otherwise false.</returns>
@@ -293,54 +312,68 @@ namespace MahjongOut3D.Managers
                 yield break;
             }
 
-            MoveHistoryRecord record = CreateSnapshotRecord("Match", new[] { firstTile, secondTile });
-            firstTile.Deselect();
-            secondTile.Deselect();
-            GetAudioManager()?.PlayMatch();
-
-            bool completed = false;
-            AnimationManager animationManager = null;
-            Context.Services.TryGet(out animationManager);
-            if (animationManager != null)
+            try
             {
-                animationManager.PlayMatchSequence(firstTile, secondTile, () => completed = true);
-            }
-            else
-            {
-                completed = true;
-            }
+                MoveHistoryRecord record = CreateSnapshotRecord("Match", new[] { firstTile, secondTile });
+                firstTile.Deselect();
+                secondTile.Deselect();
+                GetAudioManager()?.PlayMatch();
 
-            while (!completed)
-            {
-                yield return null;
-            }
+                bool completed = false;
+                AnimationManager animationManager = null;
+                Context.Services.TryGet(out animationManager);
+                if (animationManager != null)
+                {
+                    animationManager.PlayMatchSequence(firstTile, secondTile, () => completed = true);
+                }
+                else
+                {
+                    completed = true;
+                }
 
-            LevelManager levelManager = GetLevelManager();
-            if (levelManager?.ActiveGrid != null)
-            {
-                levelManager.ActiveGrid.RemoveTile(firstTile.TileId);
-                levelManager.ActiveGrid.RemoveTile(secondTile.TileId);
-            }
+                float elapsed = 0f;
+                while (!completed && elapsed < AnimationCompletionTimeoutSeconds)
+                {
+                    elapsed += GetResolutionDeltaTime();
+                    yield return null;
+                }
 
-            firstTile.MarkRemoved();
-            secondTile.MarkRemoved();
-            history.Push(record);
+                if (!completed)
+                {
+                    MahjongRuntimeLogger.LogWarning("Match animation timed out. Completing resolution to avoid locked input.");
+                }
 
-            if (rewardCoins)
-            {
-                GetSaveManager()?.AddCoins(GetCoinsPerMatch());
-            }
+                LevelManager levelManager = GetLevelManager();
+                if (levelManager?.ActiveGrid != null)
+                {
+                    levelManager.ActiveGrid.RemoveTile(firstTile.TileId);
+                    levelManager.ActiveGrid.RemoveTile(secondTile.TileId);
+                }
 
-            selectedTiles.Clear();
-            GetTileManager()?.RefreshTileExposure();
-            Context.EventBus.Publish(new MatchSucceededEvent(firstTile, secondTile));
-            PublishProgress();
-            if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
-            {
-                Context.EventBus.Publish(new SaveDataLoadedEvent(saveManager.CurrentSave));
+                firstTile.MarkRemoved();
+                secondTile.MarkRemoved();
+                history.Push(record);
+
+                if (rewardCoins)
+                {
+                    GetSaveManager()?.AddCoins(GetCoinsPerMatch());
+                }
+
+                selectedTiles.Clear();
+                GetTileManager()?.RefreshTileExposure();
+                Context.EventBus.Publish(new MatchSucceededEvent(firstTile, secondTile));
+                PublishProgress();
+                if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
+                {
+                    Context.EventBus.Publish(new SaveDataLoadedEvent(saveManager.CurrentSave));
+                }
+
+                EvaluateBoardState();
             }
-            EvaluateBoardState();
-            EndResolution();
+            finally
+            {
+                EndResolution();
+            }
         }
 
         /// <summary>
@@ -353,29 +386,50 @@ namespace MahjongOut3D.Managers
                 yield break;
             }
 
-            GetAudioManager()?.PlayMismatch();
-            bool completed = false;
-            AnimationManager animationManager = null;
-            Context.Services.TryGet(out animationManager);
-            if (animationManager != null)
+            try
             {
-                animationManager.PlayMismatchDelay(() => completed = true);
-            }
-            else
-            {
-                completed = true;
-            }
+                GetAudioManager()?.PlayMismatch();
+                bool completed = false;
+                AnimationManager animationManager = null;
+                Context.Services.TryGet(out animationManager);
+                if (animationManager != null)
+                {
+                    animationManager.PlayMismatchDelay(() => completed = true);
+                }
+                else
+                {
+                    completed = true;
+                }
 
-            while (!completed)
-            {
-                yield return null;
-            }
+                float elapsed = 0f;
+                while (!completed && elapsed < AnimationCompletionTimeoutSeconds)
+                {
+                    elapsed += GetResolutionDeltaTime();
+                    yield return null;
+                }
 
-            firstTile.Deselect();
-            secondTile.Deselect();
-            selectedTiles.Clear();
-            Context.EventBus.Publish(new MatchFailedEvent(firstTile, secondTile));
-            EndResolution();
+                if (!completed)
+                {
+                    MahjongRuntimeLogger.LogWarning("Mismatch animation timed out. Completing resolution to avoid locked input.");
+                }
+
+                firstTile.Deselect();
+                secondTile.Deselect();
+                selectedTiles.Clear();
+                Context.EventBus.Publish(new MatchFailedEvent(firstTile, secondTile));
+            }
+            finally
+            {
+                EndResolution();
+            }
+        }
+
+        /// <summary>
+        /// Gets a stable delta time for resolution watchdog timers.
+        /// </summary>
+        private static float GetResolutionDeltaTime()
+        {
+            return Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : Time.deltaTime;
         }
 
         /// <summary>
@@ -482,12 +536,66 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            if (!TryFindAnySelectablePair(out _, out _))
+            if (!TryFindAnyBoardPair(out _, out _))
             {
                 Context.EventBus.Publish(new NoMovesRemainingEvent());
                 GetAudioManager()?.PlayLose();
                 gameManager.LoseGameplay();
             }
+        }
+
+        /// <summary>
+        /// Attempts to find any remaining board pair without depending on the current camera visibility.
+        /// </summary>
+        private bool TryFindAnyBoardPair(out MahjongTile firstTile, out MahjongTile secondTile)
+        {
+            firstTile = null;
+            secondTile = null;
+
+            TileManager tileManager = GetTileManager();
+            if (tileManager == null)
+            {
+                return false;
+            }
+
+            Dictionary<int, MahjongTile> firstByMatchId = new Dictionary<int, MahjongTile>();
+            foreach (MahjongTile tile in tileManager.GetRemainingTiles())
+            {
+                if (tile == null || tile.IsRemoved || !IsTileAvailableForBoardPair(tileManager, tile))
+                {
+                    continue;
+                }
+
+                if (firstByMatchId.TryGetValue(tile.MatchId, out MahjongTile existingTile) && existingTile != tile)
+                {
+                    firstTile = existingTile;
+                    secondTile = tile;
+                    return true;
+                }
+
+                firstByMatchId[tile.MatchId] = tile;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whether a tile should count toward board move availability checks.
+        /// </summary>
+        private bool IsTileAvailableForBoardPair(TileManager tileManager, MahjongTile tile)
+        {
+            if (tileManager == null || tile == null || !tile.IsInteractable)
+            {
+                return false;
+            }
+
+            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
+            if (useSurfaceRules)
+            {
+                return true;
+            }
+
+            return tileManager.IsTileExposed(tile);
         }
 
         /// <summary>
