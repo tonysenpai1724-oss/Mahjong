@@ -592,7 +592,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return true;
+                return tileManager.IsTileExposed(tile);
             }
 
             return tileManager.IsTileExposed(tile);

@@ -1272,6 +1272,7 @@ namespace MahjongOut3D.LevelSystem
             {
                 MatchId = matchId,
                 GridCoordinate = GetLogicalGridCoordinate(tileIndex, logicalGridSize),
+                SurfaceShellIndex = placement.ShellIndex,
                 UseCustomLocalPosition = true,
                 LocalPosition = GetCompactedSurfaceTileLocalPosition(placement, shapeGridSize),
                 LocalEulerAngles = GetFacingRotationEuler(placement.FacingDirection, flipTile),

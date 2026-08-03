@@ -29,6 +29,7 @@ namespace MahjongOut3D.LevelSystem
         public int x;
         public int y;
         public int z;
+        public int surfaceShellIndex;
         public bool useCustomLocalPosition;
         public float posX;
         public float posY;

@@ -317,7 +317,53 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         private IList<LevelTileDefinition> BuildRuntimeTileDefinitions(bool useSurfaceTilePlacement, LevelShapeType shape, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> sourceTiles)
         {
-            return sourceTiles;
+            if (sourceTiles == null)
+            {
+                return sourceTiles;
+            }
+
+            List<LevelTileDefinition> runtimeTiles = new List<LevelTileDefinition>(sourceTiles.Count);
+            List<float> shellMagnitudes = useSurfaceTilePlacement ? new List<float>(sourceTiles.Count) : null;
+
+            for (int index = 0; index < sourceTiles.Count; index++)
+            {
+                LevelTileDefinition clone = CloneTileDefinition(sourceTiles[index]);
+                if (clone == null)
+                {
+                    continue;
+                }
+
+                runtimeTiles.Add(clone);
+                if (!useSurfaceTilePlacement)
+                {
+                    continue;
+                }
+
+                VoxelGridDirection facingDirection = ResolveFacingDirection(clone.LocalEulerAngles);
+                float shellMagnitude = GetCubeShellNormalMagnitude(clone.LocalPosition, facingDirection);
+                shellMagnitudes.Add(shellMagnitude);
+            }
+
+            if (!useSurfaceTilePlacement)
+            {
+                return runtimeTiles;
+            }
+
+            List<float> uniqueMagnitudes = BuildUniqueDescendingMagnitudes(shellMagnitudes);
+            for (int index = 0; index < runtimeTiles.Count; index++)
+            {
+                LevelTileDefinition tile = runtimeTiles[index];
+                if (tile == null || tile.SurfaceShellIndex > 0 || !tile.UseCustomLocalPosition)
+                {
+                    continue;
+                }
+
+                VoxelGridDirection facingDirection = ResolveFacingDirection(tile.LocalEulerAngles);
+                float shellMagnitude = GetCubeShellNormalMagnitude(tile.LocalPosition, facingDirection);
+                tile.SurfaceShellIndex = ResolveShellIndex(shellMagnitude, uniqueMagnitudes);
+            }
+
+            return runtimeTiles;
         }
 
         /// <summary>
@@ -334,6 +380,7 @@ namespace MahjongOut3D.LevelSystem
             {
                 MatchId = source.MatchId,
                 GridCoordinate = source.GridCoordinate,
+                SurfaceShellIndex = source.SurfaceShellIndex,
                 UseCustomLocalPosition = source.UseCustomLocalPosition,
                 LocalPosition = source.LocalPosition,
                 LocalEulerAngles = source.LocalEulerAngles,
@@ -496,6 +543,7 @@ namespace MahjongOut3D.LevelSystem
                 GridCoordinate = definition.GridCoordinate,
                 LocalPosition = baseLocalPosition - placementOffset,
                 LocalEulerAngles = definition.LocalEulerAngles,
+                SurfaceShellIndex = definition.SurfaceShellIndex,
             };
 
             tile.ApplyRuntimeData(runtimeData);

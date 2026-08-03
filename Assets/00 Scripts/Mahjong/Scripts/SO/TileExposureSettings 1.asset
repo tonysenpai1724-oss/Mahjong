@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TileExposureSettings 1
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.TileSystem.TileExposureSettings
   <RequireSurfaceExposure>k__BackingField: 1
-  <RequireDirectCameraVisibility>k__BackingField: 1
+  <RequireDirectCameraVisibility>k__BackingField: 0
   <RequiredVisibleSampleRatio>k__BackingField: 0.9
   <VisibilitySampleInset>k__BackingField: 0.01
   <VisibilityRayPadding>k__BackingField: 0.05

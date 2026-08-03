@@ -14,7 +14,7 @@ namespace MahjongOut3D.TileSystem
 
         [field: Header("Visibility Rules")]
         [field: SerializeField]
-        public bool RequireDirectCameraVisibility { get; private set; } = true;
+        public bool RequireDirectCameraVisibility { get; private set; } = false;
 
         [field: SerializeField, Range(0.1f, 1f)]
         public float RequiredVisibleSampleRatio { get; private set; } = 0.9f;

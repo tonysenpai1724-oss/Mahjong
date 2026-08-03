@@ -13,6 +13,7 @@ namespace MahjongOut3D.TileSystem
         [SerializeField] private int tileId;
         [SerializeField] private int matchId;
         [SerializeField] private Vector3Int gridCoordinate;
+        [SerializeField] private int surfaceShellIndex;
 
         [Header("Components")]
         [SerializeField] private MeshRenderer meshRenderer;
@@ -56,6 +57,11 @@ namespace MahjongOut3D.TileSystem
         /// Gets the logical grid coordinate inside the voxel block.
         /// </summary>
         public Vector3Int GridCoordinate => gridCoordinate;
+
+        /// <summary>
+        /// Gets the nested shell depth for surface-generated levels, where zero is outermost.
+        /// </summary>
+        public int SurfaceShellIndex => Mathf.Max(0, surfaceShellIndex);
 
         /// <summary>
         /// Gets the primary tile renderer.
@@ -138,6 +144,7 @@ namespace MahjongOut3D.TileSystem
             tileId = runtimeData.TileId;
             matchId = runtimeData.MatchId;
             gridCoordinate = runtimeData.GridCoordinate;
+            surfaceShellIndex = runtimeData.SurfaceShellIndex;
             transform.localPosition = runtimeData.LocalPosition;
             transform.localRotation = Quaternion.Euler(runtimeData.LocalEulerAngles);
             gameObject.name = $"MahjongTile_{tileId}_{matchId}";

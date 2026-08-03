@@ -237,6 +237,7 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
+            bool useSurfaceRules = levelManager.ActiveUsesSurfaceTilePlacement;
             bool xrayActive = IsXRayActive();
             foreach (MahjongTile tile in tilesById.Values)
             {
@@ -245,7 +246,8 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
-                bool shouldExpose = ShouldRevealTile(tile, levelManager.ActiveGrid, xrayActive);
+                bool shouldExpose = ShouldExposeTile(tile, levelManager.ActiveGrid, xrayActive, useSurfaceRules);
+                bool shouldReveal = useSurfaceRules || shouldExpose;
                 UpdateExposureState(tile, shouldExpose);
 
                 if (tile.State == TileState.Selected && !shouldExpose)
@@ -253,11 +255,11 @@ namespace MahjongOut3D.Managers
                     tile.Deselect();
                 }
 
-                if (tile.State == TileState.Hidden && shouldExpose)
+                if (tile.State == TileState.Hidden && shouldReveal)
                 {
                     tile.SetVisible(true);
                 }
-                else if (tile.State == TileState.Visible && !shouldExpose)
+                else if (tile.State == TileState.Visible && !shouldReveal)
                 {
                     tile.SetVisible(false);
                 }
@@ -299,7 +301,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return true;
+                return IsTileExposed(tile);
             }
 
             if (exposureSettings != null && exposureSettings.RequireSurfaceExposure && !IsTileExposed(tile))
@@ -330,12 +332,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                if (exposureSettings != null && exposureSettings.RequireDirectCameraVisibility)
-                {
-                    return IsTileCenterVisibleFromCamera(tile);
-                }
-
-                return true;
+                return IsTileExposed(tile);
             }
 
             return IsTileSelectable(tile);
@@ -457,17 +454,28 @@ namespace MahjongOut3D.Managers
         /// <summary>
         /// Determines whether a tile should currently be revealed to the player.
         /// </summary>
-        private bool ShouldRevealTile(MahjongTile tile, VoxelGridData grid, bool xrayActive)
+        private bool ShouldExposeTile(MahjongTile tile, VoxelGridData grid, bool xrayActive, bool useSurfaceRules)
         {
             if (tile == null || grid == null || tile.IsRemoved || tile.IsMatched)
             {
                 return false;
             }
 
-            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return true;
+                if (IsSurfaceTileLocallyExposed(tile))
+                {
+                    return true;
+                }
+
+                if (xrayActive)
+                {
+                    int currentShellIndex = GetCurrentSurfaceShellIndex();
+                    int maxRevealShellIndex = currentShellIndex + Mathf.Max(1, activeXRayDepth);
+                    return tile.SurfaceShellIndex <= maxRevealShellIndex;
+                }
+
+                return false;
             }
 
             if (IsTileSurfaceExposed(tile, grid))
@@ -482,6 +490,71 @@ namespace MahjongOut3D.Managers
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Determines whether a surface-placed tile has enough free outward face area to be selected.
+        /// </summary>
+        private bool IsSurfaceTileLocallyExposed(MahjongTile tile)
+        {
+            if (tile == null)
+            {
+                return false;
+            }
+
+            Collider tileCollider = tile.TileCollider;
+            if (tileCollider == null)
+            {
+                return false;
+            }
+
+            Vector3 outwardNormal = tile.transform.up.normalized;
+            Vector3[] samplePoints = tileCollider is BoxCollider boxCollider
+                ? BuildSurfaceExposureSamplePoints(boxCollider, tile.transform, GetVisibilitySampleInset())
+                : BuildSurfaceExposureSamplePoints(tileCollider.bounds, outwardNormal, GetVisibilitySampleInset());
+            int openSampleCount = 0;
+            float checkDistance = tileCollider is BoxCollider sizedBoxCollider
+                ? GetSurfaceExposureCheckDistance(sizedBoxCollider, tile.transform)
+                : GetSurfaceExposureCheckDistance(tileCollider.bounds, outwardNormal);
+
+            for (int index = 0; index < samplePoints.Length; index++)
+            {
+                Vector3 rayOrigin = samplePoints[index] + (outwardNormal * GetVisibilityRayPadding());
+                Ray ray = new Ray(rayOrigin, outwardNormal);
+                int hitCount = Physics.RaycastNonAlloc(ray, raycastBuffer, checkDistance, tileLayerMask, QueryTriggerInteraction.Ignore);
+                if (hitCount <= 0)
+                {
+                    openSampleCount++;
+                    continue;
+                }
+
+                bool isBlocked = false;
+                for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
+                {
+                    RaycastHit hit = raycastBuffer[hitIndex];
+                    if (hit.collider == null)
+                    {
+                        continue;
+                    }
+
+                    MahjongTile hitTile = hit.collider.GetComponentInParent<MahjongTile>();
+                    if (hitTile == null || hitTile == tile || hitTile.IsRemoved || hitTile.IsMatched)
+                    {
+                        continue;
+                    }
+
+                    isBlocked = true;
+                    break;
+                }
+
+                if (!isBlocked)
+                {
+                    openSampleCount++;
+                }
+            }
+
+            float openRatio = samplePoints.Length == 0 ? 0f : (float)openSampleCount / samplePoints.Length;
+            return openRatio >= GetRequiredVisibleSampleRatio();
         }
 
         /// <summary>
@@ -646,6 +719,112 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Builds sample points on the outward-facing tile surface used for local exposure checks.
+        /// </summary>
+        private static Vector3[] BuildSurfaceExposureSamplePoints(Bounds bounds, Vector3 outwardNormal, float inset)
+        {
+            Vector3 extents = bounds.extents - Vector3.one * inset;
+            extents.x = Mathf.Max(0.001f, extents.x);
+            extents.y = Mathf.Max(0.001f, extents.y);
+            extents.z = Mathf.Max(0.001f, extents.z);
+
+            Vector3 faceCenter;
+            Vector3 tangentA;
+            Vector3 tangentB;
+
+            if (Mathf.Abs(outwardNormal.x) > 0.5f)
+            {
+                faceCenter = bounds.center + new Vector3(Mathf.Sign(outwardNormal.x) * extents.x, 0f, 0f);
+                tangentA = Vector3.up * extents.y;
+                tangentB = Vector3.forward * extents.z;
+            }
+            else if (Mathf.Abs(outwardNormal.y) > 0.5f)
+            {
+                faceCenter = bounds.center + new Vector3(0f, Mathf.Sign(outwardNormal.y) * extents.y, 0f);
+                tangentA = Vector3.right * extents.x;
+                tangentB = Vector3.forward * extents.z;
+            }
+            else
+            {
+                faceCenter = bounds.center + new Vector3(0f, 0f, Mathf.Sign(outwardNormal.z) * extents.z);
+                tangentA = Vector3.right * extents.x;
+                tangentB = Vector3.up * extents.y;
+            }
+
+            return new[]
+            {
+                faceCenter,
+                faceCenter - tangentA,
+                faceCenter + tangentA,
+                faceCenter - tangentB,
+                faceCenter + tangentB,
+                faceCenter - tangentA - tangentB,
+                faceCenter - tangentA + tangentB,
+                faceCenter + tangentA - tangentB,
+                faceCenter + tangentA + tangentB,
+            };
+        }
+
+        /// <summary>
+        /// Builds sample points on the actual outward face of a rotated box collider.
+        /// </summary>
+        private static Vector3[] BuildSurfaceExposureSamplePoints(BoxCollider boxCollider, Transform transform, float inset)
+        {
+            Vector3 localCenter = boxCollider.center;
+            Vector3 localHalfSize = boxCollider.size * 0.5f;
+            float localInset = Mathf.Max(0.001f, inset);
+
+            float x = Mathf.Max(0.001f, localHalfSize.x - localInset);
+            float y = Mathf.Max(0.001f, localHalfSize.y - localInset);
+            float z = Mathf.Max(0.001f, localHalfSize.z - localInset);
+
+            Vector3 faceCenter = localCenter + new Vector3(0f, y, 0f);
+            return new[]
+            {
+                transform.TransformPoint(faceCenter),
+                transform.TransformPoint(faceCenter + new Vector3(-x, 0f, 0f)),
+                transform.TransformPoint(faceCenter + new Vector3(x, 0f, 0f)),
+                transform.TransformPoint(faceCenter + new Vector3(0f, 0f, -z)),
+                transform.TransformPoint(faceCenter + new Vector3(0f, 0f, z)),
+                transform.TransformPoint(faceCenter + new Vector3(-x, 0f, -z)),
+                transform.TransformPoint(faceCenter + new Vector3(-x, 0f, z)),
+                transform.TransformPoint(faceCenter + new Vector3(x, 0f, -z)),
+                transform.TransformPoint(faceCenter + new Vector3(x, 0f, z)),
+            };
+        }
+
+        /// <summary>
+        /// Resolves how far outward to probe for a covering tile on the next shell.
+        /// </summary>
+        private float GetSurfaceExposureCheckDistance(Bounds bounds, Vector3 outwardNormal)
+        {
+            float axisSize;
+            if (Mathf.Abs(outwardNormal.x) > 0.5f)
+            {
+                axisSize = bounds.size.x;
+            }
+            else if (Mathf.Abs(outwardNormal.y) > 0.5f)
+            {
+                axisSize = bounds.size.y;
+            }
+            else
+            {
+                axisSize = bounds.size.z;
+            }
+
+            return Mathf.Max(0.05f, axisSize + GetVisibilityRayPadding());
+        }
+
+        /// <summary>
+        /// Resolves how far outward to probe for a covering tile on the next shell for box colliders.
+        /// </summary>
+        private float GetSurfaceExposureCheckDistance(BoxCollider boxCollider, Transform transform)
+        {
+            float scaledThickness = Mathf.Abs(boxCollider.size.y * transform.lossyScale.y);
+            return Mathf.Max(0.05f, scaledThickness + GetVisibilityRayPadding());
+        }
+
+        /// <summary>
         /// Gets the closest valid hit inside the shared non-alloc raycast buffer.
         /// </summary>
         private int GetClosestHitIndex(int hitCount)
@@ -676,6 +855,25 @@ namespace MahjongOut3D.Managers
             int yDepth = Mathf.Min(coordinate.y, size.Height - 1 - coordinate.y);
             int zDepth = Mathf.Min(coordinate.z, size.Depth - 1 - coordinate.z);
             return Mathf.Min(xDepth, Mathf.Min(yDepth, zDepth));
+        }
+
+        /// <summary>
+        /// Resolves the outermost remaining shell index for surface-generated levels.
+        /// </summary>
+        private int GetCurrentSurfaceShellIndex()
+        {
+            int currentShellIndex = int.MaxValue;
+            foreach (MahjongTile tile in tilesById.Values)
+            {
+                if (tile == null || tile.IsRemoved || tile.IsMatched)
+                {
+                    continue;
+                }
+
+                currentShellIndex = Mathf.Min(currentShellIndex, tile.SurfaceShellIndex);
+            }
+
+            return currentShellIndex == int.MaxValue ? 0 : currentShellIndex;
         }
 
         /// <summary>

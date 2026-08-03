@@ -14,6 +14,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private bool useCustomLocalPosition;
         [SerializeField] private Vector3 localPosition;
         [SerializeField] private Vector3 localEulerAngles;
+        [SerializeField] private int surfaceShellIndex;
 
         /// <summary>
         /// Gets or sets the match identifier for the tile.
@@ -58,6 +59,15 @@ namespace MahjongOut3D.LevelSystem
         {
             get => localEulerAngles;
             set => localEulerAngles = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the nested shell depth for surface-generated levels, where zero is outermost.
+        /// </summary>
+        public int SurfaceShellIndex
+        {
+            get => Mathf.Max(0, surfaceShellIndex);
+            set => surfaceShellIndex = Mathf.Max(0, value);
         }
     }
 }
