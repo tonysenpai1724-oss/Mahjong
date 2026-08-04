@@ -33,7 +33,7 @@ MonoBehaviour:
     difficulty: 1
   hardSettings:
     label: Hard
-    levelCount: 5
+    levelCount: 0
     minLayerCount: 3
     maxLayerCount: 6
     minPairCount: 34
@@ -44,7 +44,7 @@ MonoBehaviour:
     difficulty: 2
   superHardSettings:
     label: SuperHard
-    levelCount: 5
+    levelCount: 0
     minLayerCount: 6
     maxLayerCount: 8
     minPairCount: 48

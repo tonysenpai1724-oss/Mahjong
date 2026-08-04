@@ -548,7 +548,7 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Chooses a visually complete cube by keeping whole shells from the smallest cube outward.
+        /// Chooses a visually complete cube by keeping whole shells from the outermost cube inward.
         /// </summary>
         private static int GetPreferredCubeTileCount(List<List<TilePlacementData>> shells, int minimumLayerCount, int minTileCount, int maxTileCount)
         {
@@ -815,6 +815,7 @@ namespace MahjongOut3D.LevelSystem
                 previousShell = shellPlan;
             }
 
+            shells.Reverse();
             return shells;
         }
 
@@ -827,10 +828,8 @@ namespace MahjongOut3D.LevelSystem
             int heightCount = shellPlan.RowCount;
             float cubeSideLength = shellPlan.SideLength;
             float normalOffset = GetRecessedCubeFaceNormalOffset(cubeSideLength, metrics);
-            float edgeInset = GetCubeFaceEdgeInset(metrics);
-            float targetPanelSideLength = Mathf.Max(0.01f, cubeSideLength - (edgeInset * 2f));
-            float widthAxisStep = GetSquarePanelStep(widthCount, metrics.FaceWidth, targetPanelSideLength);
-            float heightAxisStep = GetSquarePanelStep(heightCount, metrics.FaceHeight, targetPanelSideLength);
+            float widthAxisStep = Mathf.Max(0.01f, metrics.FaceWidth);
+            float heightAxisStep = Mathf.Max(0.01f, metrics.FaceHeight);
 
             List<TilePlacementData> shell = new List<TilePlacementData>();
 
@@ -876,25 +875,25 @@ namespace MahjongOut3D.LevelSystem
         private static float GetRecessedCubeFaceNormalOffset(float cubeSideLength, CubeTileMetrics metrics)
         {
             float centeredOffset = (cubeSideLength - metrics.Thickness) * 0.55f;
-            float inwardRecess = metrics.Thickness * 0.5f;
+            float inwardRecess = metrics.Thickness * 1f;
             return Mathf.Max(0f, centeredOffset - inwardRecess);
         }
 
         /// <summary>
         /// Resolves the two in-plane face dimensions and thickness.
-        /// Layout settings take priority so swapping tile art does not reshape generated levels.
+        /// The assigned Mahjong tile prefab takes priority so generated cube shells match the actual tile footprint.
         /// </summary>
         private CubeTileMetrics ResolveCubeTileMetrics()
         {
+            if (TryGetTilePrefabBounds(out Bounds prefabBounds))
+            {
+                return new CubeTileMetrics(prefabBounds.size.x, prefabBounds.size.z, prefabBounds.size.y);
+            }
+
             if (layoutOverride != null)
             {
                 Vector3 layoutCellSize = layoutOverride.CellSize;
                 return new CubeTileMetrics(layoutCellSize.x, layoutCellSize.z, layoutCellSize.y);
-            }
-
-            if (TryGetTilePrefabBounds(out Bounds prefabBounds))
-            {
-                return new CubeTileMetrics(prefabBounds.size.x, prefabBounds.size.z, prefabBounds.size.y);
             }
 
             Vector3 cellSize = layoutOverride != null ? layoutOverride.CellSize : new Vector3(0.95f, 0.45f, 0.7f);
@@ -912,14 +911,80 @@ namespace MahjongOut3D.LevelSystem
                 return false;
             }
 
+            if (TryGetTilePrefabPlacementBounds(out prefabBounds))
+            {
+                prefabBounds = ApplyTileOutlineScale(prefabBounds);
+                return true;
+            }
+
             Collider[] colliders = tilePrefab.GetComponentsInChildren<Collider>(true);
             if (TryEncapsulateBounds(colliders, out prefabBounds))
             {
+                prefabBounds = ApplyTileOutlineScale(prefabBounds);
                 return true;
             }
 
             Renderer[] renderers = tilePrefab.GetComponentsInChildren<Renderer>(true);
-            return TryEncapsulateBounds(renderers, out prefabBounds);
+            if (TryEncapsulateBounds(renderers, out prefabBounds))
+            {
+                prefabBounds = ApplyTileOutlineScale(prefabBounds);
+                return true;
+            }
+
+            return false;
+        }
+
+        private Bounds ApplyTileOutlineScale(Bounds bounds)
+        {
+            float outlineScale = tilePrefab != null && tilePrefab.Outline != null
+                ? tilePrefab.Outline.OutlineScale
+                : 1f;
+
+            if (outlineScale <= 0f || Mathf.Approximately(outlineScale, 1f))
+            {
+                return bounds;
+            }
+
+            return new Bounds(bounds.center, bounds.size * outlineScale);
+        }
+
+        /// <summary>
+        /// Tries to resolve the tile footprint from the Mahjong tile's placement mesh/collider in parent-space units.
+        /// </summary>
+        private bool TryGetTilePrefabPlacementBounds(out Bounds placementBounds)
+        {
+            placementBounds = default;
+            if (tilePrefab == null)
+            {
+                return false;
+            }
+
+            if (tilePrefab.MeshRenderer != null)
+            {
+                MeshFilter meshFilter = tilePrefab.MeshRenderer.GetComponent<MeshFilter>();
+                if (meshFilter != null && meshFilter.sharedMesh != null &&
+                    TryTransformBounds(tilePrefab.transform.worldToLocalMatrix * meshFilter.transform.localToWorldMatrix, meshFilter.sharedMesh.bounds, out Bounds rootLocalBounds) &&
+                    TryTransformBounds(tilePrefab.transform.localToWorldMatrix, rootLocalBounds, out placementBounds))
+                {
+                    return true;
+                }
+            }
+
+            if (tilePrefab.TileCollider is MeshCollider meshCollider && meshCollider.sharedMesh != null &&
+                TryTransformBounds(tilePrefab.transform.worldToLocalMatrix * meshCollider.transform.localToWorldMatrix, meshCollider.sharedMesh.bounds, out Bounds meshColliderBounds) &&
+                TryTransformBounds(tilePrefab.transform.localToWorldMatrix, meshColliderBounds, out placementBounds))
+            {
+                return true;
+            }
+
+            if (tilePrefab.TileCollider is BoxCollider boxCollider &&
+                TryTransformBounds(tilePrefab.transform.worldToLocalMatrix * boxCollider.transform.localToWorldMatrix, new Bounds(boxCollider.center, boxCollider.size), out Bounds boxColliderBounds) &&
+                TryTransformBounds(tilePrefab.transform.localToWorldMatrix, boxColliderBounds, out placementBounds))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -939,32 +1004,82 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Builds the next larger cube shell by expanding the shorter face axis until the previous shell is fully covered.
+        /// Builds the next larger cube shell by choosing the smallest larger panel that still keeps the face as square as possible.
+        /// This avoids growing only one axis on the next shell, which can leave an outer face visually under-filled.
         /// </summary>
         private static CubeShellPlan CreateCoveringCubeShellPlan(CubeShellPlan previousShell, CubeTileMetrics metrics)
         {
             float requiredSideLength = previousShell.SideLength + (metrics.Thickness * 2f);
-            int columnCount = Mathf.Max(1, previousShell.ColumnCount);
-            int rowCount = Mathf.Max(1, previousShell.RowCount);
+            int minimumColumnCount = Mathf.Max(1, previousShell.ColumnCount);
+            int minimumRowCount = Mathf.Max(1, previousShell.RowCount);
             float edgeInset = GetCubeFaceEdgeInset(metrics);
+            const int SearchPaddingPerAxis = 12;
+
+            float bestMismatch = float.MaxValue;
+            float bestSideLength = float.MaxValue;
+            int bestColumnCount = minimumColumnCount;
+            int bestRowCount = minimumRowCount;
+            int bestTileCount = int.MaxValue;
+            bool foundCandidate = false;
+
+            for (int columnCount = minimumColumnCount; columnCount <= minimumColumnCount + SearchPaddingPerAxis; columnCount++)
+            {
+                for (int rowCount = minimumRowCount; rowCount <= minimumRowCount + SearchPaddingPerAxis; rowCount++)
+                {
+                    float panelWidth = columnCount * metrics.FaceWidth;
+                    float panelHeight = rowCount * metrics.FaceHeight;
+                    float sideLength = Mathf.Max(panelWidth, panelHeight) + (edgeInset * 2f);
+                    if (sideLength + 0.0001f < requiredSideLength)
+                    {
+                        continue;
+                    }
+
+                    float longestSide = Mathf.Max(panelWidth, panelHeight);
+                    float mismatch = longestSide <= 0.01f ? 0f : Mathf.Abs(panelWidth - panelHeight) / longestSide;
+                    int tileCount = columnCount * rowCount;
+
+                    bool isBetterMismatch = mismatch + 0.0001f < bestMismatch;
+                    bool isSameMismatchWithSmallerShell = Mathf.Abs(mismatch - bestMismatch) <= 0.0001f && sideLength + 0.0001f < bestSideLength;
+                    bool isSameMismatchAndShellWithFewerTiles = Mathf.Abs(mismatch - bestMismatch) <= 0.0001f && Mathf.Abs(sideLength - bestSideLength) <= 0.0001f && tileCount < bestTileCount;
+                    if (!isBetterMismatch && !isSameMismatchWithSmallerShell && !isSameMismatchAndShellWithFewerTiles)
+                    {
+                        continue;
+                    }
+
+                    bestMismatch = mismatch;
+                    bestSideLength = sideLength;
+                    bestColumnCount = columnCount;
+                    bestRowCount = rowCount;
+                    bestTileCount = tileCount;
+                    foundCandidate = true;
+                }
+            }
+
+            if (foundCandidate)
+            {
+                return new CubeShellPlan(bestColumnCount, bestRowCount, bestSideLength);
+            }
+
+            int columnCountFallback = minimumColumnCount;
+            int rowCountFallback = minimumRowCount;
 
             while (true)
             {
-                float panelWidth = columnCount * metrics.FaceWidth;
-                float panelHeight = rowCount * metrics.FaceHeight;
+                float panelWidth = columnCountFallback * metrics.FaceWidth;
+                float panelHeight = rowCountFallback * metrics.FaceHeight;
                 float sideLength = Mathf.Max(panelWidth, panelHeight) + (edgeInset * 2f);
                 if (sideLength + 0.0001f >= requiredSideLength)
                 {
-                    return new CubeShellPlan(columnCount, rowCount, sideLength);
+                    return new CubeShellPlan(columnCountFallback, rowCountFallback, sideLength);
                 }
 
                 if (panelWidth <= panelHeight)
                 {
-                    columnCount++;
+                    columnCountFallback++;
                 }
                 else
                 {
-                    rowCount++;
+                    rowCountFallback++;
                 }
             }
         }
@@ -975,22 +1090,6 @@ namespace MahjongOut3D.LevelSystem
         private static float GetCubeFaceEdgeInset(CubeTileMetrics metrics)
         {
             return Mathf.Max(0.01f, metrics.Thickness + 0.001f);
-        }
-
-        /// <summary>
-        /// Resolves the center-to-center step that stretches one tile strip to fill a square panel without overlap.
-        /// </summary>
-        private static float GetSquarePanelStep(int tileCount, float tileSize, float targetPanelSideLength)
-        {
-            int safeTileCount = Mathf.Max(1, tileCount);
-            float safeTileSize = Mathf.Max(0.01f, tileSize);
-            if (safeTileCount <= 1)
-            {
-                return 0f;
-            }
-
-            float step = (Mathf.Max(safeTileSize, targetPanelSideLength) - safeTileSize) / (safeTileCount - 1);
-            return Mathf.Max(safeTileSize, step);
         }
 
         /// <summary>
@@ -1095,6 +1194,43 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return hasBounds;
+        }
+
+        /// <summary>
+        /// Transforms a bounds volume through the supplied matrix and returns the resulting axis-aligned bounds.
+        /// </summary>
+        private static bool TryTransformBounds(Matrix4x4 matrix, Bounds sourceBounds, out Bounds transformedBounds)
+        {
+            transformedBounds = default;
+            if (sourceBounds.size.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return false;
+            }
+
+            Vector3 sourceCenter = sourceBounds.center;
+            Vector3 sourceExtents = sourceBounds.extents;
+            Vector3[] corners = new Vector3[8];
+            int cornerIndex = 0;
+
+            for (int x = -1; x <= 1; x += 2)
+            {
+                for (int y = -1; y <= 1; y += 2)
+                {
+                    for (int z = -1; z <= 1; z += 2)
+                    {
+                        Vector3 corner = sourceCenter + Vector3.Scale(sourceExtents, new Vector3(x, y, z));
+                        corners[cornerIndex++] = matrix.MultiplyPoint3x4(corner);
+                    }
+                }
+            }
+
+            transformedBounds = new Bounds(corners[0], Vector3.zero);
+            for (int index = 1; index < corners.Length; index++)
+            {
+                transformedBounds.Encapsulate(corners[index]);
+            }
+
+            return transformedBounds.size.sqrMagnitude > Mathf.Epsilon;
         }
 
         /// <summary>

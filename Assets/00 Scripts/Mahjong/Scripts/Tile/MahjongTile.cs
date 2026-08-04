@@ -322,12 +322,25 @@ namespace MahjongOut3D.TileSystem
         {
             CacheReferences();
 
-            if (TryGetPlacementBounds(out Bounds placementBounds))
+            if (TryGetPlacementLocalBounds(out Bounds placementBounds))
             {
-                return Quaternion.Inverse(transform.rotation) * (placementBounds.center - transform.position);
+                return placementBounds.center;
             }
 
             return Vector3.zero;
+        }
+
+        /// <summary>
+        /// Resolves the physical placement size of the tile in root local space.
+        /// </summary>
+        /// <returns>Root-local bounds size when available; otherwise zero.</returns>
+        public Vector3 GetPlacementSize()
+        {
+            CacheReferences();
+
+            return TryGetPlacementLocalBounds(out Bounds placementBounds)
+                ? placementBounds.size
+                : Vector3.zero;
         }
 
         /// <summary>
@@ -488,23 +501,68 @@ namespace MahjongOut3D.TileSystem
         /// </summary>
         /// <param name="placementBounds">Resolved bounds when available.</param>
         /// <returns>True when a non-empty bounds source was found; otherwise false.</returns>
-        private bool TryGetPlacementBounds(out Bounds placementBounds)
+        private bool TryGetPlacementLocalBounds(out Bounds placementBounds)
         {
             placementBounds = default;
 
-            if (tileCollider != null && tileCollider.bounds.size.sqrMagnitude > Mathf.Epsilon)
+            if (meshRenderer != null)
             {
-                placementBounds = tileCollider.bounds;
-                return true;
+                MeshFilter meshFilter = meshRenderer.GetComponent<MeshFilter>();
+                if (meshFilter != null && meshFilter.sharedMesh != null)
+                {
+                    return TryTransformLocalBounds(meshFilter.transform, meshFilter.sharedMesh.bounds, out placementBounds);
+                }
             }
 
-            if (meshRenderer != null && meshRenderer.bounds.size.sqrMagnitude > Mathf.Epsilon)
+            if (tileCollider is MeshCollider meshCollider && meshCollider.sharedMesh != null)
             {
-                placementBounds = meshRenderer.bounds;
-                return true;
+                return TryTransformLocalBounds(meshCollider.transform, meshCollider.sharedMesh.bounds, out placementBounds);
+            }
+
+            if (tileCollider is BoxCollider boxCollider)
+            {
+                return TryTransformLocalBounds(boxCollider.transform, new Bounds(boxCollider.center, boxCollider.size), out placementBounds);
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Converts a component-local bounds into the tile root local space.
+        /// </summary>
+        private bool TryTransformLocalBounds(Transform sourceTransform, Bounds sourceBounds, out Bounds transformedBounds)
+        {
+            transformedBounds = default;
+            if (sourceTransform == null || sourceBounds.size.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return false;
+            }
+
+            Matrix4x4 toRootMatrix = transform.worldToLocalMatrix * sourceTransform.localToWorldMatrix;
+            Vector3 sourceCenter = sourceBounds.center;
+            Vector3 sourceExtents = sourceBounds.extents;
+
+            Vector3[] corners = new Vector3[8];
+            int cornerIndex = 0;
+            for (int x = -1; x <= 1; x += 2)
+            {
+                for (int y = -1; y <= 1; y += 2)
+                {
+                    for (int z = -1; z <= 1; z += 2)
+                    {
+                        Vector3 corner = sourceCenter + Vector3.Scale(sourceExtents, new Vector3(x, y, z));
+                        corners[cornerIndex++] = toRootMatrix.MultiplyPoint3x4(corner);
+                    }
+                }
+            }
+
+            transformedBounds = new Bounds(corners[0], Vector3.zero);
+            for (int index = 1; index < corners.Length; index++)
+            {
+                transformedBounds.Encapsulate(corners[index]);
+            }
+
+            return transformedBounds.size.sqrMagnitude > Mathf.Epsilon;
         }
 
         /// <summary>

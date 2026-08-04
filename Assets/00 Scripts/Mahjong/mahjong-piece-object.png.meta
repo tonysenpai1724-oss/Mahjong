@@ -121,7 +121,205 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: mahjong-piece-object_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: daf43131ab26bbd99a2e73e1e16049a9
+      internalID: 497667192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_1
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6cc537310a24b955092ca14fb3e848ec
+      internalID: 827354805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_2
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14e6897405aa998c199f3baea674ca00
+      internalID: 308567714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_3
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 85bc2c48aba3c018bb22004f64cb5f69
+      internalID: -1464664789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_4
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bcd3ff4040e06c4ed9df62113346a0a2
+      internalID: 1038438681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_5
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cd516e7da07948302ba4a6520d9983c5
+      internalID: -1965310340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_6
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7f279bb1c3cc8c98b534cbe987caa37
+      internalID: 1208795758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_7
+      rect:
+        serializedVersion: 2
+        x: 840
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d5af4417f7dac2b87942b8140e538346
+      internalID: -621354971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mahjong-piece-object_8
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 1862
+        width: 120
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 82db8f23d59a15cdc9384e4c5d936d16
+      internalID: 2125684924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -134,8 +332,19 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
-    nameFileIdTable: {}
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":120.0,"y":186.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      mahjong-piece-object_0: 497667192
+      mahjong-piece-object_1: 827354805
+      mahjong-piece-object_2: 308567714
+      mahjong-piece-object_3: -1464664789
+      mahjong-piece-object_4: 1038438681
+      mahjong-piece-object_5: -1965310340
+      mahjong-piece-object_6: 1208795758
+      mahjong-piece-object_7: -621354971
+      mahjong-piece-object_8: 2125684924
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

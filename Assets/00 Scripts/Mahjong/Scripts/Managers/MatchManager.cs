@@ -465,9 +465,11 @@ namespace MahjongOut3D.Managers
                 }
             }
 
+            List<MahjongTile> hintCandidates = GetOrderedHintCandidates(tileManager);
             Dictionary<int, MahjongTile> firstByMatchId = new Dictionary<int, MahjongTile>();
-            foreach (MahjongTile tile in tileManager.GetExposedTiles())
+            for (int index = 0; index < hintCandidates.Count; index++)
             {
+                MahjongTile tile = hintCandidates[index];
                 if (tile == null || tile.IsRemoved || tile.IsBufferedSelection || !tileManager.IsTileHintSelectable(tile))
                 {
                     continue;
@@ -484,6 +486,59 @@ namespace MahjongOut3D.Managers
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Gets hint candidates ordered from the outermost visible shell inward.
+        /// </summary>
+        private List<MahjongTile> GetOrderedHintCandidates(TileManager tileManager)
+        {
+            List<MahjongTile> hintCandidates = new List<MahjongTile>();
+            if (tileManager == null)
+            {
+                return hintCandidates;
+            }
+
+            foreach (MahjongTile tile in tileManager.GetExposedTiles())
+            {
+                hintCandidates.Add(tile);
+            }
+
+            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
+            hintCandidates.Sort((left, right) => CompareHintCandidates(left, right, useSurfaceRules));
+            return hintCandidates;
+        }
+
+        /// <summary>
+        /// Orders hint candidates so auto-resolve prefers the outer shell first.
+        /// </summary>
+        private static int CompareHintCandidates(MahjongTile left, MahjongTile right, bool useSurfaceRules)
+        {
+            if (object.ReferenceEquals(left, right))
+            {
+                return 0;
+            }
+
+            if (left == null)
+            {
+                return 1;
+            }
+
+            if (right == null)
+            {
+                return -1;
+            }
+
+            if (useSurfaceRules)
+            {
+                int shellComparison = left.SurfaceShellIndex.CompareTo(right.SurfaceShellIndex);
+                if (shellComparison != 0)
+                {
+                    return shellComparison;
+                }
+            }
+
+            return left.TileId.CompareTo(right.TileId);
         }
 
         /// <summary>

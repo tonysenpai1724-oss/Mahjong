@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MahjongOut3D.TileSystem
@@ -7,6 +8,9 @@ namespace MahjongOut3D.TileSystem
     /// </summary>
     public sealed class TileVisualController : MonoBehaviour
     {
+        private const string MatchIndicatorObjectName = "Quad";
+        private const string GeneratedOutlineObjectName = "InvertedHullOutlineRuntime";
+
         [SerializeField] private TileVisualSettings settings;
         [SerializeField] private MeshRenderer[] targetRenderers;
         [SerializeField] private TileOutlinePresenter outlinePresenter;
@@ -27,6 +31,7 @@ namespace MahjongOut3D.TileSystem
         private bool hasRuntimeBaseColorOverride;
         private Color runtimeBaseColorOverride = Color.white;
         private bool isHintHighlighted;
+        private bool hasResolvedTargetRenderers;
 
         /// <summary>
         /// Enables or disables the temporary hint highlight visual.
@@ -160,7 +165,7 @@ namespace MahjongOut3D.TileSystem
 
             if (targetRenderers == null || targetRenderers.Length == 0)
             {
-                targetRenderers = GetComponentsInChildren<MeshRenderer>(true);
+                RefreshTargetRenderers();
             }
         }
 
@@ -179,9 +184,9 @@ namespace MahjongOut3D.TileSystem
                 propertyBlock = new MaterialPropertyBlock();
             }
 
-            if (targetRenderers == null || targetRenderers.Length == 0)
+            if (!hasResolvedTargetRenderers || HasMissingTargetRenderer())
             {
-                targetRenderers = GetComponentsInChildren<MeshRenderer>(true);
+                RefreshTargetRenderers();
             }
 
             if (outlinePresenter == null)
@@ -210,6 +215,70 @@ namespace MahjongOut3D.TileSystem
                     cachedHasPrimaryBaseColor[index] = TryResolveBaseColor(renderer, GetBaseColorProperty(), out cachedPrimaryBaseColors[index]);
                     cachedHasSecondaryBaseColor[index] = TryResolveBaseColor(renderer, GetSecondaryBaseColorProperty(), out cachedSecondaryBaseColors[index]);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the renderer list so every visible tile mesh is driven by the state machine.
+        /// </summary>
+        private void RefreshTargetRenderers()
+        {
+            MeshRenderer[] discoveredRenderers = GetComponentsInChildren<MeshRenderer>(true);
+            List<MeshRenderer> mergedRenderers = new List<MeshRenderer>(discoveredRenderers.Length);
+
+            AddRenderers(mergedRenderers, targetRenderers);
+            AddRenderers(mergedRenderers, discoveredRenderers);
+
+            targetRenderers = mergedRenderers.ToArray();
+            hasResolvedTargetRenderers = targetRenderers.Length > 0;
+        }
+
+        /// <summary>
+        /// Returns true when the cached renderer list contains missing references.
+        /// </summary>
+        private bool HasMissingTargetRenderer()
+        {
+            if (targetRenderers == null || targetRenderers.Length == 0)
+            {
+                return true;
+            }
+
+            for (int index = 0; index < targetRenderers.Length; index++)
+            {
+                if (targetRenderers[index] == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Adds valid tile renderers while excluding match-indicator and generated-outline helpers.
+        /// </summary>
+        private static void AddRenderers(List<MeshRenderer> destination, MeshRenderer[] source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < source.Length; index++)
+            {
+                MeshRenderer renderer = source[index];
+                if (renderer == null || destination.Contains(renderer))
+                {
+                    continue;
+                }
+
+                string rendererObjectName = renderer.gameObject.name;
+                if (rendererObjectName == MatchIndicatorObjectName || rendererObjectName == GeneratedOutlineObjectName)
+                {
+                    continue;
+                }
+
+                destination.Add(renderer);
             }
         }
 
