@@ -418,6 +418,11 @@ namespace MahjongOut3D.TileSystem
                 return;
             }
 
+            if (newState == TileState.Matched || newState == TileState.Removed || newState == TileState.Hidden)
+            {
+                SetHintHighlighted(false);
+            }
+
             TileState previousState = state;
             state = newState;
             ApplyStateToPresentation(state, false);

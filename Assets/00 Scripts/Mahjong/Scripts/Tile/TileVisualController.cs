@@ -35,6 +35,16 @@ namespace MahjongOut3D.TileSystem
         public void SetHintHighlighted(bool isHighlighted)
         {
             isHintHighlighted = isHighlighted;
+
+            if (outlinePresenter == null)
+            {
+                outlinePresenter = GetComponentInChildren<TileOutlinePresenter>(true);
+            }
+
+            if (outlinePresenter != null)
+            {
+                outlinePresenter.SetHintHighlighted(isHighlighted);
+            }
         }
 
         /// <summary>
@@ -48,7 +58,7 @@ namespace MahjongOut3D.TileSystem
 
             bool shouldRender = state != TileState.Hidden && state != TileState.Removed;
             SetRenderersVisible(shouldRender);
-            SetOutlineVisible(state == TileState.Selected || isHintHighlighted);
+            SetOutlineVisible(shouldRender);
 
             targetScale = GetTargetScale(state);
             if (instant)
@@ -141,6 +151,11 @@ namespace MahjongOut3D.TileSystem
             if (outlinePresenter == null)
             {
                 outlinePresenter = GetComponentInChildren<TileOutlinePresenter>(true);
+            }
+
+            if (outlinePresenter != null)
+            {
+                outlinePresenter.SetHintHighlighted(isHintHighlighted);
             }
 
             if (targetRenderers == null || targetRenderers.Length == 0)
@@ -375,6 +390,7 @@ namespace MahjongOut3D.TileSystem
             if (outlinePresenter != null)
             {
                 outlinePresenter.SetOutlineVisible(isVisible);
+                outlinePresenter.SetHintHighlighted(isVisible && isHintHighlighted);
             }
         }
 
