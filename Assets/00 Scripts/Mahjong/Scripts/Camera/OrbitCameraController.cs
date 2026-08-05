@@ -17,7 +17,7 @@ namespace MahjongOut3D.CameraSystem
         private const float FallbackZoomSpeed = 3f;
         private const float FallbackZoomInputScale = 0.02f;
         private const float FallbackMinZoomDistance = 6f;
-        private const float FallbackMaxZoomDistance = 18f;
+        private const float FallbackMaxZoomDistance = 24f;
         private const float FallbackDefaultPitch = 25f;
         private const float FallbackMinPitch = -15f;
         private const float FallbackMaxPitch = 70f;
@@ -166,6 +166,47 @@ namespace MahjongOut3D.CameraSystem
         }
 
         /// <summary>
+        /// Sets the desired zoom distance directly.
+        /// </summary>
+        /// <param name="distance">Target orbit distance.</param>
+        /// <param name="snap">True to snap immediately; otherwise smooth toward the target.</param>
+        public void SetZoomDistance(float distance, bool snap = false)
+        {
+            float clampedDistance = Mathf.Clamp(distance, GetMinZoomDistance(), GetMaxZoomDistance());
+            targetDistance = clampedDistance;
+
+            if (snap || !isInitialized)
+            {
+                currentDistance = clampedDistance;
+
+                if (isInitialized)
+                {
+                    ApplyTransform(true);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the current smoothed orbit distance.
+        /// </summary>
+        public float CurrentDistance => currentDistance;
+
+        /// <summary>
+        /// Gets the configured default orbit distance.
+        /// </summary>
+        public float DefaultDistance => GetDefaultZoomDistance();
+
+        /// <summary>
+        /// Gets the configured minimum orbit distance.
+        /// </summary>
+        public float MinDistance => GetMinZoomDistance();
+
+        /// <summary>
+        /// Gets the configured maximum orbit distance.
+        /// </summary>
+        public float MaxDistance => GetMaxZoomDistance();
+
+        /// <summary>
         /// Updates the orbit focus target at runtime.
         /// </summary>
         /// <param name="target">Transform that the camera should orbit around.</param>
@@ -188,19 +229,45 @@ namespace MahjongOut3D.CameraSystem
         /// </summary>
         /// <param name="worldBounds">World bounds to frame.</param>
         /// <param name="paddingMultiplier">Extra framing padding multiplier.</param>
-        public void FrameBounds(Bounds worldBounds, float paddingMultiplier = 1.2f)
+        public void FrameBounds(Bounds worldBounds, float paddingMultiplier = 1.2f, bool snap = false, bool resetAngles = false)
         {
             focusTarget = null;
             focusPoint = worldBounds.center;
+
+            if (resetAngles)
+            {
+                targetYaw = initialYaw;
+                targetPitch = Mathf.Clamp(GetDefaultPitch(), GetMinPitch(), GetMaxPitch());
+                inertialRotationVelocity = Vector2.zero;
+                yawSmoothVelocity = 0f;
+                pitchSmoothVelocity = 0f;
+                lastDragFrame = -1;
+            }
 
             float safePadding = Mathf.Max(1f, paddingMultiplier);
             float framingDistance = CalculateFramingDistance(worldBounds, safePadding);
             targetDistance = Mathf.Clamp(framingDistance, GetMinZoomDistance(), GetMaxZoomDistance());
 
-            if (!isInitialized)
+            if (snap || !isInitialized)
             {
                 currentFocusPoint = focusPoint;
                 currentDistance = targetDistance;
+
+                if (resetAngles)
+                {
+                    currentYaw = targetYaw;
+                    currentPitch = targetPitch;
+                }
+
+                focusXSmoothVelocity = 0f;
+                focusYSmoothVelocity = 0f;
+                focusZSmoothVelocity = 0f;
+                distanceSmoothVelocity = 0f;
+
+                if (isInitialized)
+                {
+                    ApplyTransform(true);
+                }
             }
         }
 

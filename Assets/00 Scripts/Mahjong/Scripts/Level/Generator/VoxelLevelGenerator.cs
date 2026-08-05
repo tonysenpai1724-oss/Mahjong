@@ -4,6 +4,7 @@ using MahjongOut3D.Data;
 using MahjongOut3D.Managers;
 using MahjongOut3D.TileSystem;
 using MahjongOut3D.Utilities;
+using MahjongOut3D;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -45,6 +46,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private bool generateOnStart;
         [SerializeField] private bool clearExistingChildrenOnGenerate = true;
         [SerializeField] private bool usePooling = true;
+        [SerializeField, Min(1f)] private float cameraFramePaddingOnLoad = 1.7f;
 
         private readonly List<MahjongTile> spawnedTiles = new List<MahjongTile>();
         private readonly Dictionary<int, Material> fillMaterialsByMatchId = new Dictionary<int, Material>();
@@ -53,8 +55,10 @@ namespace MahjongOut3D.LevelSystem
         private LevelManager levelManager;
         private TileManager tileManager;
         private CameraManager cameraManager;
+        private ZoomSlider zoomSlider;
         private int nextTileId;
         private MahjongTile runtimeFallbackTilePrefab;
+        private Quaternion defaultTileRootLocalRotation = Quaternion.identity;
         public MahjongMaterialSO mahjongMaterialSO;
         private Material pieceMaterial;
         /// <summary>
@@ -68,11 +72,14 @@ namespace MahjongOut3D.LevelSystem
             levelManager = context.Services.Get<LevelManager>();
             tileManager = context.Services.Get<TileManager>();
             context.Services.TryGet(out cameraManager);
+            zoomSlider = FindFirstObjectByType<ZoomSlider>(FindObjectsInactive.Exclude);
 
             if (tileRoot == null)
             {
                 tileRoot = transform;
             }
+
+            defaultTileRootLocalRotation = tileRoot != null ? tileRoot.localRotation : Quaternion.identity;
 
             EnsureTileTemplate();
 
@@ -648,6 +655,11 @@ namespace MahjongOut3D.LevelSystem
             }
 
             Transform rotationRoot = tileRoot != null ? tileRoot : transform;
+            if (rotationRoot != null)
+            {
+                rotationRoot.localRotation = defaultTileRootLocalRotation;
+            }
+
             cameraManager.SetRotationTarget(rotationRoot);
 
             Bounds worldBounds;
@@ -657,7 +669,8 @@ namespace MahjongOut3D.LevelSystem
                 worldBounds = TransformBounds(rotationRoot, localBounds);
             }
 
-            cameraManager.FrameBounds(worldBounds, 1.35f);
+            cameraManager.FrameBounds(worldBounds, cameraFramePaddingOnLoad, true, true);
+            zoomSlider?.SyncWithCamera();
         }
 
         /// <summary>

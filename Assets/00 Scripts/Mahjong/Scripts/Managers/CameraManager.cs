@@ -211,9 +211,9 @@ namespace MahjongOut3D.Managers
         /// </summary>
         /// <param name="worldBounds">Bounds to frame.</param>
         /// <param name="paddingMultiplier">Extra framing padding multiplier.</param>
-        public void FrameBounds(Bounds worldBounds, float paddingMultiplier = 1.2f)
+        public void FrameBounds(Bounds worldBounds, float paddingMultiplier = 1.2f, bool snap = false, bool resetAngles = false)
         {
-            orbitCameraController?.FrameBounds(worldBounds, paddingMultiplier);
+            orbitCameraController?.FrameBounds(worldBounds, paddingMultiplier, snap, resetAngles);
         }
 
         /// <summary>

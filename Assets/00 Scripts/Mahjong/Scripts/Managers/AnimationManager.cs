@@ -347,20 +347,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private float GetTrayTargetDistance(Camera activeCamera, MahjongTile tile)
         {
-            float configuredDistance = GetTrayDistanceFromCamera();
-            if (activeCamera == null || tile == null)
-            {
-                return configuredDistance;
-            }
-
-            Vector3 toTile = tile.transform.position - activeCamera.transform.position;
-            float currentDepth = Vector3.Dot(toTile, activeCamera.transform.forward);
-            if (currentDepth <= Mathf.Epsilon)
-            {
-                return configuredDistance;
-            }
-
-            return Mathf.Max(configuredDistance, currentDepth + GetTrayDistancePadding());
+            return Mathf.Max(0.5f, GetTrayDistanceFromCamera() + GetTrayDistancePadding());
         }
 
         /// <summary>

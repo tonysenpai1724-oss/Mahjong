@@ -18,7 +18,7 @@ MonoBehaviour:
   <ZoomSpeed>k__BackingField: 3
   <ZoomInputScale>k__BackingField: 0.02
   <MinZoomDistance>k__BackingField: 6
-  <MaxZoomDistance>k__BackingField: 18
+  <MaxZoomDistance>k__BackingField: 24
   <DefaultPitch>k__BackingField: 25
   <MinPitch>k__BackingField: -15
   <MaxPitch>k__BackingField: 70

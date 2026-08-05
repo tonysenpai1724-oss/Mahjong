@@ -34,11 +34,13 @@ namespace MahjongOut3D.TileSystem
         private Material generatedOutlineRuntimeMaterial;
         private Color defaultOutlineColor = Color.black;
         private bool isHintHighlighted;
+        private bool isOutlineVisible = true;
 
         private void Awake()
         {
             EnsureGeneratedOutline();
             ApplyOutlineAppearance();
+            isOutlineVisible = showOutlineOnCreate;
             SetGeneratedOutlineVisible(showOutlineOnCreate);
         }
 
@@ -62,6 +64,7 @@ namespace MahjongOut3D.TileSystem
         public void SetOutlineVisible(bool isVisible)
         {
             EnsureGeneratedOutline();
+            isOutlineVisible = isVisible;
 
             if (outlineBehaviours != null)
             {
@@ -87,7 +90,7 @@ namespace MahjongOut3D.TileSystem
                 }
             }
 
-            SetGeneratedOutlineVisible(isVisible);
+            SetGeneratedOutlineVisible(isVisible && (!isHintHighlighted || IsHintBlinkVisible()));
         }
 
         /// <summary>
@@ -187,13 +190,18 @@ namespace MahjongOut3D.TileSystem
             if (!isHintHighlighted)
             {
                 ApplyOutlineColor(generatedOutlineRuntimeMaterial, defaultOutlineColor);
+                SetGeneratedOutlineVisible(isOutlineVisible);
                 return;
             }
 
+            ApplyOutlineColor(generatedOutlineRuntimeMaterial, hintOutlineColor);
+            SetGeneratedOutlineVisible(isOutlineVisible && IsHintBlinkVisible());
+        }
+
+        private bool IsHintBlinkVisible()
+        {
             float blinkT = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * hintBlinkSpeed * Mathf.PI * 2f);
-            float blendStrength = Mathf.Lerp(0.08f, hintBlinkStrength, blinkT);
-            Color blinkColor = Color.Lerp(defaultOutlineColor, hintOutlineColor, blendStrength);
-            ApplyOutlineColor(generatedOutlineRuntimeMaterial, blinkColor);
+            return blinkT >= Mathf.Clamp01(hintBlinkStrength);
         }
 
         private void ApplyOutlineScale(Material targetMaterial)

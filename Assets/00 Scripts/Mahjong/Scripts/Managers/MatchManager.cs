@@ -255,8 +255,14 @@ namespace MahjongOut3D.Managers
             }
 
             MahjongTile tappedTile = eventData.Tile;
-            if (tappedTile == null || !tileManager.IsTileSelectable(tappedTile))
+            if (tappedTile == null)
             {
+                return;
+            }
+
+            if (!tileManager.IsTileSelectable(tappedTile))
+            {
+                tappedTile.PlayBlockedTapFeedback();
                 return;
             }
 
@@ -275,6 +281,7 @@ namespace MahjongOut3D.Managers
 
             if (!tappedTile.TrySelect())
             {
+                tappedTile.PlayBlockedTapFeedback();
                 return;
             }
 

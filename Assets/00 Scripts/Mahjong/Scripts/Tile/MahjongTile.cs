@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using MahjongOut3D.Data;
 using UnityEngine;
 
@@ -37,6 +38,7 @@ namespace MahjongOut3D.TileSystem
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
         private MaterialPropertyBlock baseColorPropertyBlock;
+        private Coroutine blockedTapFeedbackRoutine;
         private bool hasDebugBaseColor;
         private Color debugBaseColor = Color.white;
 
@@ -478,6 +480,24 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Plays a short shake to indicate that the tile cannot currently be selected.
+        /// </summary>
+        public void PlayBlockedTapFeedback()
+        {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            if (blockedTapFeedbackRoutine != null)
+            {
+                StopCoroutine(blockedTapFeedbackRoutine);
+            }
+
+            blockedTapFeedbackRoutine = StartCoroutine(PlayBlockedTapFeedbackRoutine());
+        }
+
+        /// <summary>
         /// Changes the runtime tile state and updates visuals and colliders.
         /// </summary>
         /// <param name="newState">New tile state.</param>
@@ -507,6 +527,28 @@ namespace MahjongOut3D.TileSystem
             {
                 SelectionChanged?.Invoke(new TileSelectionChangedEvent(this, isSelected));
             }
+        }
+
+        private IEnumerator PlayBlockedTapFeedbackRoutine()
+        {
+            Vector3 startLocalPosition = transform.localPosition;
+            const float durationSeconds = 0.16f;
+            const float amplitude = 0.015f;
+            const float oscillationCount = 3.5f;
+
+            float elapsed = 0f;
+            while (elapsed < durationSeconds)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float normalizedTime = Mathf.Clamp01(elapsed / durationSeconds);
+                float damping = 1f - normalizedTime;
+                float offset = Mathf.Sin(normalizedTime * oscillationCount * Mathf.PI * 2f) * amplitude * damping;
+                transform.localPosition = startLocalPosition + (Vector3.right * offset);
+                yield return null;
+            }
+
+            transform.localPosition = startLocalPosition;
+            blockedTapFeedbackRoutine = null;
         }
 
         /// <summary>

@@ -28,7 +28,7 @@ namespace MahjongOut3D.CameraSystem
         public float MinZoomDistance { get; private set; } = 6f;
 
         [field: SerializeField, Min(1f)]
-        public float MaxZoomDistance { get; private set; } = 18f;
+        public float MaxZoomDistance { get; private set; } = 24f;
 
         [field: Header("Angles")]
         [field: SerializeField, Range(-89f, 89f)]
