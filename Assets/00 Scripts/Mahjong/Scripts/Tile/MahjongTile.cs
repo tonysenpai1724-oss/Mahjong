@@ -173,6 +173,19 @@ namespace MahjongOut3D.TileSystem
                 pieceRenderer.sharedMaterial = pieceMaterial;
             }
         }
+
+        public void SetupFillMaterial(Material fillMaterial)
+        {
+            if (fillRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (fillRenderer != null)
+            {
+                fillRenderer.sharedMaterial = fillMaterial;
+            }
+        }
         /// <summary>
         /// Applies explicit piece and fill materials to the tile renderers.
         /// </summary>

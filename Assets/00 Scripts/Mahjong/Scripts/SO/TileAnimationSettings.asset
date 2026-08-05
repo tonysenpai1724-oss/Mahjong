@@ -15,6 +15,8 @@ MonoBehaviour:
   <MatchDurationSeconds>k__BackingField: 0.35
   <MatchSlideDistance>k__BackingField: 1.25
   <MatchRotationDegrees>k__BackingField: 55
+  <MatchViewportYOffset>k__BackingField: 0.08
+  <MatchDepthOffset>k__BackingField: 1.25
   <HintDurationSeconds>k__BackingField: 0.7
   <MismatchDelaySeconds>k__BackingField: 0.2
   <TrayMoveDurationSeconds>k__BackingField: 0.22

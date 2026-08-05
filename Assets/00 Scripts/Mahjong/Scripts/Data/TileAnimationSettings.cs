@@ -18,6 +18,12 @@ namespace MahjongOut3D.Data
         [field: SerializeField, Min(0f)]
         public float MatchRotationDegrees { get; private set; } = 55f;
 
+        [field: SerializeField, Range(0f, 0.2f)]
+        public float MatchViewportYOffset { get; private set; } = 0.05f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchDepthOffset { get; private set; } = 1.25f;
+
         [field: SerializeField, Min(0.05f)]
         public float HintDurationSeconds { get; private set; } = 0.7f;
 

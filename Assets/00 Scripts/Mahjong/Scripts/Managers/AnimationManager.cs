@@ -132,7 +132,6 @@ namespace MahjongOut3D.Managers
             Quaternion firstRotationStart = firstTile.transform.rotation;
             Quaternion secondRotationStart = secondTile.transform.rotation;
 
-            Vector3 worldCenter = GetWorldFocusPoint();
             Vector3 cameraRight = GetCameraRight();
             Vector3 cameraForward = GetCameraForward();
             if (cameraForward.sqrMagnitude <= Mathf.Epsilon)
@@ -146,9 +145,8 @@ namespace MahjongOut3D.Managers
 
             float slideDistance = GetMatchSlideDistance();
             float stageOffset = Mathf.Max(0.45f, slideDistance * 0.45f);
-            float liftHeight = Mathf.Max(0.75f, slideDistance * 3f);
 
-            Vector3 impactWorld = worldCenter + (Vector3.up * liftHeight);
+            Vector3 impactWorld = GetMatchCenterWorldPosition(firstTile, secondTile);
             Vector3 firstStageWorld = impactWorld - (cameraRight * stageOffset);
             Vector3 secondStageWorld = impactWorld + (cameraRight * stageOffset);
 
@@ -325,6 +323,26 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Resolves the shared world-space center used by the match animation.
+        /// </summary>
+        private Vector3 GetMatchCenterWorldPosition(MahjongTile firstTile, MahjongTile secondTile)
+        {
+            if (!Context.Services.TryGet(out CameraManager cameraManager) || cameraManager.ActiveCamera == null)
+            {
+                return Vector3.Lerp(firstTile.transform.position, secondTile.transform.position, 0.5f);
+            }
+
+            Camera activeCamera = cameraManager.ActiveCamera;
+            float viewportX = 0.5f;
+            float viewportY = Mathf.Clamp01(GetTrayViewportY() - GetMatchViewportYOffset());
+            float firstDepth = GetTrayTargetDistance(activeCamera, firstTile);
+            float secondDepth = GetTrayTargetDistance(activeCamera, secondTile);
+            float trayDepth = Mathf.Max(firstDepth, secondDepth);
+            float targetDepth = Mathf.Max(0.5f, trayDepth - GetMatchDepthOffset());
+            return activeCamera.ViewportToWorldPoint(new Vector3(viewportX, viewportY, targetDepth));
+        }
+
+        /// <summary>
         /// Keeps tray tiles from being pulled too close to the camera so their perceived size stays stable.
         /// </summary>
         private float GetTrayTargetDistance(Camera activeCamera, MahjongTile tile)
@@ -427,19 +445,6 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Gets the current world focus point used for slide-out direction calculations.
-        /// </summary>
-        private Vector3 GetWorldFocusPoint()
-        {
-            if (Context.Services.TryGet(out CameraManager cameraManager) && cameraManager.OrbitCameraController != null)
-            {
-                return cameraManager.OrbitCameraController.CurrentFocusPoint;
-            }
-
-            return Vector3.zero;
-        }
-
-        /// <summary>
         /// Gets the horizontal right direction of the active gameplay camera.
         /// </summary>
         /// <returns>Normalized world-space right vector.</returns>
@@ -483,6 +488,8 @@ namespace MahjongOut3D.Managers
         private float GetTrayMoveDurationSeconds() => animationSettings != null ? animationSettings.TrayMoveDurationSeconds : 0.22f;
         private float GetTrayViewportY() => animationSettings != null ? animationSettings.TrayViewportY : 0.84f;
         private float GetTrayViewportSlotSpacing() => animationSettings != null ? animationSettings.TrayViewportSlotSpacing : 0.1f;
+        private float GetMatchViewportYOffset() => animationSettings != null ? animationSettings.MatchViewportYOffset : 0.05f;
+        private float GetMatchDepthOffset() => animationSettings != null ? animationSettings.MatchDepthOffset : 1.25f;
         private float GetTrayDistanceFromCamera() => animationSettings != null ? animationSettings.TrayDistanceFromCamera : 8f;
         private float GetTrayDistancePadding() => animationSettings != null ? animationSettings.TrayDistancePadding : 0.75f;
         private float GetShakeDurationSeconds() => animationSettings != null ? animationSettings.ShakeDurationSeconds : 0.18f;

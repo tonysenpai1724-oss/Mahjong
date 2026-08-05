@@ -641,7 +641,7 @@ MonoBehaviour:
   generateOnStart: 1
   clearExistingChildrenOnGenerate: 1
   usePooling: 1
-  mahjongMaterialSO: {fileID: 0}
+  mahjongMaterialSO: {fileID: 11400000, guid: b68fb1a4d367ebaa5b1f911d6dc09311, type: 2}
 --- !u!1 &176450051
 GameObject:
   m_ObjectHideFlags: 0

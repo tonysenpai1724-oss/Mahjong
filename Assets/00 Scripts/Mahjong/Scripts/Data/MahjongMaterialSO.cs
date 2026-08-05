@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace MahjongOut3D.Data
 {
@@ -7,8 +7,6 @@ namespace MahjongOut3D.Data
     public sealed class MahjongMaterialSO : ScriptableObject
     {
         [SerializeField] public List<Material> pieceMaterial;
-        [SerializeField] public  List<Material >fillMaterial;
-
-
+        [SerializeField] public List<Material> fillMaterial;
     }
 }
