@@ -1699,10 +1699,21 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Resolves the tile thickness used when shell layers are compacted against each other.
+        /// Resolves the physical tile thickness used when shell layers are compacted against each other.
+        /// Prefers the assigned tile prefab bounds so wrapped shell layers stay visually tight across every shape.
         /// </summary>
         private float GetSurfaceShellThickness()
         {
+            if (TryGetTilePrefabPlacementBounds(out Bounds placementBounds))
+            {
+                return Mathf.Max(0.01f, placementBounds.size.y);
+            }
+
+            if (TryGetTilePrefabBounds(out Bounds prefabBounds))
+            {
+                return Mathf.Max(0.01f, prefabBounds.size.y);
+            }
+
             Vector3 cellSize = layoutOverride != null ? layoutOverride.CellSize : new Vector3(0.95f, 0.45f, 0.7f);
             return Mathf.Max(0.01f, cellSize.y);
         }

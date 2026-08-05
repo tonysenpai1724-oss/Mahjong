@@ -41,6 +41,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private bool applyTileBaseColor = true;
         [SerializeField] private Color tileBaseColor = Color.white;
         [SerializeField] private Vector3 tileSpacingOffset;
+        [SerializeField, Range(0.5f, 1f)] private float surfaceShellSeparationScale = 0.8f;
 
         [Header("Generation")]
         [SerializeField] private bool generateOnStart;
@@ -407,7 +408,54 @@ namespace MahjongOut3D.LevelSystem
                 tile.SurfaceShellIndex = ResolveShellIndex(shellMagnitude, uniqueMagnitudes);
             }
 
+            CompactSurfaceShellLayers(runtimeTiles, layoutOverride);
+
             return runtimeTiles;
+        }
+
+        /// <summary>
+        /// Pulls nested surface shells slightly closer together while preserving their order and cube-like layering.
+        /// This runs at load time so existing generated level assets also benefit from tighter layer spacing.
+        /// </summary>
+        private void CompactSurfaceShellLayers(IList<LevelTileDefinition> runtimeTiles, VoxelGridLayoutSettings layoutOverride)
+        {
+            if (runtimeTiles == null || runtimeTiles.Count == 0 || surfaceShellSeparationScale >= 0.9999f)
+            {
+                return;
+            }
+
+            float shellThickness = GetSurfaceShellThickness(layoutOverride);
+            if (shellThickness <= Mathf.Epsilon)
+            {
+                return;
+            }
+
+            for (int index = 0; index < runtimeTiles.Count; index++)
+            {
+                LevelTileDefinition tile = runtimeTiles[index];
+                if (tile == null || tile.SurfaceShellIndex <= 0 || !tile.UseCustomLocalPosition)
+                {
+                    continue;
+                }
+
+                VoxelGridDirection facingDirection = ResolveFacingDirection(tile.LocalEulerAngles);
+                float faceStep = GetSurfaceFaceStep(layoutOverride, facingDirection);
+                float authoredGap = Mathf.Max(0f, faceStep - shellThickness);
+                if (authoredGap <= Mathf.Epsilon)
+                {
+                    continue;
+                }
+
+                float targetGap = authoredGap * Mathf.Clamp(surfaceShellSeparationScale, 0f, 1f);
+                float additionalOutwardOffset = (targetGap - authoredGap) * tile.SurfaceShellIndex;
+                if (Mathf.Abs(additionalOutwardOffset) <= 0.0001f)
+                {
+                    continue;
+                }
+
+                Vector3 faceNormal = ((Vector3)VoxelGridDirections.GetOffset(facingDirection)).normalized;
+                tile.LocalPosition += faceNormal * additionalOutwardOffset;
+            }
         }
 
         /// <summary>
@@ -567,6 +615,51 @@ namespace MahjongOut3D.LevelSystem
                 default:
                     return Mathf.Max(0.01f, (shellCount * cellSize.z) - cellSize.y) * 0.5f;
             }
+        }
+
+        /// <summary>
+        /// Resolves the face-normal step distance used by wrapped surface tiles.
+        /// </summary>
+        private float GetSurfaceFaceStep(VoxelGridLayoutSettings layoutOverride, VoxelGridDirection facingDirection)
+        {
+            VoxelGridLayoutSettings resolvedLayout = layoutOverride != null ? layoutOverride : levelManager != null ? levelManager.DefaultGridLayout : null;
+            Vector3 step = resolvedLayout != null ? resolvedLayout.CellStep : new Vector3(0.95f, 0.45f, 0.7f);
+
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return Mathf.Max(0.01f, step.x);
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return Mathf.Max(0.01f, step.y);
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return Mathf.Max(0.01f, step.z);
+            }
+        }
+
+        /// <summary>
+        /// Resolves the effective tile thickness used when tightening wrapped surface shells.
+        /// </summary>
+        private float GetSurfaceShellThickness(VoxelGridLayoutSettings layoutOverride)
+        {
+            MahjongTile template = tilePrefab != null ? tilePrefab : runtimeFallbackTilePrefab;
+            if (template != null)
+            {
+                float placementThickness = template.GetPlacementSize().y;
+                if (placementThickness > 0.01f)
+                {
+                    return placementThickness;
+                }
+            }
+
+            VoxelGridLayoutSettings resolvedLayout = layoutOverride != null ? layoutOverride : levelManager != null ? levelManager.DefaultGridLayout : null;
+            Vector3 cellSize = resolvedLayout != null ? resolvedLayout.CellSize : new Vector3(0.95f, 0.45f, 0.7f);
+            return Mathf.Max(0.01f, cellSize.y);
         }
 
         /// <summary>

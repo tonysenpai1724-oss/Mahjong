@@ -13,17 +13,28 @@ MonoBehaviour:
   m_Name: MahjongMaterial
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Data.MahjongMaterialSO
   pieceMaterial:
-  - {fileID: 2100000, guid: bc9addc40e4feabfcb1d60cb0fe274cf, type: 2}
-  - {fileID: 2100000, guid: 9c3959dfb8d874a18b1f85eac5579694, type: 2}
   - {fileID: 2100000, guid: c1cd76912aa7dcbda9ee7baa9dac49fd, type: 2}
+  - {fileID: 2100000, guid: bc9addc40e4feabfcb1d60cb0fe274cf, type: 2}
+  - {fileID: 2100000, guid: 2b20d5d45a08fc2458d2821f0feda56a, type: 2}
+  - {fileID: 2100000, guid: 9c3959dfb8d874a18b1f85eac5579694, type: 2}
   - {fileID: 2100000, guid: ee5e8022e85f004c3bd703d439f99c85, type: 2}
-  - {fileID: 2100000, guid: 63c51573f0b49dc3a96bc88a093cb323, type: 2}
+  - {fileID: 2100000, guid: d40678171a39d7206878dc2fcebe25a9, type: 2}
+  - {fileID: 2100000, guid: cb31d6d080a4773dfad8c83aa0a2754f, type: 2}
   - {fileID: 2100000, guid: f324a6fab6806930386337d66af0282e, type: 2}
   - {fileID: 2100000, guid: 4781b84171d05b76fb3d3977d14870c2, type: 2}
+  - {fileID: 2100000, guid: 572f203bc2a407ab08c0247488121ef0, type: 2}
+  - {fileID: 2100000, guid: 91161c6e3fe1b238f870cd173357cc3c, type: 2}
+  - {fileID: 2100000, guid: 4bd18279edca86e62a154454806bd6bc, type: 2}
+  - {fileID: 2100000, guid: 3f8704eb1fbcad54db2bae31bd97d4c3, type: 2}
   - {fileID: 2100000, guid: 52cdf37a4cf7fd2dd83a773fc1cbc116, type: 2}
   - {fileID: 2100000, guid: 0fb20ef682304b9d69dc57b3935e4054, type: 2}
+  - {fileID: 2100000, guid: a4cfc9e3b59740bf08d724b56f808e54, type: 2}
+  - {fileID: 2100000, guid: 5071f6f3f06e4ccaba11d10046d933ac, type: 2}
   - {fileID: 2100000, guid: f344cfb2954054fe9bb0e3c27b23f419, type: 2}
-  - {fileID: 2100000, guid: 2b20d5d45a08fc2458d2821f0feda56a, type: 2}
+  - {fileID: 2100000, guid: 27b97053ae0649487a126898be171f51, type: 2}
+  - {fileID: 2100000, guid: 5a465557a52d171a18d8eb2cbf68eb8d, type: 2}
+  - {fileID: 2100000, guid: 63c51573f0b49dc3a96bc88a093cb323, type: 2}
+  - {fileID: 2100000, guid: 1b77ec44343a68f8cb4bb5d7b3c01321, type: 2}
   fillMaterial:
   - {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
   - {fileID: 2100000, guid: 28c09dc37d3eac6d8b580b109e8d0521, type: 2}

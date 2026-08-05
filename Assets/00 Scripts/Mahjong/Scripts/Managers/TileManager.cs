@@ -423,11 +423,6 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            if (!IsTileSelectable(tile))
-            {
-                return;
-            }
-
             Context.EventBus.Publish(new TileTappedEvent(tile, eventData.ScreenPosition, ray, hitInfo));
         }
 
@@ -525,13 +520,16 @@ namespace MahjongOut3D.Managers
             }
 
             Vector3 outwardNormal = tile.transform.up.normalized;
+            if (HasOutwardFaceCoveringTile(tile, outwardNormal))
+            {
+                return false;
+            }
+
             Vector3[] samplePoints = tileCollider is BoxCollider boxCollider
                 ? BuildSurfaceExposureSamplePoints(boxCollider, tile.transform, GetVisibilitySampleInset())
                 : BuildSurfaceExposureSamplePoints(tileCollider.bounds, outwardNormal, GetVisibilitySampleInset());
             int openSampleCount = 0;
-            float checkDistance = tileCollider is BoxCollider sizedBoxCollider
-                ? GetSurfaceExposureCheckDistance(sizedBoxCollider, tile.transform)
-                : GetSurfaceExposureCheckDistance(tileCollider.bounds, outwardNormal);
+            float checkDistance = GetSurfaceExposureCheckDistance(tile, outwardNormal);
 
             for (int index = 0; index < samplePoints.Length; index++)
             {
@@ -571,6 +569,49 @@ namespace MahjongOut3D.Managers
 
             float openRatio = samplePoints.Length == 0 ? 0f : (float)openSampleCount / samplePoints.Length;
             return openRatio >= GetRequiredVisibleSampleRatio();
+        }
+
+        private bool HasOutwardFaceCoveringTile(MahjongTile tile, Vector3 outwardNormal)
+        {
+            if (tile == null || tile.TileCollider == null)
+            {
+                return false;
+            }
+
+            Vector3[] samplePoints = tile.TileCollider is BoxCollider boxCollider
+                ? BuildSurfaceCoverCheckSamplePoints(boxCollider, tile.transform, GetVisibilitySampleInset())
+                : BuildSurfaceCoverCheckSamplePoints(tile.TileCollider.bounds, outwardNormal, GetVisibilitySampleInset());
+            float checkDistance = GetSurfaceExposureCheckDistance(tile, outwardNormal);
+
+            for (int index = 0; index < samplePoints.Length; index++)
+            {
+                Vector3 rayOrigin = samplePoints[index] + (outwardNormal * GetVisibilityRayPadding());
+                Ray ray = new Ray(rayOrigin, outwardNormal);
+                int hitCount = Physics.RaycastNonAlloc(ray, raycastBuffer, checkDistance, tileLayerMask, QueryTriggerInteraction.Ignore);
+                if (hitCount <= 0)
+                {
+                    continue;
+                }
+
+                for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
+                {
+                    RaycastHit hit = raycastBuffer[hitIndex];
+                    if (hit.collider == null)
+                    {
+                        continue;
+                    }
+
+                    MahjongTile hitTile = hit.collider.GetComponentInParent<MahjongTile>();
+                    if (hitTile == null || hitTile == tile || hitTile.IsRemoved || hitTile.IsMatched)
+                    {
+                        continue;
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -809,6 +850,80 @@ namespace MahjongOut3D.Managers
             };
         }
 
+        private static Vector3[] BuildSurfaceCoverCheckSamplePoints(Bounds bounds, Vector3 outwardNormal, float inset)
+        {
+            Vector3 extents = bounds.extents - Vector3.one * inset;
+            extents.x = Mathf.Max(0.001f, extents.x);
+            extents.y = Mathf.Max(0.001f, extents.y);
+            extents.z = Mathf.Max(0.001f, extents.z);
+
+            Vector3 faceCenter;
+            Vector3 tangentA;
+            Vector3 tangentB;
+
+            if (Mathf.Abs(outwardNormal.x) > 0.5f)
+            {
+                faceCenter = bounds.center + new Vector3(Mathf.Sign(outwardNormal.x) * extents.x, 0f, 0f);
+                tangentA = Vector3.up * extents.y;
+                tangentB = Vector3.forward * extents.z;
+            }
+            else if (Mathf.Abs(outwardNormal.y) > 0.5f)
+            {
+                faceCenter = bounds.center + new Vector3(0f, Mathf.Sign(outwardNormal.y) * extents.y, 0f);
+                tangentA = Vector3.right * extents.x;
+                tangentB = Vector3.forward * extents.z;
+            }
+            else
+            {
+                faceCenter = bounds.center + new Vector3(0f, 0f, Mathf.Sign(outwardNormal.z) * extents.z);
+                tangentA = Vector3.right * extents.x;
+                tangentB = Vector3.up * extents.y;
+            }
+
+            return BuildFaceGridSamplePoints(faceCenter, tangentA, tangentB, 5);
+        }
+
+        private static Vector3[] BuildSurfaceCoverCheckSamplePoints(BoxCollider boxCollider, Transform transform, float inset)
+        {
+            Vector3 localCenter = boxCollider.center;
+            Vector3 localHalfSize = boxCollider.size * 0.5f;
+            float localInset = Mathf.Max(0.001f, inset);
+
+            float x = Mathf.Max(0.001f, localHalfSize.x - localInset);
+            float z = Mathf.Max(0.001f, localHalfSize.z - localInset);
+
+            Vector3 faceCenter = localCenter + new Vector3(0f, Mathf.Max(0.001f, localHalfSize.y - localInset), 0f);
+            Vector3[] localPoints = BuildFaceGridSamplePoints(faceCenter, Vector3.right * x, Vector3.forward * z, 5);
+            Vector3[] worldPoints = new Vector3[localPoints.Length];
+            for (int index = 0; index < localPoints.Length; index++)
+            {
+                worldPoints[index] = transform.TransformPoint(localPoints[index]);
+            }
+
+            return worldPoints;
+        }
+
+        private static Vector3[] BuildFaceGridSamplePoints(Vector3 faceCenter, Vector3 tangentA, Vector3 tangentB, int samplesPerAxis)
+        {
+            int safeSamplesPerAxis = Mathf.Max(2, samplesPerAxis);
+            Vector3[] points = new Vector3[safeSamplesPerAxis * safeSamplesPerAxis];
+            int pointIndex = 0;
+
+            for (int row = 0; row < safeSamplesPerAxis; row++)
+            {
+                float rowT = safeSamplesPerAxis == 1 ? 0f : (float)row / (safeSamplesPerAxis - 1);
+                float rowOffset = Mathf.Lerp(-1f, 1f, rowT);
+                for (int column = 0; column < safeSamplesPerAxis; column++)
+                {
+                    float columnT = safeSamplesPerAxis == 1 ? 0f : (float)column / (safeSamplesPerAxis - 1);
+                    float columnOffset = Mathf.Lerp(-1f, 1f, columnT);
+                    points[pointIndex++] = faceCenter + (tangentA * columnOffset) + (tangentB * rowOffset);
+                }
+            }
+
+            return points;
+        }
+
         /// <summary>
         /// Resolves how far outward to probe for a covering tile on the next shell.
         /// </summary>
@@ -832,12 +947,45 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Resolves how far outward to probe for a covering tile on the next shell for box colliders.
+        /// Resolves how far outward to probe for a covering tile on the next shell.
         /// </summary>
-        private float GetSurfaceExposureCheckDistance(BoxCollider boxCollider, Transform transform)
+        private float GetSurfaceExposureCheckDistance(MahjongTile tile, Vector3 outwardNormal)
         {
-            float scaledThickness = Mathf.Abs(boxCollider.size.y * transform.lossyScale.y);
-            return Mathf.Max(0.05f, scaledThickness + GetVisibilityRayPadding());
+            if (tile == null)
+            {
+                return Mathf.Max(0.05f, GetVisibilityRayPadding());
+            }
+
+            float distanceFromBounds = tile.TileCollider != null
+                ? GetSurfaceExposureCheckDistance(tile.TileCollider.bounds, outwardNormal)
+                : 0.05f;
+
+            float faceStep = GetSurfaceFaceStep(outwardNormal);
+            return Mathf.Max(distanceFromBounds, faceStep + GetVisibilityRayPadding());
+        }
+
+        /// <summary>
+        /// Resolves the face-normal step distance used by wrapped surface tiles on the active grid.
+        /// </summary>
+        private float GetSurfaceFaceStep(Vector3 outwardNormal)
+        {
+            if (!Context.Services.TryGet(out LevelManager levelManager) || levelManager.ActiveGrid?.LayoutSettings == null)
+            {
+                return 0.05f;
+            }
+
+            Vector3 step = levelManager.ActiveGrid.LayoutSettings.CellStep;
+            if (Mathf.Abs(outwardNormal.x) > 0.5f)
+            {
+                return Mathf.Max(0.01f, step.x);
+            }
+
+            if (Mathf.Abs(outwardNormal.y) > 0.5f)
+            {
+                return Mathf.Max(0.01f, step.y);
+            }
+
+            return Mathf.Max(0.01f, step.z);
         }
 
         /// <summary>
