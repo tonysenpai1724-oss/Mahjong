@@ -1,4 +1,5 @@
 using System;
+using MahjongOut3D.Data;
 using UnityEngine;
 
 namespace MahjongOut3D.TileSystem
@@ -21,6 +22,8 @@ namespace MahjongOut3D.TileSystem
 
         [Header("Components")]
         [SerializeField] private MeshRenderer meshRenderer;
+        [SerializeField] private MeshRenderer pieceRenderer;
+        [SerializeField] private MeshRenderer fillRenderer;
         [SerializeField] private MeshRenderer matchIndicatorRenderer;
         [SerializeField] private Collider tileCollider;
         [SerializeField] private Animator animator;
@@ -138,6 +141,7 @@ namespace MahjongOut3D.TileSystem
         private void Awake()
         {
             CacheReferences();
+            Setup();
             ApplyStateToPresentation(state, true);
         }
 
@@ -147,6 +151,47 @@ namespace MahjongOut3D.TileSystem
         private void OnValidate()
         {
             CacheReferences();
+            Setup();
+        }
+
+        /// <summary>
+        /// Applies the configured material set to the tile's piece and fill renderers.
+        /// </summary>
+        public void Setup()
+        {
+           
+        }
+        public void SetupPieceMaterial(Material pieceMaterial)
+        {
+            if (pieceRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (pieceRenderer != null)
+            {
+                pieceRenderer.sharedMaterial = pieceMaterial;
+            }
+        }
+        /// <summary>
+        /// Applies explicit piece and fill materials to the tile renderers.
+        /// </summary>
+        public void Setup(Material pieceMaterial, Material fillMaterial)
+        {
+            if (pieceRenderer == null || fillRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (pieceRenderer != null)
+            {
+                pieceRenderer.sharedMaterial = pieceMaterial;
+            }
+
+            if (fillRenderer != null)
+            {
+                fillRenderer.sharedMaterial = fillMaterial;
+            }
         }
 
         /// <summary>
@@ -466,16 +511,31 @@ namespace MahjongOut3D.TileSystem
                 meshRenderer = visualController != null ? visualController.GetPrimaryRenderer() : GetComponentInChildren<MeshRenderer>(true);
             }
 
-            if (matchIndicatorRenderer == null)
+            if (pieceRenderer == null || fillRenderer == null || matchIndicatorRenderer == null)
             {
                 MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>(true);
                 for (int index = 0; index < renderers.Length; index++)
                 {
                     MeshRenderer renderer = renderers[index];
-                    if (renderer != null && renderer != meshRenderer && renderer.gameObject.name.Equals("Quad", StringComparison.OrdinalIgnoreCase))
+                    if (renderer == null)
+                    {
+                        continue;
+                    }
+
+                    string rendererName = renderer.gameObject.name;
+                    if (pieceRenderer == null && rendererName.Equals("Mahjong Piece", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pieceRenderer = renderer;
+                    }
+
+                    if (fillRenderer == null && rendererName.Equals("Object Fill", StringComparison.OrdinalIgnoreCase))
+                    {
+                        fillRenderer = renderer;
+                    }
+
+                    if (matchIndicatorRenderer == null && renderer != meshRenderer && rendererName.Equals("Quad", StringComparison.OrdinalIgnoreCase))
                     {
                         matchIndicatorRenderer = renderer;
-                        break;
                     }
                 }
             }

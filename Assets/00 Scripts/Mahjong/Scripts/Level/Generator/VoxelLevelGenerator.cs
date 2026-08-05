@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MahjongOut3D.Core;
+using MahjongOut3D.Data;
 using MahjongOut3D.Managers;
 using MahjongOut3D.TileSystem;
 using MahjongOut3D.Utilities;
@@ -53,7 +54,8 @@ namespace MahjongOut3D.LevelSystem
         private CameraManager cameraManager;
         private int nextTileId;
         private MahjongTile runtimeFallbackTilePrefab;
-
+        public MahjongMaterialSO mahjongMaterialSO;
+        private Material material;
         /// <summary>
         /// Initializes the generator with the shared runtime context.
         /// </summary>
@@ -139,7 +141,20 @@ namespace MahjongOut3D.LevelSystem
                 LevelJsonSerializer.ToTileDefinitions(jsonData));
             return Generate(jsonData.levelName, gridSize, null, runtimeTiles);
         }
+        /// <summary>
+        /// Returns a random tile material from the configured MahjongMaterialSO.
+        /// </summary>
+        /// <returns></returns>
+        public Material RandomTileMaterial()
+        {
+            if (mahjongMaterialSO == null || mahjongMaterialSO.pieceMaterial == null || mahjongMaterialSO.pieceMaterial.Count == 0)
+            {
+                return null;
+            }
 
+            int randomIndex = Random.Range(0, mahjongMaterialSO.pieceMaterial.Count);
+            return mahjongMaterialSO.pieceMaterial[randomIndex];
+        }
         /// <summary>
         /// Generates a level from a 3D array of match ids.
         /// </summary>
@@ -291,7 +306,8 @@ namespace MahjongOut3D.LevelSystem
 
             VoxelGridData grid = levelManager.CreateGrid(gridSize, layoutOverride);
             levelManager.SetActiveGrid(grid);
-
+             material = RandomTileMaterial();
+          
             if (tileDefinitions != null)
             {
                 for (int index = 0; index < tileDefinitions.Count; index++)
@@ -547,6 +563,7 @@ namespace MahjongOut3D.LevelSystem
             };
 
             tile.ApplyRuntimeData(runtimeData);
+            tile.SetupPieceMaterial(material);
             if (applyTileBaseColor)
             {
                 tile.SetDebugMatchColor(tileBaseColor);
