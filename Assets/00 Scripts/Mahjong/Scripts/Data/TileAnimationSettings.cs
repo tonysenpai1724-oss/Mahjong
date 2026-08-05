@@ -35,7 +35,10 @@ namespace MahjongOut3D.Data
         public float TrayViewportSlotSpacing { get; private set; } = 0.15f;
 
         [field: SerializeField, Min(0.5f)]
-        public float TrayDistanceFromCamera { get; private set; } = 6f;
+        public float TrayDistanceFromCamera { get; private set; } = 8f;
+
+        [field: SerializeField, Min(0f)]
+        public float TrayDistancePadding { get; private set; } = 0.75f;
 
         [field: Header("Camera Shake")]
         [field: SerializeField, Min(0f)]

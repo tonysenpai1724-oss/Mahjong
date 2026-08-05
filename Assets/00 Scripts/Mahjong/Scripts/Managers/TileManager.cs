@@ -312,7 +312,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return IsTileExposed(tile);
+                return IsTileExposed(tile) && IsTileCenterVisibleFromCamera(tile);
             }
 
             if (exposureSettings != null && exposureSettings.RequireSurfaceExposure && !IsTileExposed(tile))
@@ -348,7 +348,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return IsTileExposed(tile);
+                return IsTileExposed(tile) && IsTileCenterVisibleFromCamera(tile);
             }
 
             return IsTileSelectable(tile);

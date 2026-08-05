@@ -33,7 +33,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private Transform tileRoot;
         [SerializeField] private GameObject fallbackVisualSource;
         [SerializeField] private TileVisualSettings fallbackTileVisualSettings;
-        [SerializeField] private Material[] matchIndicatorMaterials;
+       // [SerializeField] private Material[] matchIndicatorMaterials;
 
         [Header("Tile Tuning")]
         [SerializeField] private bool applyTileBaseColor = true;
@@ -556,7 +556,7 @@ namespace MahjongOut3D.LevelSystem
                 tile.ClearDebugMatchColor();
             }
 
-            tile.SetMatchIndicatorMaterial(GetMatchIndicatorMaterial(definition.MatchId));
+            //tile.SetMatchIndicatorMaterial(GetMatchIndicatorMaterial(definition.MatchId));
             tile.ResetTile();
             grid.TryPlaceTile(tile.TileId, definition.GridCoordinate);
             tileManager.RegisterTile(tile);
@@ -568,16 +568,16 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         /// <param name="matchId">Match identifier.</param>
         /// <returns>Indicator material for that match group, or null when none is configured.</returns>
-        private Material GetMatchIndicatorMaterial(int matchId)
-        {
-            if (matchIndicatorMaterials == null || matchIndicatorMaterials.Length == 0)
-            {
-                return null;
-            }
+        // private Material GetMatchIndicatorMaterial(int matchId)
+        // {
+        //     if (matchIndicatorMaterials == null || matchIndicatorMaterials.Length == 0)
+        //     {
+        //         return null;
+        //     }
 
-            int materialIndex = Mathf.Abs(matchId) % matchIndicatorMaterials.Length;
-            return matchIndicatorMaterials[materialIndex];
-        }
+        //     int materialIndex = Mathf.Abs(matchId) % matchIndicatorMaterials.Length;
+        //     return matchIndicatorMaterials[materialIndex];
+        // }
 
         /// <summary>
         /// Applies an outward spacing offset so the distance between tiles can be tuned from the inspector.

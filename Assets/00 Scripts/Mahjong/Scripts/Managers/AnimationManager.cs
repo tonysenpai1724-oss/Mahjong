@@ -97,7 +97,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         public bool SnapToTray(MahjongTile tile, int slotIndex)
         {
-            if (tile == null || !TryGetTraySlotPose(slotIndex, out Vector3 position, out Quaternion rotation))
+            if (tile == null || !TryGetTraySlotPose(tile, slotIndex, out Vector3 position, out Quaternion rotation))
             {
                 return false;
             }
@@ -272,7 +272,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private IEnumerator PlayMoveToTrayRoutine(MahjongTile tile, int slotIndex, Action onCompleted)
         {
-            if (tile == null || !TryGetTraySlotPose(slotIndex, out Vector3 targetPosition, out Quaternion targetRotation))
+            if (tile == null || !TryGetTraySlotPose(tile, slotIndex, out Vector3 targetPosition, out Quaternion targetRotation))
             {
                 onCompleted?.Invoke();
                 yield break;
@@ -304,7 +304,7 @@ namespace MahjongOut3D.Managers
         /// <summary>
         /// Resolves a temporary tray slot pose relative to the active gameplay camera.
         /// </summary>
-        private bool TryGetTraySlotPose(int slotIndex, out Vector3 position, out Quaternion rotation)
+        private bool TryGetTraySlotPose(MahjongTile tile, int slotIndex, out Vector3 position, out Quaternion rotation)
         {
             position = Vector3.zero;
             rotation = Quaternion.identity;
@@ -317,11 +317,32 @@ namespace MahjongOut3D.Managers
             Camera activeCamera = cameraManager.ActiveCamera;
             float x = 0.5f + ((Mathf.Clamp(slotIndex, 0, 3) - 1.5f) * GetTrayViewportSlotSpacing());
             float y = GetTrayViewportY();
-            float z = GetTrayDistanceFromCamera();
+            float z = GetTrayTargetDistance(activeCamera, tile);
 
             position = activeCamera.ViewportToWorldPoint(new Vector3(x, y, z));
             rotation = GetTrayFacingRotation(activeCamera.transform.forward, activeCamera.transform.up);
             return true;
+        }
+
+        /// <summary>
+        /// Keeps tray tiles from being pulled too close to the camera so their perceived size stays stable.
+        /// </summary>
+        private float GetTrayTargetDistance(Camera activeCamera, MahjongTile tile)
+        {
+            float configuredDistance = GetTrayDistanceFromCamera();
+            if (activeCamera == null || tile == null)
+            {
+                return configuredDistance;
+            }
+
+            Vector3 toTile = tile.transform.position - activeCamera.transform.position;
+            float currentDepth = Vector3.Dot(toTile, activeCamera.transform.forward);
+            if (currentDepth <= Mathf.Epsilon)
+            {
+                return configuredDistance;
+            }
+
+            return Mathf.Max(configuredDistance, currentDepth + GetTrayDistancePadding());
         }
 
         /// <summary>
@@ -462,7 +483,8 @@ namespace MahjongOut3D.Managers
         private float GetTrayMoveDurationSeconds() => animationSettings != null ? animationSettings.TrayMoveDurationSeconds : 0.22f;
         private float GetTrayViewportY() => animationSettings != null ? animationSettings.TrayViewportY : 0.84f;
         private float GetTrayViewportSlotSpacing() => animationSettings != null ? animationSettings.TrayViewportSlotSpacing : 0.1f;
-        private float GetTrayDistanceFromCamera() => animationSettings != null ? animationSettings.TrayDistanceFromCamera : 6f;
+        private float GetTrayDistanceFromCamera() => animationSettings != null ? animationSettings.TrayDistanceFromCamera : 8f;
+        private float GetTrayDistancePadding() => animationSettings != null ? animationSettings.TrayDistancePadding : 0.75f;
         private float GetShakeDurationSeconds() => animationSettings != null ? animationSettings.ShakeDurationSeconds : 0.18f;
         private float GetShakeAmplitude() => animationSettings != null ? animationSettings.ShakeAmplitude : 0.12f;
     }
