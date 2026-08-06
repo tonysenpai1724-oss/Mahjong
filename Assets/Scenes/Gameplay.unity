@@ -1530,7 +1530,7 @@ GameObject:
   - component: {fileID: 360906505}
   - component: {fileID: 360906507}
   m_Layer: 5
-  m_Name: Hint (1)
+  m_Name: Undo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3799,7 +3799,7 @@ GameObject:
   - component: {fileID: 895476506}
   - component: {fileID: 895476508}
   m_Layer: 5
-  m_Name: Hint (2)
+  m_Name: Shuffle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5617,7 +5617,7 @@ GameObject:
   - component: {fileID: 1608133431}
   - component: {fileID: 1608133433}
   m_Layer: 5
-  m_Name: Hint (3)
+  m_Name: Bomb
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

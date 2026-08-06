@@ -98,6 +98,22 @@ namespace MahjongOut3D.TileSystem
         public MeshRenderer MatchIndicatorRenderer => matchIndicatorRenderer;
 
         /// <summary>
+        /// Gets the current fill material used to visually identify the tile pair.
+        /// </summary>
+        public Material FillMaterial
+        {
+            get
+            {
+                if (fillRenderer == null)
+                {
+                    CacheReferences();
+                }
+
+                return fillRenderer != null ? fillRenderer.sharedMaterial : null;
+            }
+        }
+
+        /// <summary>
         /// Gets the tile collider used for hit testing.
         /// </summary>
         public Collider TileCollider => tileCollider;
@@ -372,6 +388,16 @@ namespace MahjongOut3D.TileSystem
         public void SetGridCoordinate(Vector3Int coordinate)
         {
             gridCoordinate = coordinate;
+        }
+
+        /// <summary>
+        /// Updates the match identifier while keeping the current transform and state untouched.
+        /// </summary>
+        /// <param name="newMatchId">New shared match identifier.</param>
+        public void SetMatchId(int newMatchId)
+        {
+            matchId = newMatchId;
+            gameObject.name = $"MahjongTile_{tileId}_{matchId}";
         }
 
         /// <summary>
