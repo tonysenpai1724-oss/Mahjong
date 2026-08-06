@@ -26,7 +26,7 @@ MonoBehaviour:
     minLayerCount: 2
     maxLayerCount: 4
     minPairCount: 22
-    maxPairCount: 300
+    maxPairCount: 50
     flippedTileChance: 0.45
     shape: 0
     allowedShapes: 00000000
@@ -40,7 +40,7 @@ MonoBehaviour:
     maxPairCount: 40
     flippedTileChance: 0.55
     shape: 1
-    allowedShapes: 0300000001000000
+    allowedShapes: 00000000
     difficulty: 2
   superHardSettings:
     label: SuperHard
@@ -50,6 +50,6 @@ MonoBehaviour:
     minPairCount: 48
     maxPairCount: 300
     flippedTileChance: 0.65
-    shape: 2
-    allowedShapes: 02000000
+    shape: 1
+    allowedShapes: 00000000
     difficulty: 3

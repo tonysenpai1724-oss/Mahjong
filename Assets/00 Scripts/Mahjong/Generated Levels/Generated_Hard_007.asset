@@ -18,7 +18,7 @@ MonoBehaviour:
     height: 11
     depth: 11
   <LayoutOverride>k__BackingField: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
-  <Shape>k__BackingField: 3
+  <Shape>k__BackingField: 1
   <UseSurfaceTilePlacement>k__BackingField: 1
   <Difficulty>k__BackingField: 2
   <Tiles>k__BackingField:

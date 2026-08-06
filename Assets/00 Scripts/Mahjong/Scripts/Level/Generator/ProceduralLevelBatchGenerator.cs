@@ -104,12 +104,23 @@ namespace MahjongOut3D.LevelSystem
             /// </summary>
             public LevelShapeType GetRandomShape(System.Random random)
             {
+                LevelShapeType selectedShape;
                 if (allowedShapes != null && allowedShapes.Count > 0)
                 {
-                    return allowedShapes[random.Next(0, allowedShapes.Count)];
+                    selectedShape = allowedShapes[random.Next(0, allowedShapes.Count)];
+                }
+                else
+                {
+                    selectedShape = shape;
                 }
 
-                return shape;
+                LevelShapeType normalizedSelectedShape = NormalizeSupportedShapeType(selectedShape);
+                if (normalizedSelectedShape == selectedShape)
+                {
+                    return normalizedSelectedShape;
+                }
+
+                return NormalizeSupportedShapeType(shape);
             }
 
             /// <summary>
@@ -126,11 +137,8 @@ namespace MahjongOut3D.LevelSystem
                     minPairCount = 22,
                     maxPairCount = 24,
                     flippedTileChance = 0.45f,
-                    shape = LevelShapeType.Heart,
-                    allowedShapes = new List<LevelShapeType>
-                    {
-                        LevelShapeType.Heart,
-                    },
+                    shape = LevelShapeType.Cube,
+                    allowedShapes = new List<LevelShapeType>(),
                     difficulty = LevelDifficulty.Normal,
                 };
             }
@@ -149,11 +157,8 @@ namespace MahjongOut3D.LevelSystem
                     minPairCount = 34,
                     maxPairCount = 40,
                     flippedTileChance = 0.55f,
-                    shape = LevelShapeType.Castle,
-                    allowedShapes = new List<LevelShapeType>
-                    {
-                        LevelShapeType.Castle,
-                    },
+                    shape = LevelShapeType.Pagoda,
+                    allowedShapes = new List<LevelShapeType>(),
                     difficulty = LevelDifficulty.Hard,
                 };
             }
@@ -172,14 +177,23 @@ namespace MahjongOut3D.LevelSystem
                     minPairCount = 48,
                     maxPairCount = 58,
                     flippedTileChance = 0.65f,
-                    shape = LevelShapeType.Castle,
-                    allowedShapes = new List<LevelShapeType>
-                    {
-                        LevelShapeType.Heart,
-                        LevelShapeType.Castle,
-                    },
+                    shape = LevelShapeType.Pagoda,
+                    allowedShapes = new List<LevelShapeType>(),
                     difficulty = LevelDifficulty.Expert,
                 };
+            }
+        }
+
+        private static LevelShapeType NormalizeSupportedShapeType(LevelShapeType shape)
+        {
+            switch (shape)
+            {
+                case LevelShapeType.Cube:
+                case LevelShapeType.Pagoda:
+                case LevelShapeType.Custom:
+                    return shape;
+                default:
+                    return LevelShapeType.Cube;
             }
         }
 
@@ -197,6 +211,11 @@ namespace MahjongOut3D.LevelSystem
             /// Gets or sets the selected silhouette type.
             /// </summary>
             public LevelShapeType Shape { get; set; }
+
+            /// <summary>
+            /// Gets or sets how many shell layers this candidate was authored to expose.
+            /// </summary>
+            public int TargetLayerCount { get; set; }
 
             /// <summary>
             /// Gets or sets the shell list from outside to inside.
@@ -260,7 +279,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Stores one generated tile placement including its outward-facing shell direction.
         /// </summary>
-        private sealed class TilePlacementData
+        internal sealed class TilePlacementData
         {
             /// <summary>
             /// Gets or sets the source voxel coordinate that owns this face slot.
@@ -296,7 +315,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Stores the tile face and thickness dimensions used to build square cube shells.
         /// </summary>
-        private readonly struct CubeTileMetrics
+        internal readonly struct CubeTileMetrics
         {
             public CubeTileMetrics(float faceWidth, float faceHeight, float thickness)
             {
@@ -411,7 +430,7 @@ namespace MahjongOut3D.LevelSystem
             {
                 sequence++;
                 ShapeCandidate candidate = CreateShapeCandidate(settings, random);
-                int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.Shape, random);
+                int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.Shape, candidate.TargetLayerCount, random);
                 List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
                 VoxelGridSize logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
                 List<LevelTileDefinition> tileDefinitions = BuildTileDefinitions(occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random);
@@ -455,7 +474,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Chooses a compact tile count that preserves full outer layers whenever possible.
         /// </summary>
-        private static int GetTargetTileCount(DifficultyBatchDefinition settings, List<List<TilePlacementData>> shells, LevelShapeType shape, System.Random random)
+        private static int GetTargetTileCount(DifficultyBatchDefinition settings, List<List<TilePlacementData>> shells, LevelShapeType shape, int targetLayerCount, System.Random random)
         {
             if (shells == null || shells.Count == 0)
             {
@@ -467,7 +486,12 @@ namespace MahjongOut3D.LevelSystem
 
             if (shape == LevelShapeType.Cube)
             {
-                return GetPreferredCubeTileCount(shells, settings.MinLayerCount, minTileCount, maxTileCount);
+                return GetPreferredCubeTileCount(shells, targetLayerCount, minTileCount, maxTileCount);
+            }
+
+            if (shape == LevelShapeType.Pagoda)
+            {
+                return GetPreferredPagodaTileCount(shells, minTileCount, maxTileCount);
             }
 
             List<int> completeLayerCounts = new List<int>(shells.Count);
@@ -498,39 +522,6 @@ namespace MahjongOut3D.LevelSystem
                 }
             }
 
-            if (shape == LevelShapeType.Heart || shape == LevelShapeType.Castle)
-            {
-                int targetFullLayerCount = Mathf.Min(shells.Count, shape == LevelShapeType.Castle ? 4 : 5);
-                if (targetFullLayerCount >= 3)
-                {
-                    int layeredTileCount = 0;
-                    for (int layerIndex = 0; layerIndex < targetFullLayerCount; layerIndex++)
-                    {
-                        layeredTileCount += shells[layerIndex].Count;
-                    }
-
-                    if (layeredTileCount >= 2)
-                    {
-                        return layeredTileCount % 2 == 0 ? layeredTileCount : layeredTileCount - 1;
-                    }
-                }
-
-                if (preferredCounts.Count > 0)
-                {
-                    return preferredCounts[preferredCounts.Count - 1];
-                }
-
-                for (int index = completeLayerCounts.Count - 1; index >= 0; index--)
-                {
-                    if (completeLayerCounts[index] <= maxTileCount)
-                    {
-                        return completeLayerCounts[index];
-                    }
-                }
-
-                return completeLayerCounts[0];
-            }
-
             if (preferredCounts.Count > 0)
             {
                 return preferredCounts[random.Next(0, preferredCounts.Count)];
@@ -544,7 +535,46 @@ namespace MahjongOut3D.LevelSystem
                 }
             }
 
-            return completeLayerCounts[completeLayerCounts.Count - 1];
+            return completeLayerCounts[0];
+        }
+
+        private static int GetPreferredPagodaTileCount(List<List<TilePlacementData>> shells, int minTileCount, int maxTileCount)
+        {
+            int cumulativeCount = 0;
+            int smallestValidCount = 0;
+            int bestInRangeCount = 0;
+
+            for (int index = 0; index < shells.Count; index++)
+            {
+                cumulativeCount += Mathf.Max(0, shells[index].Count);
+                if (cumulativeCount < 2 || cumulativeCount % 2 != 0)
+                {
+                    continue;
+                }
+
+                if (smallestValidCount == 0)
+                {
+                    smallestValidCount = cumulativeCount;
+                }
+
+                if (cumulativeCount >= minTileCount && cumulativeCount <= maxTileCount)
+                {
+                    bestInRangeCount = cumulativeCount;
+                }
+            }
+
+            if (bestInRangeCount >= 2)
+            {
+                return bestInRangeCount;
+            }
+
+            if (smallestValidCount >= 2)
+            {
+                return smallestValidCount;
+            }
+
+            int fallbackCount = GetShellTileCapacity(shells);
+            return fallbackCount % 2 == 0 ? fallbackCount : fallbackCount - 1;
         }
 
         /// <summary>
@@ -619,6 +649,7 @@ namespace MahjongOut3D.LevelSystem
                 {
                     GridSize = gridSize,
                     Shape = selectedShape,
+                    TargetLayerCount = targetLayerCount,
                     Shells = shells,
                 };
 
@@ -644,6 +675,7 @@ namespace MahjongOut3D.LevelSystem
             {
                 GridSize = fallbackGridSize,
                 Shape = LevelShapeType.Cube,
+                TargetLayerCount = fallbackLayerCount,
                 Shells = BuildShapeShells(fallbackGridSize, LevelShapeType.Cube, fallbackLayerCount, settings),
             };
         }
@@ -704,20 +736,15 @@ namespace MahjongOut3D.LevelSystem
                 case LevelShapeType.Cube:
                     return BuildNestedCubeShells(targetLayerCount, settings);
 
-                case LevelShapeType.Heart:
-                case LevelShapeType.Castle:
-                {
-                    List<List<TilePlacementData>> nestedShells = BuildNestedSilhouetteShells(gridSize, shape, targetLayerCount);
-                    if (GetShellTileCapacity(nestedShells) >= 2)
-                    {
-                        return nestedShells;
-                    }
-
-                    break;
-                }
+                case LevelShapeType.Pagoda:
+                    return PagodaLevelShapeGenerator.BuildShells(
+                        targetLayerCount,
+                        ResolveCubeTileMetrics(),
+                        Mathf.Max(2, settings.MinPairCount * 2),
+                        Mathf.Max(2, settings.MaxPairCount * 2));
             }
 
-            return BuildShells(BuildShapeCoordinates(gridSize, shape));
+            return BuildShells(BuildShapeCoordinates(gridSize));
         }
 
         /// <summary>
@@ -735,61 +762,6 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Builds shells as nested complete silhouettes where each inner silhouette is smaller than the outer one.
-        /// </summary>
-        private static List<List<TilePlacementData>> BuildNestedSilhouetteShells(VoxelGridSize gridSize, LevelShapeType shape, int targetLayerCount)
-        {
-            HashSet<Vector3Int> outerVolume = new HashSet<Vector3Int>(BuildShapeCoordinates(gridSize, shape));
-            if (outerVolume.Count < 2)
-            {
-                return BuildShells(BuildShapeCoordinates(gridSize, shape));
-            }
-
-            int desiredLayerCount = Mathf.Max(1, targetLayerCount);
-            int scaleSampleCount = GetNestedLayerScaleSampleCount(gridSize, shape);
-            float minimumScale = GetMinimumNestedScale(shape);
-
-            List<HashSet<Vector3Int>> nestedVolumes = new List<HashSet<Vector3Int>>(desiredLayerCount)
-            {
-                outerVolume,
-            };
-
-            HashSet<Vector3Int> previousVolume = outerVolume;
-            for (int sampleIndex = 1; sampleIndex <= scaleSampleCount && nestedVolumes.Count < desiredLayerCount; sampleIndex++)
-            {
-                float t = sampleIndex / (float)scaleSampleCount;
-                float layerScale = Mathf.Lerp(0.96f, minimumScale, t);
-                HashSet<Vector3Int> scaledVolume = BuildScaledShapeCoordinateSet(gridSize, shape, layerScale);
-                scaledVolume.IntersectWith(previousVolume);
-
-                if (scaledVolume.Count < 2 || scaledVolume.SetEquals(previousVolume) || scaledVolume.Count >= previousVolume.Count)
-                {
-                    continue;
-                }
-
-                nestedVolumes.Add(scaledVolume);
-                previousVolume = scaledVolume;
-            }
-
-            if (nestedVolumes.Count <= 1)
-            {
-                return BuildShells(BuildShapeCoordinates(gridSize, shape));
-            }
-
-            List<List<TilePlacementData>> shells = new List<List<TilePlacementData>>(nestedVolumes.Count);
-            for (int index = 0; index < nestedVolumes.Count; index++)
-            {
-                List<TilePlacementData> shell = ExtractSurfaceShell(nestedVolumes[index]);
-                if (shell.Count >= 2)
-                {
-                    shells.Add(shell);
-                }
-            }
-
-            return shells.Count > 0 ? shells : BuildShells(BuildShapeCoordinates(gridSize, shape));
-        }
-
-        /// <summary>
         /// Builds nested cube shells directly in world space so the resulting block stays cubic on all three axes.
         /// </summary>
         private List<List<TilePlacementData>> BuildNestedCubeShells(int targetLayerCount, DifficultyBatchDefinition settings)
@@ -797,7 +769,7 @@ namespace MahjongOut3D.LevelSystem
             CubeTileMetrics metrics = ResolveCubeTileMetrics();
             List<List<TilePlacementData>> shells = new List<List<TilePlacementData>>();
             int layerCount = Mathf.Max(2, targetLayerCount);
-            int desiredVisibleLayerCount = settings != null ? settings.MinLayerCount : 1;
+            int desiredVisibleLayerCount = layerCount;
             int maxTileCount = settings != null ? Mathf.Max(2, settings.MaxPairCount * 2) : int.MaxValue;
 
             CubeShellPlan previousShell = CreateInitialCubeShellPlan(metrics, maxTileCount, desiredVisibleLayerCount);
@@ -1249,47 +1221,6 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Returns how many intermediate scale samples should be tested to find unique nested layers.
-        /// </summary>
-        private static int GetNestedLayerScaleSampleCount(VoxelGridSize gridSize, LevelShapeType shape)
-        {
-            int minDimension = Mathf.Min(gridSize.Width, Mathf.Min(gridSize.Height, gridSize.Depth));
-            return shape == LevelShapeType.Castle ? Mathf.Max(10, minDimension * 4) : Mathf.Max(12, minDimension * 5);
-        }
-
-        /// <summary>
-        /// Returns the smallest scale allowed for the innermost nested silhouette.
-        /// </summary>
-        private static float GetMinimumNestedScale(LevelShapeType shape)
-        {
-            return shape == LevelShapeType.Castle ? 0.46f : 0.34f;
-        }
-
-        /// <summary>
-        /// Builds one full silhouette volume at a given scale.
-        /// </summary>
-        private static HashSet<Vector3Int> BuildScaledShapeCoordinateSet(VoxelGridSize gridSize, LevelShapeType shape, float scale)
-        {
-            HashSet<Vector3Int> coordinates = new HashSet<Vector3Int>();
-            for (int x = 0; x < gridSize.Width; x++)
-            {
-                for (int y = 0; y < gridSize.Height; y++)
-                {
-                    for (int z = 0; z < gridSize.Depth; z++)
-                    {
-                        Vector3Int coordinate = new Vector3Int(x, y, z);
-                        if (IsCoordinateInsideScaledShape(coordinate, gridSize, shape, scale))
-                        {
-                            coordinates.Add(coordinate);
-                        }
-                    }
-                }
-            }
-
-            return coordinates;
-        }
-
-        /// <summary>
         /// Builds a visually reasonable voxel grid for the supplied shell-layer count and shape.
         /// </summary>
         private static VoxelGridSize BuildGridSizeForShape(int layerCount, LevelShapeType shape)
@@ -1310,26 +1241,17 @@ namespace MahjongOut3D.LevelSystem
                     break;
                 }
 
-                case LevelShapeType.Heart:
-                    width = Mathf.Max(width, 5);
-                    height = Mathf.Max(height, 5);
-                    depth = Mathf.Max(safeLayerCount, 4);
-                    break;
-
-                case LevelShapeType.Castle:
-                    width = Mathf.Max(width + 1, 6);
-                    height = Mathf.Max(height, 5);
-                    depth = Mathf.Max(depth, 5);
-                    break;
+                case LevelShapeType.Pagoda:
+                    return PagodaLevelShapeGenerator.BuildGridSize(layerCount);
             }
 
             return new VoxelGridSize(width, height, depth);
         }
 
         /// <summary>
-        /// Builds all voxel coordinates belonging to the requested silhouette.
+        /// Builds a solid occupied voxel block for non-custom-world-space shapes.
         /// </summary>
-        private static List<Vector3Int> BuildShapeCoordinates(VoxelGridSize gridSize, LevelShapeType shape)
+        private static List<Vector3Int> BuildShapeCoordinates(VoxelGridSize gridSize)
         {
             List<Vector3Int> coordinates = new List<Vector3Int>(gridSize.Volume);
             for (int x = 0; x < gridSize.Width; x++)
@@ -1338,45 +1260,12 @@ namespace MahjongOut3D.LevelSystem
                 {
                     for (int z = 0; z < gridSize.Depth; z++)
                     {
-                        Vector3Int coordinate = new Vector3Int(x, y, z);
-                        if (IsCoordinateInsideShape(coordinate, gridSize, shape))
-                        {
-                            coordinates.Add(coordinate);
-                        }
+                        coordinates.Add(new Vector3Int(x, y, z));
                     }
                 }
             }
 
-            if (coordinates.Count < 2)
-            {
-                return BuildShapeCoordinates(gridSize, LevelShapeType.Cube);
-            }
-
             return coordinates;
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the scaled version of a silhouette.
-        /// </summary>
-        private static bool IsCoordinateInsideScaledShape(Vector3Int coordinate, VoxelGridSize gridSize, LevelShapeType shape, float scale)
-        {
-            switch (shape)
-            {
-                case LevelShapeType.Heart:
-                    return IsInsideHeartShape(
-                        ScaleCenteredSigned(NormalizeAxis(coordinate.x, gridSize.Width), scale),
-                        ScaleCenteredHeight(GetHeight01(coordinate.y, gridSize.Height), scale),
-                        ScaleCenteredSigned(NormalizeAxis(coordinate.z, gridSize.Depth), scale));
-
-                case LevelShapeType.Castle:
-                    return IsInsideCastleShape(
-                        ScaleCenteredSigned(NormalizeAxis(coordinate.x, gridSize.Width), scale),
-                        ScaleBottomAnchoredHeight(GetHeight01(coordinate.y, gridSize.Height), scale),
-                        ScaleCenteredSigned(NormalizeAxis(coordinate.z, gridSize.Depth), scale));
-
-                default:
-                    return IsCoordinateInsideShape(coordinate, gridSize, shape);
-            }
         }
 
         /// <summary>
@@ -1778,270 +1667,6 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Returns whether a voxel belongs to the requested silhouette.
-        /// </summary>
-        private static bool IsCoordinateInsideShape(Vector3Int coordinate, VoxelGridSize gridSize, LevelShapeType shape)
-        {
-            switch (shape)
-            {
-                case LevelShapeType.Heart:
-                    return IsInsideHeart(coordinate, gridSize);
-                case LevelShapeType.Castle:
-                    return IsInsideCastle(coordinate, gridSize);
-                case LevelShapeType.Robot:
-                    return IsInsideRobot(coordinate, gridSize);
-                case LevelShapeType.Bonsai:
-                    return IsInsideBonsai(coordinate, gridSize);
-                case LevelShapeType.Statue:
-                    return IsInsideStatue(coordinate, gridSize);
-                case LevelShapeType.Cat:
-                    return IsInsideCat(coordinate, gridSize);
-                case LevelShapeType.Dragon:
-                    return IsInsideDragon(coordinate, gridSize);
-                case LevelShapeType.Custom:
-                case LevelShapeType.Cube:
-                default:
-                    return true;
-            }
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the heart silhouette.
-        /// </summary>
-        private static bool IsInsideHeart(Vector3Int coordinate, VoxelGridSize gridSize)
-        {
-            return IsInsideHeartShape(
-                NormalizeAxis(coordinate.x, gridSize.Width),
-                GetHeight01(coordinate.y, gridSize.Height),
-                NormalizeAxis(coordinate.z, gridSize.Depth));
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the castle silhouette.
-        /// </summary>
-        private static bool IsInsideCastle(Vector3Int coordinate, VoxelGridSize gridSize)
-        {
-            return IsInsideCastleShape(
-                NormalizeAxis(coordinate.x, gridSize.Width),
-                GetHeight01(coordinate.y, gridSize.Height),
-                NormalizeAxis(coordinate.z, gridSize.Depth));
-        }
-
-        /// <summary>
-        /// Returns whether normalized coordinates belong to the heart silhouette.
-        /// </summary>
-        private static bool IsInsideHeartShape(float x, float y, float z)
-        {
-            bool leftLobe = DistanceSquared(x + 0.34f, y - 0.76f, 0f) <= 0.13f;
-            bool rightLobe = DistanceSquared(x - 0.34f, y - 0.76f, 0f) <= 0.13f;
-
-            float bodyHalfWidth = Mathf.Lerp(0.08f, 0.72f, Mathf.InverseLerp(0.08f, 0.62f, y));
-            bool upperBody = y >= 0.30f && y <= 0.82f && Mathf.Abs(x) <= bodyHalfWidth;
-
-            float lowerBlend = Mathf.InverseLerp(0.00f, 0.42f, y);
-            float lowerHalfWidth = Mathf.Lerp(0.04f, 0.34f, lowerBlend);
-            bool lowerPoint = y <= 0.38f && Mathf.Abs(x) <= lowerHalfWidth;
-
-            bool heartFace = leftLobe || rightLobe || upperBody || lowerPoint;
-            if (!heartFace)
-            {
-                return false;
-            }
-
-            float centerBias = 1f - Mathf.Clamp01(Mathf.Abs(x) * 0.85f);
-            float verticalBias = 1f - Mathf.Abs(y - 0.55f);
-            float depthAllowance = Mathf.Lerp(0.18f, 0.92f, Mathf.Clamp01((centerBias * 0.6f) + (verticalBias * 0.4f)));
-            return Mathf.Abs(z) <= depthAllowance;
-        }
-
-        /// <summary>
-        /// Returns whether normalized coordinates belong to the castle silhouette.
-        /// </summary>
-        private static bool IsInsideCastleShape(float signedX, float height, float signedZ)
-        {
-            float x = Mathf.Abs(signedX);
-            float z = Mathf.Abs(signedZ);
-
-            bool foundation = height <= 0.16f && x <= 0.94f && z <= 0.94f;
-            bool outerWalls = height >= 0.12f && height <= 0.58f && x <= 0.90f && z <= 0.90f && (x >= 0.54f || z >= 0.54f);
-            bool frontGateCut = height >= 0.12f && height <= 0.40f && signedZ >= 0.54f && Mathf.Abs(signedX) <= 0.22f;
-            bool keepBase = height >= 0.18f && height <= 0.78f && x <= 0.28f && z <= 0.28f;
-            bool keepTop = height >= 0.78f && height <= 0.94f && x <= 0.36f && z <= 0.36f;
-            bool cornerTowerCore = height >= 0.12f && height <= 0.96f && x >= 0.58f && x <= 0.94f && z >= 0.58f && z <= 0.94f;
-            bool cornerTowerCaps = height >= 0.86f && x >= 0.50f && x <= 0.98f && z >= 0.50f && z <= 0.98f;
-            bool parapetNorth = height >= 0.56f && height <= 0.74f && signedZ >= 0.78f && x <= 0.88f;
-            bool parapetSouth = height >= 0.56f && height <= 0.74f && signedZ <= -0.78f && x <= 0.88f;
-            bool parapetEast = height >= 0.56f && height <= 0.74f && signedX >= 0.78f && z <= 0.88f;
-            bool parapetWest = height >= 0.56f && height <= 0.74f && signedX <= -0.78f && z <= 0.88f;
-
-            bool castle = foundation || outerWalls || keepBase || keepTop || cornerTowerCore || cornerTowerCaps || parapetNorth || parapetSouth || parapetEast || parapetWest;
-            return castle && !frontGateCut;
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the robot silhouette.
-        /// </summary>
-        private static bool IsInsideRobot(Vector3Int coordinate, VoxelGridSize gridSize)
-        {
-            float x = NormalizeAxis(coordinate.x, gridSize.Width);
-            float z = NormalizeAxis(coordinate.z, gridSize.Depth);
-            float ax = Mathf.Abs(x);
-            float az = Mathf.Abs(z);
-            float height = GetHeight01(coordinate.y, gridSize.Height);
-
-            bool head = height >= 0.72f && height <= 0.98f && ax <= 0.26f && az <= 0.26f;
-            bool neck = height >= 0.66f && height <= 0.76f && ax <= 0.12f && az <= 0.12f;
-            bool torso = height >= 0.28f && height <= 0.74f && ax <= 0.38f && az <= 0.24f;
-            bool shoulders = height >= 0.50f && height <= 0.66f && ax <= 0.72f && az <= 0.24f;
-            bool arms = height >= 0.28f && height <= 0.62f && ax >= 0.42f && ax <= 0.72f && az <= 0.18f;
-            bool hips = height >= 0.20f && height <= 0.32f && ax <= 0.42f && az <= 0.24f;
-            bool legs = height <= 0.32f && az <= 0.16f && ((x >= -0.38f && x <= -0.10f) || (x >= 0.10f && x <= 0.38f));
-            bool feet = height <= 0.10f && az <= 0.28f && ((x >= -0.44f && x <= -0.02f) || (x >= 0.02f && x <= 0.44f));
-            return head || neck || torso || shoulders || arms || hips || legs || feet;
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the bonsai silhouette.
-        /// </summary>
-        private static bool IsInsideBonsai(Vector3Int coordinate, VoxelGridSize gridSize)
-        {
-            float x = NormalizeAxis(coordinate.x, gridSize.Width);
-            float z = NormalizeAxis(coordinate.z, gridSize.Depth);
-            float ax = Mathf.Abs(x);
-            float az = Mathf.Abs(z);
-            float height = GetHeight01(coordinate.y, gridSize.Height);
-
-            bool pot = height <= 0.18f && ax <= 0.60f && az <= 0.60f;
-            bool trunk = height >= 0.12f && height <= 0.62f && Mathf.Abs(x - 0.08f + (height * 0.12f)) <= 0.14f && az <= 0.14f;
-            bool canopyA = DistanceSquared(x, height - 0.72f, z) <= 0.30f;
-            bool canopyB = DistanceSquared(x + 0.28f, height - 0.62f, z + 0.12f) <= 0.18f;
-            bool canopyC = DistanceSquared(x - 0.22f, height - 0.68f, z - 0.16f) <= 0.17f;
-            return pot || trunk || canopyA || canopyB || canopyC;
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the statue silhouette.
-        /// </summary>
-        private static bool IsInsideStatue(Vector3Int coordinate, VoxelGridSize gridSize)
-        {
-            float x = NormalizeAxis(coordinate.x, gridSize.Width);
-            float z = NormalizeAxis(coordinate.z, gridSize.Depth);
-            float ax = Mathf.Abs(x);
-            float az = Mathf.Abs(z);
-            float height = GetHeight01(coordinate.y, gridSize.Height);
-
-            bool pedestal = height <= 0.18f && ax <= 0.64f && az <= 0.64f;
-            bool lowerBody = height >= 0.18f && height <= 0.50f && ax <= 0.26f && az <= 0.22f;
-            bool upperBody = height >= 0.46f && height <= 0.78f && ax <= 0.34f && az <= 0.24f;
-            bool arms = height >= 0.52f && height <= 0.68f && ax <= 0.60f && az <= 0.14f;
-            bool head = height >= 0.76f && height <= 0.98f && ax <= 0.18f && az <= 0.18f;
-            return pedestal || lowerBody || upperBody || arms || head;
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the cat silhouette.
-        /// </summary>
-        private static bool IsInsideCat(Vector3Int coordinate, VoxelGridSize gridSize)
-        {
-            float x = NormalizeAxis(coordinate.x, gridSize.Width);
-            float z = NormalizeAxis(coordinate.z, gridSize.Depth);
-            float ax = Mathf.Abs(x);
-            float az = Mathf.Abs(z);
-            float height = GetHeight01(coordinate.y, gridSize.Height);
-
-            bool body = height >= 0.18f && height <= 0.62f && ax <= 0.48f && az <= 0.28f;
-            bool head = height >= 0.56f && height <= 0.90f && ax <= 0.24f && z >= 0.08f && z <= 0.50f;
-            bool ears = height >= 0.80f && height <= 1.00f && z >= 0.12f && z <= 0.42f && ((x >= -0.30f && x <= -0.10f) || (x >= 0.10f && x <= 0.30f));
-            bool paws = height <= 0.22f && az <= 0.20f && ((x >= -0.46f && x <= -0.20f) || (x >= -0.12f && x <= 0.12f) || (x >= 0.20f && x <= 0.46f));
-            bool tail = height >= 0.34f && height <= 0.88f && x >= 0.32f && x <= 0.56f && z <= -0.08f && z >= -0.30f;
-            return body || head || ears || paws || tail;
-        }
-
-        /// <summary>
-        /// Returns whether a voxel belongs to the dragon silhouette.
-        /// </summary>
-        private static bool IsInsideDragon(Vector3Int coordinate, VoxelGridSize gridSize)
-        {
-            float x = NormalizeAxis(coordinate.x, gridSize.Width);
-            float z = NormalizeAxis(coordinate.z, gridSize.Depth);
-            float ax = Mathf.Abs(x);
-            float height = GetHeight01(coordinate.y, gridSize.Height);
-            float spineX = Mathf.Sin((z + 1f) * 2.1f) * 0.30f;
-
-            bool body = height >= 0.24f && height <= 0.58f && Mathf.Abs(x - spineX) <= 0.24f && Mathf.Abs(z) <= 0.90f;
-            bool neck = height >= 0.50f && height <= 0.86f && Mathf.Abs(x - 0.08f) <= 0.14f && z >= 0.06f && z <= 0.72f;
-            bool head = height >= 0.74f && height <= 0.98f && x >= -0.14f && x <= 0.26f && z >= 0.42f && z <= 0.92f;
-            bool wingLeft = height >= 0.38f && height <= 0.76f && x <= -0.14f && x >= -0.82f && Mathf.Abs(z) <= 0.52f && (Mathf.Abs(x + 0.46f) + Mathf.Abs(height - 0.58f) * 1.4f + Mathf.Abs(z) * 0.7f <= 0.78f);
-            bool wingRight = height >= 0.38f && height <= 0.76f && x >= 0.14f && x <= 0.82f && Mathf.Abs(z) <= 0.52f && (Mathf.Abs(x - 0.46f) + Mathf.Abs(height - 0.58f) * 1.4f + Mathf.Abs(z) * 0.7f <= 0.78f);
-            bool tail = height >= 0.18f && height <= 0.42f && Mathf.Abs(x - Mathf.Sin((z + 1f) * 2.7f) * 0.38f) <= 0.16f && z <= -0.32f;
-            bool horns = height >= 0.88f && height <= 1.00f && z >= 0.62f && ((x >= -0.26f && x <= -0.10f) || (x >= 0.10f && x <= 0.26f));
-            return body || neck || head || wingLeft || wingRight || tail || horns || (ax <= 0.10f && height <= 0.18f && z >= -0.16f && z <= 0.18f);
-        }
-
-        /// <summary>
-        /// Converts a voxel index to a normalized range from -1 to 1.
-        /// </summary>
-        private static float NormalizeAxis(int index, int size)
-        {
-            if (size <= 1)
-            {
-                return 0f;
-            }
-
-            return ((index / (float)(size - 1)) * 2f) - 1f;
-        }
-
-        /// <summary>
-        /// Scales a signed -1..1 coordinate around the center.
-        /// </summary>
-        private static float ScaleCenteredSigned(float value, float scale)
-        {
-            return scale <= Mathf.Epsilon ? value : value / scale;
-        }
-
-        /// <summary>
-        /// Scales a 0..1 height coordinate around the vertical center.
-        /// </summary>
-        private static float ScaleCenteredHeight(float value, float scale)
-        {
-            if (scale <= Mathf.Epsilon)
-            {
-                return value;
-            }
-
-            return (((value - 0.5f) / scale) + 0.5f);
-        }
-
-        /// <summary>
-        /// Scales a 0..1 height coordinate while keeping the silhouette anchored to the bottom.
-        /// </summary>
-        private static float ScaleBottomAnchoredHeight(float value, float scale)
-        {
-            return scale <= Mathf.Epsilon ? value : value / scale;
-        }
-
-        /// <summary>
-        /// Converts a voxel height index to a normalized 0..1 range.
-        /// </summary>
-        private static float GetHeight01(int index, int size)
-        {
-            if (size <= 1)
-            {
-                return 0f;
-            }
-
-            return index / (float)(size - 1);
-        }
-
-        /// <summary>
-        /// Returns a squared distance value for simple blob tests.
-        /// </summary>
-        private static float DistanceSquared(float x, float y, float z)
-        {
-            return (x * x) + (y * y) + (z * z);
-        }
-
-        /// <summary>
         /// Shuffles the supplied list using Fisher-Yates.
         /// </summary>
         private static void Shuffle<TValue>(IList<TValue> values, System.Random random)
@@ -2070,7 +1695,7 @@ namespace MahjongOut3D.LevelSystem
             gridSizeProperty.FindPropertyRelative("depth").intValue = data.GridSize.Depth;
 
             serializedObject.FindProperty("<LayoutOverride>k__BackingField").objectReferenceValue = data.LayoutOverride;
-            serializedObject.FindProperty("<Shape>k__BackingField").enumValueIndex = (int)data.Shape;
+            serializedObject.FindProperty("<Shape>k__BackingField").intValue = (int)data.Shape;
             serializedObject.FindProperty("<UseSurfaceTilePlacement>k__BackingField").boolValue = true;
             serializedObject.FindProperty("<Difficulty>k__BackingField").enumValueIndex = (int)data.Difficulty;
 

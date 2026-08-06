@@ -53,7 +53,7 @@ namespace MahjongOut3D.LevelSystem.ArrowOutGeneration
             FindRequiredProperty(serializedObject, LevelNameProperty).stringValue = level.LevelName;
             WriteGridSize(FindRequiredProperty(serializedObject, GridSizeProperty), level.GridSize);
             FindRequiredProperty(serializedObject, LayoutOverrideProperty).objectReferenceValue = level.LayoutOverride;
-            FindRequiredProperty(serializedObject, ShapeProperty).enumValueIndex = (int)level.Shape;
+            FindRequiredProperty(serializedObject, ShapeProperty).intValue = (int)level.Shape;
 
             SerializedProperty useSurfaceTilePlacement = serializedObject.FindProperty(UseSurfaceTilePlacementProperty);
             if (useSurfaceTilePlacement != null)
