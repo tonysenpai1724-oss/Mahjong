@@ -15,13 +15,13 @@ MonoBehaviour:
   <MatchDurationSeconds>k__BackingField: 0.35
   <MatchSlideDistance>k__BackingField: 1.25
   <MatchRotationDegrees>k__BackingField: 55
-  <MatchViewportYOffset>k__BackingField: 0.08
+  <MatchViewportYOffset>k__BackingField: 0.04
   <MatchDepthOffset>k__BackingField: 1.25
   <HintDurationSeconds>k__BackingField: 0.7
   <MismatchDelaySeconds>k__BackingField: 0.2
   <TrayMoveDurationSeconds>k__BackingField: 0.22
-  <TrayViewportY>k__BackingField: 0.84
-  <TrayViewportSlotSpacing>k__BackingField: 0.2
+  <TrayViewportY>k__BackingField: 0.75
+  <TrayViewportSlotSpacing>k__BackingField: 0.12
   <TrayDistanceFromCamera>k__BackingField: 8
   <TrayDistancePadding>k__BackingField: 0.75
   <ShakeDurationSeconds>k__BackingField: 0.18

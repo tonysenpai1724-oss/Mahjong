@@ -33,14 +33,14 @@ MonoBehaviour:
     difficulty: 1
   hardSettings:
     label: Hard
-    levelCount: 0
+    levelCount: 5
     minLayerCount: 3
     maxLayerCount: 6
     minPairCount: 34
     maxPairCount: 40
     flippedTileChance: 0.55
     shape: 1
-    allowedShapes: 00000000
+    allowedShapes: 01000000
     difficulty: 2
   superHardSettings:
     label: SuperHard

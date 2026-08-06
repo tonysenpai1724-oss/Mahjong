@@ -4,41 +4,50 @@ using UnityEngine;
 namespace MahjongOut3D.LevelSystem
 {
     /// <summary>
-    /// Builds stacked pagoda-style shell tiers using the resolved Mahjong tile footprint.
-    /// Keeping this in a dedicated class makes the pagoda profile easy to tune without touching cube generation.
+    /// Builds a pagoda as a solid stepped volume, then peels it into nested shells.
+    /// This keeps the visible layers wrapped around each other like the cube generator.
     /// </summary>
     internal static class PagodaLevelShapeGenerator
     {
-        private const int MaxTilesPerAxis = 12;
-        private const float EdgeInsetPadding = 0.001f;
-        private const float TierGapMultiplier = 0.75f;
+        private static readonly Vector3Int[] NeighborDirections =
+        {
+            Vector3Int.right,
+            Vector3Int.left,
+            Vector3Int.up,
+            Vector3Int.down,
+            new Vector3Int(0, 0, 1),
+            new Vector3Int(0, 0, -1),
+        };
+
+        private const int MaxTilesPerAxis = 10;
+        private const float TargetTileRangeBias = 0.72f;
+        private const float FootprintMismatchPenalty = 45f;
+        private const float DistinctTierReward = 10f;
+        private const float OversizePenalty = 0.1f;
 
         private readonly struct TierPlan
         {
-            public TierPlan(int columnCount, int rowCount, float sideLength, float normalOffset)
+            public TierPlan(int columnCount, int rowCount, int heightCount)
             {
                 ColumnCount = Mathf.Max(1, columnCount);
                 RowCount = Mathf.Max(1, rowCount);
-                SideLength = Mathf.Max(0.01f, sideLength);
-                NormalOffset = Mathf.Max(0f, normalOffset);
+                HeightCount = Mathf.Max(1, heightCount);
             }
 
             public int ColumnCount { get; }
 
             public int RowCount { get; }
 
-            public float SideLength { get; }
-
-            public float NormalOffset { get; }
+            public int HeightCount { get; }
         }
 
         public static VoxelGridSize BuildGridSize(int layerCount)
         {
             int safeLayerCount = Mathf.Max(1, layerCount);
-            return new VoxelGridSize(
-                Mathf.Max(4, safeLayerCount + 2),
-                Mathf.Max(4, safeLayerCount + 2),
-                Mathf.Max(4, safeLayerCount + 2));
+            int width = Mathf.Max(8, (safeLayerCount * 2) + 4);
+            int height = Mathf.Max(6, (safeLayerCount * 2) + 2);
+            int depth = Mathf.Max(8, (safeLayerCount * 2) + 4);
+            return new VoxelGridSize(width, height, depth);
         }
 
         public static List<List<ProceduralLevelBatchGenerator.TilePlacementData>> BuildShells(
@@ -47,200 +56,265 @@ namespace MahjongOut3D.LevelSystem
             int minTileCount,
             int maxTileCount)
         {
-            int tierCount = Mathf.Max(2, targetLayerCount);
-            List<TierPlan> tierPlans = SelectTierPlans(tierCount, metrics, minTileCount, maxTileCount);
+            VoxelGridSize gridSize = BuildGridSize(targetLayerCount);
+            List<TierPlan> tierPlans = SelectTierPlans(targetLayerCount, metrics, minTileCount, maxTileCount, gridSize);
             if (tierPlans.Count == 0)
             {
                 return new List<List<ProceduralLevelBatchGenerator.TilePlacementData>>();
             }
 
-            float[] tierCenters = ResolveTierCenters(tierPlans, metrics.Thickness);
-            List<List<ProceduralLevelBatchGenerator.TilePlacementData>> shells = new List<List<ProceduralLevelBatchGenerator.TilePlacementData>>(tierPlans.Count);
-            for (int index = 0; index < tierPlans.Count; index++)
-            {
-                List<ProceduralLevelBatchGenerator.TilePlacementData> shell = BuildTierShell(tierPlans[index], metrics, tierCenters[index]);
-                if (shell.Count >= 2)
-                {
-                    shells.Add(shell);
-                }
-            }
-
-            return shells;
+            HashSet<Vector3Int> occupiedCoordinates = BuildOccupiedCoordinates(tierPlans, gridSize);
+            return BuildShellsFromOccupied(occupiedCoordinates);
         }
 
-        private static List<TierPlan> SelectTierPlans(int tierCount, ProceduralLevelBatchGenerator.CubeTileMetrics metrics, int minTileCount, int maxTileCount)
+        private static List<TierPlan> SelectTierPlans(
+            int targetLayerCount,
+            ProceduralLevelBatchGenerator.CubeTileMetrics metrics,
+            int minTileCount,
+            int maxTileCount,
+            VoxelGridSize gridSize)
         {
-            float safeMinTileCount = Mathf.Max(2, minTileCount);
-            float safeMaxTileCount = Mathf.Max(safeMinTileCount, maxTileCount);
-            float targetTileCount = (safeMinTileCount + safeMaxTileCount) * 0.5f;
+            int tierCount = Mathf.Max(2, targetLayerCount);
+            int desiredTileCount = Mathf.RoundToInt(Mathf.Lerp(Mathf.Max(2, minTileCount), Mathf.Max(minTileCount, maxTileCount), TargetTileRangeBias));
 
-            float bestRangeDistance = float.MaxValue;
-            float bestMismatch = float.MaxValue;
-            int bestTotalTileCount = int.MaxValue;
+            float bestScore = float.MaxValue;
+            int bestCapacity = 0;
             List<TierPlan> bestPlans = null;
 
-            for (int baseColumnCount = 1; baseColumnCount <= MaxTilesPerAxis; baseColumnCount++)
+            int minBaseWidth = Mathf.Max(4, targetLayerCount + 2);
+            int maxBaseWidth = Mathf.Min(MaxTilesPerAxis, targetLayerCount + 5);
+            int minBaseDepth = Mathf.Max(4, targetLayerCount + 2);
+            int maxBaseDepth = Mathf.Min(MaxTilesPerAxis, targetLayerCount + 5);
+
+            for (int baseColumnCount = minBaseWidth; baseColumnCount <= maxBaseWidth; baseColumnCount++)
             {
-                for (int baseRowCount = 1; baseRowCount <= MaxTilesPerAxis; baseRowCount++)
+                for (int baseRowCount = minBaseDepth; baseRowCount <= maxBaseDepth; baseRowCount++)
                 {
                     List<TierPlan> candidatePlans = BuildTierPlans(baseColumnCount, baseRowCount, tierCount, metrics);
-                    if (candidatePlans.Count == 0)
+                    if (candidatePlans.Count < 2)
                     {
                         continue;
                     }
 
-                    int cumulativeTileCount = 0;
-                    float candidateRangeDistance = float.MaxValue;
-                    for (int index = 0; index < candidatePlans.Count; index++)
+                    HashSet<Vector3Int> occupiedCoordinates = BuildOccupiedCoordinates(candidatePlans, gridSize);
+                    List<List<ProceduralLevelBatchGenerator.TilePlacementData>> shells = BuildShellsFromOccupied(occupiedCoordinates);
+                    int capacity = GetShellTileCapacity(shells);
+                    int availableLayers = shells.Count;
+                    if (capacity < 2 || availableLayers < 2)
                     {
-                        cumulativeTileCount += GetShellTileCount(candidatePlans[index]);
-                        float distanceToRange = GetDistanceToTileRange(cumulativeTileCount, safeMinTileCount, safeMaxTileCount, targetTileCount);
-                        if (distanceToRange < candidateRangeDistance)
-                        {
-                            candidateRangeDistance = distanceToRange;
-                        }
+                        continue;
                     }
 
                     TierPlan basePlan = candidatePlans[0];
-                    float panelWidth = basePlan.ColumnCount * metrics.FaceWidth;
-                    float panelHeight = basePlan.RowCount * metrics.FaceHeight;
-                    float longestSide = Mathf.Max(panelWidth, panelHeight);
-                    float mismatch = longestSide <= 0.01f ? 0f : Mathf.Abs(panelWidth - panelHeight) / longestSide;
+                    float mismatch = GetFootprintMismatch(basePlan, metrics);
+                    float rangeDistance = GetDistanceToTileRange(capacity, minTileCount, maxTileCount, desiredTileCount);
+                    float score = rangeDistance;
+                    score += mismatch * FootprintMismatchPenalty;
+                    score -= Mathf.Min(availableLayers, targetLayerCount) * DistinctTierReward;
+                    score += Mathf.Max(0, capacity - maxTileCount) * OversizePenalty;
 
-                    bool isBetterRange = candidateRangeDistance + 0.0001f < bestRangeDistance;
-                    bool isSameRangeWithBetterMismatch = Mathf.Abs(candidateRangeDistance - bestRangeDistance) <= 0.0001f && mismatch + 0.0001f < bestMismatch;
-                    bool isSameRangeAndMismatchWithFewerTiles = Mathf.Abs(candidateRangeDistance - bestRangeDistance) <= 0.0001f && Mathf.Abs(mismatch - bestMismatch) <= 0.0001f && cumulativeTileCount < bestTotalTileCount;
-                    if (!isBetterRange && !isSameRangeWithBetterMismatch && !isSameRangeAndMismatchWithFewerTiles)
+                    bool isBetter = score + 0.0001f < bestScore;
+                    bool isTieWithCloserCapacity = Mathf.Abs(score - bestScore) <= 0.0001f && Mathf.Abs(capacity - desiredTileCount) < Mathf.Abs(bestCapacity - desiredTileCount);
+                    if (!isBetter && !isTieWithCloserCapacity)
                     {
                         continue;
                     }
 
-                    bestRangeDistance = candidateRangeDistance;
-                    bestMismatch = mismatch;
-                    bestTotalTileCount = cumulativeTileCount;
+                    bestScore = score;
+                    bestCapacity = capacity;
                     bestPlans = candidatePlans;
                 }
             }
 
-            return bestPlans ?? BuildTierPlans(2, 2, tierCount, metrics);
+            if (bestPlans != null)
+            {
+                return bestPlans;
+            }
+
+            return BuildTierPlans(Mathf.Max(4, targetLayerCount + 2), Mathf.Max(4, targetLayerCount + 2), tierCount, metrics);
         }
 
         private static List<TierPlan> BuildTierPlans(int baseColumnCount, int baseRowCount, int tierCount, ProceduralLevelBatchGenerator.CubeTileMetrics metrics)
         {
             List<TierPlan> plans = new List<TierPlan>(tierCount);
-            int columnCount = Mathf.Max(1, baseColumnCount);
-            int rowCount = Mathf.Max(1, baseRowCount);
+            int currentColumnCount = Mathf.Max(1, baseColumnCount);
+            int currentRowCount = Mathf.Max(1, baseRowCount);
 
             for (int tierIndex = 0; tierIndex < tierCount; tierIndex++)
             {
-                float sideLength = ResolveTierSideLength(columnCount, rowCount, metrics);
-                float normalOffset = ResolveNormalOffset(sideLength, metrics);
-                plans.Add(new TierPlan(columnCount, rowCount, sideLength, normalOffset));
-                ShrinkTierFootprint(metrics, ref columnCount, ref rowCount);
+                plans.Add(new TierPlan(currentColumnCount, currentRowCount, 2));
+                ShrinkTierFootprint(metrics, ref currentColumnCount, ref currentRowCount);
             }
 
             return plans;
-        }
-
-        private static float[] ResolveTierCenters(List<TierPlan> tierPlans, float thickness)
-        {
-            float[] centers = new float[tierPlans.Count];
-            float currentTop = 0f;
-            float gap = Mathf.Max(0.01f, thickness * TierGapMultiplier);
-
-            for (int index = 0; index < tierPlans.Count; index++)
-            {
-                TierPlan plan = tierPlans[index];
-                float centerY = index == 0 ? plan.NormalOffset : currentTop + gap + plan.NormalOffset;
-                centers[index] = centerY;
-                currentTop = centerY + plan.NormalOffset;
-            }
-
-            float minimumY = centers[0] - tierPlans[0].NormalOffset;
-            float maximumY = currentTop;
-            float centerOffset = -((minimumY + maximumY) * 0.5f);
-            for (int index = 0; index < centers.Length; index++)
-            {
-                centers[index] += centerOffset;
-            }
-
-            return centers;
-        }
-
-        private static List<ProceduralLevelBatchGenerator.TilePlacementData> BuildTierShell(TierPlan plan, ProceduralLevelBatchGenerator.CubeTileMetrics metrics, float centerY)
-        {
-            int widthCount = plan.ColumnCount;
-            int heightCount = plan.RowCount;
-            float normalOffset = plan.NormalOffset;
-            float widthAxisStep = Mathf.Max(0.01f, metrics.FaceWidth);
-            float heightAxisStep = Mathf.Max(0.01f, metrics.FaceHeight);
-            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = new List<ProceduralLevelBatchGenerator.TilePlacementData>();
-
-            for (int verticalIndex = 0; verticalIndex < widthCount; verticalIndex++)
-            {
-                float localY = GetCenteredPanelCoordinate(verticalIndex, widthCount, widthAxisStep) + centerY;
-                for (int depthIndex = 0; depthIndex < heightCount; depthIndex++)
-                {
-                    float localZ = GetCenteredPanelCoordinate(depthIndex, heightCount, heightAxisStep);
-                    shell.Add(CreateCustomPlacement(new Vector3(-normalOffset, localY, localZ), VoxelGridDirection.Left));
-                    shell.Add(CreateCustomPlacement(new Vector3(normalOffset, localY, localZ), VoxelGridDirection.Right));
-                }
-            }
-
-            for (int depthIndex = 0; depthIndex < heightCount; depthIndex++)
-            {
-                float localZ = GetCenteredPanelCoordinate(depthIndex, heightCount, heightAxisStep);
-                for (int widthIndex = 0; widthIndex < widthCount; widthIndex++)
-                {
-                    float localX = GetCenteredPanelCoordinate(widthIndex, widthCount, widthAxisStep);
-                    shell.Add(CreateCustomPlacement(new Vector3(localX, centerY - normalOffset, localZ), VoxelGridDirection.Down));
-                    shell.Add(CreateCustomPlacement(new Vector3(localX, centerY + normalOffset, localZ), VoxelGridDirection.Up));
-                }
-            }
-
-            for (int heightIndex = 0; heightIndex < heightCount; heightIndex++)
-            {
-                float localY = GetCenteredPanelCoordinate(heightIndex, heightCount, heightAxisStep) + centerY;
-                for (int widthIndex = 0; widthIndex < widthCount; widthIndex++)
-                {
-                    float localX = GetCenteredPanelCoordinate(widthIndex, widthCount, widthAxisStep);
-                    shell.Add(CreateCustomPlacement(new Vector3(localX, localY, -normalOffset), VoxelGridDirection.Back));
-                    shell.Add(CreateCustomPlacement(new Vector3(localX, localY, normalOffset), VoxelGridDirection.Forward));
-                }
-            }
-
-            return shell;
         }
 
         private static void ShrinkTierFootprint(ProceduralLevelBatchGenerator.CubeTileMetrics metrics, ref int columnCount, ref int rowCount)
         {
             float widthSpan = columnCount * metrics.FaceWidth;
             float depthSpan = rowCount * metrics.FaceHeight;
-            if ((widthSpan >= depthSpan && columnCount > 1) || rowCount <= 1)
+
+            if (columnCount > 2)
             {
-                columnCount = Mathf.Max(1, columnCount - 1);
+                columnCount--;
+            }
+
+            if (rowCount > 2)
+            {
+                rowCount--;
+            }
+
+            if (columnCount == rowCount)
+            {
                 return;
             }
 
-            rowCount = Mathf.Max(1, rowCount - 1);
+            if (widthSpan > depthSpan && rowCount > 2)
+            {
+                rowCount--;
+                return;
+            }
+
+            if (depthSpan > widthSpan && columnCount > 2)
+            {
+                columnCount--;
+            }
         }
 
-        private static float ResolveTierSideLength(int columnCount, int rowCount, ProceduralLevelBatchGenerator.CubeTileMetrics metrics)
+        private static HashSet<Vector3Int> BuildOccupiedCoordinates(List<TierPlan> tierPlans, VoxelGridSize gridSize)
         {
-            float edgeInset = Mathf.Max(0.01f, metrics.Thickness + EdgeInsetPadding);
-            float panelWidth = columnCount * metrics.FaceWidth;
-            float panelHeight = rowCount * metrics.FaceHeight;
-            return Mathf.Max(panelWidth, panelHeight) + (edgeInset * 2f);
+            HashSet<Vector3Int> occupiedCoordinates = new HashSet<Vector3Int>();
+            int currentY = 0;
+
+            for (int tierIndex = 0; tierIndex < tierPlans.Count; tierIndex++)
+            {
+                TierPlan plan = tierPlans[tierIndex];
+                int minX = Mathf.Max(0, (gridSize.Width - plan.ColumnCount) / 2);
+                int minZ = Mathf.Max(0, (gridSize.Depth - plan.RowCount) / 2);
+                int maxX = Mathf.Min(gridSize.Width, minX + plan.ColumnCount);
+                int maxY = Mathf.Min(gridSize.Height, currentY + plan.HeightCount);
+                int maxZ = Mathf.Min(gridSize.Depth, minZ + plan.RowCount);
+
+                for (int x = minX; x < maxX; x++)
+                {
+                    for (int y = currentY; y < maxY; y++)
+                    {
+                        for (int z = minZ; z < maxZ; z++)
+                        {
+                            occupiedCoordinates.Add(new Vector3Int(x, y, z));
+                        }
+                    }
+                }
+
+                currentY = maxY;
+                if (currentY >= gridSize.Height)
+                {
+                    break;
+                }
+            }
+
+            return occupiedCoordinates;
         }
 
-        private static float ResolveNormalOffset(float sideLength, ProceduralLevelBatchGenerator.CubeTileMetrics metrics)
+        private static List<List<ProceduralLevelBatchGenerator.TilePlacementData>> BuildShellsFromOccupied(HashSet<Vector3Int> occupiedCoordinates)
         {
-            float centeredOffset = (sideLength - metrics.Thickness) * 0.55f;
-            float inwardRecess = metrics.Thickness * 1f;
-            return Mathf.Max(0f, centeredOffset - inwardRecess);
+            List<List<ProceduralLevelBatchGenerator.TilePlacementData>> shells = new List<List<ProceduralLevelBatchGenerator.TilePlacementData>>();
+            HashSet<Vector3Int> remaining = new HashSet<Vector3Int>(occupiedCoordinates);
+
+            while (remaining.Count > 0)
+            {
+                List<ProceduralLevelBatchGenerator.TilePlacementData> shell = ExtractSurfaceShell(remaining);
+                if (shell.Count == 0)
+                {
+                    break;
+                }
+
+                shells.Add(shell);
+                for (int index = 0; index < shell.Count; index++)
+                {
+                    remaining.Remove(shell[index].Coordinate);
+                }
+            }
+
+            return shells;
         }
 
-        private static float GetDistanceToTileRange(int tileCount, float minTileCount, float maxTileCount, float targetTileCount)
+        private static List<ProceduralLevelBatchGenerator.TilePlacementData> ExtractSurfaceShell(HashSet<Vector3Int> occupiedCoordinates)
+        {
+            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = new List<ProceduralLevelBatchGenerator.TilePlacementData>();
+            foreach (Vector3Int coordinate in occupiedCoordinates)
+            {
+                for (int directionIndex = 0; directionIndex < NeighborDirections.Length; directionIndex++)
+                {
+                    Vector3Int neighbor = coordinate + NeighborDirections[directionIndex];
+                    if (occupiedCoordinates.Contains(neighbor))
+                    {
+                        continue;
+                    }
+
+                    shell.Add(new ProceduralLevelBatchGenerator.TilePlacementData
+                    {
+                        Coordinate = coordinate,
+                        FacingDirection = ToGridDirection(NeighborDirections[directionIndex]),
+                        SurfaceSlotIndex = -1,
+                        UseCustomLocalPosition = false,
+                    });
+                }
+            }
+
+            return shell;
+        }
+
+        private static VoxelGridDirection ToGridDirection(Vector3Int offset)
+        {
+            if (offset == Vector3Int.right)
+            {
+                return VoxelGridDirection.Right;
+            }
+
+            if (offset == Vector3Int.left)
+            {
+                return VoxelGridDirection.Left;
+            }
+
+            if (offset == Vector3Int.up)
+            {
+                return VoxelGridDirection.Up;
+            }
+
+            if (offset == Vector3Int.down)
+            {
+                return VoxelGridDirection.Down;
+            }
+
+            if (offset.z > 0)
+            {
+                return VoxelGridDirection.Forward;
+            }
+
+            return VoxelGridDirection.Back;
+        }
+
+        private static int GetShellTileCapacity(List<List<ProceduralLevelBatchGenerator.TilePlacementData>> shells)
+        {
+            int total = 0;
+            for (int index = 0; index < shells.Count; index++)
+            {
+                total += shells[index].Count;
+            }
+
+            return total;
+        }
+
+        private static float GetFootprintMismatch(TierPlan plan, ProceduralLevelBatchGenerator.CubeTileMetrics metrics)
+        {
+            float widthSpan = plan.ColumnCount * metrics.FaceWidth;
+            float depthSpan = plan.RowCount * metrics.FaceHeight;
+            float longestSide = Mathf.Max(widthSpan, depthSpan);
+            return longestSide <= 0.01f ? 0f : Mathf.Abs(widthSpan - depthSpan) / longestSide;
+        }
+
+        private static float GetDistanceToTileRange(int tileCount, int minTileCount, int maxTileCount, int targetTileCount)
         {
             if (tileCount >= minTileCount && tileCount <= maxTileCount)
             {
@@ -253,71 +327,6 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return (tileCount - maxTileCount) + 1000f;
-        }
-
-        private static int GetShellTileCount(TierPlan plan)
-        {
-            return plan.ColumnCount * plan.RowCount * 6;
-        }
-
-        private static float GetCenteredPanelCoordinate(int index, int count, float step)
-        {
-            return ((index + 0.5f) - (count * 0.5f)) * step;
-        }
-
-        private static void GetSquareFaceTileGrid(float tileFaceWidth, float tileFaceHeight, int maxFaceTileCount, out int columnCount, out int rowCount)
-        {
-            float safeWidth = Mathf.Max(0.01f, tileFaceWidth);
-            float safeHeight = Mathf.Max(0.01f, tileFaceHeight);
-            int safeMaxFaceTileCount = Mathf.Max(1, maxFaceTileCount);
-            float bestMismatch = float.MaxValue;
-            int bestColumnCount = 1;
-            int bestRowCount = 1;
-            int bestTileCount = int.MaxValue;
-
-            for (int candidateColumnCount = 1; candidateColumnCount <= MaxTilesPerAxis; candidateColumnCount++)
-            {
-                for (int candidateRowCount = 1; candidateRowCount <= MaxTilesPerAxis; candidateRowCount++)
-                {
-                    int tileCount = candidateColumnCount * candidateRowCount;
-                    if (tileCount > safeMaxFaceTileCount)
-                    {
-                        continue;
-                    }
-
-                    float panelWidth = candidateColumnCount * safeWidth;
-                    float panelHeight = candidateRowCount * safeHeight;
-                    float longestSide = Mathf.Max(panelWidth, panelHeight);
-                    float mismatch = longestSide <= 0.01f ? 0f : Mathf.Abs(panelWidth - panelHeight) / longestSide;
-
-                    bool isBetterMismatch = mismatch + 0.0001f < bestMismatch;
-                    bool isSameMismatchWithFewerTiles = Mathf.Abs(mismatch - bestMismatch) <= 0.0001f && tileCount < bestTileCount;
-                    if (!isBetterMismatch && !isSameMismatchWithFewerTiles)
-                    {
-                        continue;
-                    }
-
-                    bestMismatch = mismatch;
-                    bestColumnCount = candidateColumnCount;
-                    bestRowCount = candidateRowCount;
-                    bestTileCount = tileCount;
-                }
-            }
-
-            columnCount = bestColumnCount;
-            rowCount = bestRowCount;
-        }
-
-        private static ProceduralLevelBatchGenerator.TilePlacementData CreateCustomPlacement(Vector3 localPosition, VoxelGridDirection facingDirection)
-        {
-            return new ProceduralLevelBatchGenerator.TilePlacementData
-            {
-                Coordinate = Vector3Int.zero,
-                FacingDirection = facingDirection,
-                SurfaceSlotIndex = -1,
-                CustomLocalPosition = localPosition,
-                UseCustomLocalPosition = true,
-            };
         }
     }
 }

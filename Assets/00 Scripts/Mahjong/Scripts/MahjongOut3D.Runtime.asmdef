@@ -1,7 +1,9 @@
 {
   "name": "MahjongOut3D.Runtime",
   "rootNamespace": "MahjongOut3D",
-  "references": [],
+  "references": [
+    "Unity.TextMeshPro"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

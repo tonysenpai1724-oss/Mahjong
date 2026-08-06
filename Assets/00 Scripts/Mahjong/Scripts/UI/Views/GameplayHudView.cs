@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,9 +10,9 @@ namespace MahjongOut3D.UI
     /// </summary>
     public sealed class GameplayHudView : UIScreenView
     {
-        [SerializeField] private Text coinText;
-        [SerializeField] private Text progressText;
-        [SerializeField] private Slider progressSlider;
+        [SerializeField] private TMP_Text coinText;
+        [SerializeField] private TMP_Text progressText;
+        [SerializeField] private Image progressSlider;
         [SerializeField] private Button pauseButton;
         [SerializeField] private Button hintButton;
         [SerializeField] private Button undoButton;
@@ -55,7 +56,7 @@ namespace MahjongOut3D.UI
 
             if (progressSlider != null)
             {
-                progressSlider.value = Mathf.Clamp01(completionRatio);
+                progressSlider.fillAmount = Mathf.Clamp01(completionRatio);
             }
         }
 
