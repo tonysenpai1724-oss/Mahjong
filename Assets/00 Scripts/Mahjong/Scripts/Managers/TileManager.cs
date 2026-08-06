@@ -312,7 +312,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return IsTileExposed(tile) && IsTileCenterVisibleFromCamera(tile);
+                return IsTileExposed(tile) && IsTileSurfaceVisibleFromCamera(tile);
             }
 
             if (exposureSettings != null && exposureSettings.RequireSurfaceExposure && !IsTileExposed(tile))
@@ -326,6 +326,23 @@ namespace MahjongOut3D.Managers
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Determines whether the tile currently satisfies selection rules for a concrete tap hit.
+        /// </summary>
+        /// <param name="tile">Tile to evaluate.</param>
+        /// <param name="hitInfo">Physics hit produced by the tap raycast.</param>
+        /// <returns>True when the tap should select the tile; otherwise false.</returns>
+        public bool IsTileTapSelectable(MahjongTile tile, RaycastHit hitInfo)
+        {
+            if (!IsTileSelectable(tile))
+            {
+                return false;
+            }
+
+            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
+            return !useSurfaceRules || IsTapOnSurfaceFace(tile, hitInfo);
         }
 
         /// <summary>
@@ -348,7 +365,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return IsTileExposed(tile) && IsTileCenterVisibleFromCamera(tile);
+                return IsTileExposed(tile) && IsTileSurfaceVisibleFromCamera(tile);
             }
 
             return IsTileSelectable(tile);
@@ -504,6 +521,85 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Validates that enough of a surface tile's outward-facing samples are directly visible from the active camera.
+        /// </summary>
+        private bool IsTileSurfaceVisibleFromCamera(MahjongTile tile)
+        {
+            if (tile == null || !Context.Services.TryGet(out CameraManager cameraManager) || cameraManager.ActiveCamera == null)
+            {
+                return false;
+            }
+
+            Collider tileCollider = tile.TileCollider;
+            if (tileCollider == null)
+            {
+                return false;
+            }
+
+            Camera activeCamera = cameraManager.ActiveCamera;
+            Vector3 cameraPosition = activeCamera.transform.position;
+            Vector3 outwardNormal = tile.transform.up.normalized;
+            Vector3[] samplePoints = tileCollider is BoxCollider boxCollider
+                ? BuildSurfaceCoverCheckSamplePoints(boxCollider, tileCollider.transform, GetVisibilitySampleInset())
+                : BuildSurfaceCoverCheckSamplePoints(tileCollider.bounds, outwardNormal, GetVisibilitySampleInset());
+            int visibleSampleCount = 0;
+
+            for (int index = 0; index < samplePoints.Length; index++)
+            {
+                Vector3 targetPoint = samplePoints[index];
+                Vector3 direction = targetPoint - cameraPosition;
+                float distance = direction.magnitude + GetVisibilityRayPadding();
+                if (distance <= Mathf.Epsilon)
+                {
+                    continue;
+                }
+
+                Ray ray = new Ray(cameraPosition, direction.normalized);
+                int hitCount = Physics.RaycastNonAlloc(ray, raycastBuffer, distance, tileLayerMask, QueryTriggerInteraction.Ignore);
+                if (hitCount <= 0)
+                {
+                    continue;
+                }
+
+                int closestHitIndex = GetClosestHitIndex(hitCount);
+                if (closestHitIndex < 0)
+                {
+                    continue;
+                }
+
+                MahjongTile hitTile = raycastBuffer[closestHitIndex].collider.GetComponentInParent<MahjongTile>();
+                if (hitTile == tile)
+                {
+                    visibleSampleCount++;
+                }
+            }
+
+            float visibleRatio = samplePoints.Length == 0 ? 0f : (float)visibleSampleCount / samplePoints.Length;
+            return visibleRatio >= GetRequiredVisibleSampleRatio();
+        }
+
+        /// <summary>
+        /// Validates that a tap lands on the tile's outward-facing selectable face.
+        /// </summary>
+        private bool IsTapOnSurfaceFace(MahjongTile tile, RaycastHit hitInfo)
+        {
+            if (tile == null || tile.TileCollider == null || hitInfo.collider == null)
+            {
+                return false;
+            }
+
+            MahjongTile hitTile = hitInfo.collider.GetComponentInParent<MahjongTile>();
+            if (hitTile != tile)
+            {
+                return false;
+            }
+
+            Vector3 outwardNormal = tile.transform.up.normalized;
+            float normalAlignment = Vector3.Dot(hitInfo.normal.normalized, outwardNormal);
+            return normalAlignment >= 0.85f;
+        }
+
+        /// <summary>
         /// Determines whether a surface-placed tile has enough free outward face area to be selected.
         /// </summary>
         private bool IsSurfaceTileLocallyExposed(MahjongTile tile)
@@ -520,28 +616,17 @@ namespace MahjongOut3D.Managers
             }
 
             Vector3 outwardNormal = tile.transform.up.normalized;
-            if (HasOutwardFaceCoveringTile(tile, outwardNormal))
-            {
-                return false;
-            }
-
             Vector3[] samplePoints = tileCollider is BoxCollider boxCollider
-                ? BuildSurfaceExposureSamplePoints(boxCollider, tile.transform, GetVisibilitySampleInset())
-                : BuildSurfaceExposureSamplePoints(tileCollider.bounds, outwardNormal, GetVisibilitySampleInset());
+                ? BuildSurfaceCoverCheckSamplePoints(boxCollider, tile.transform, GetVisibilitySampleInset())
+                : BuildSurfaceCoverCheckSamplePoints(tileCollider.bounds, outwardNormal, GetVisibilitySampleInset());
             int openSampleCount = 0;
-            float checkDistance = GetSurfaceExposureCheckDistance(tile, outwardNormal);
+            float checkDistance = maxRaycastDistance;
 
             for (int index = 0; index < samplePoints.Length; index++)
             {
                 Vector3 rayOrigin = samplePoints[index] + (outwardNormal * GetVisibilityRayPadding());
                 Ray ray = new Ray(rayOrigin, outwardNormal);
                 int hitCount = Physics.RaycastNonAlloc(ray, raycastBuffer, checkDistance, tileLayerMask, QueryTriggerInteraction.Ignore);
-                if (hitCount <= 0)
-                {
-                    openSampleCount++;
-                    continue;
-                }
-
                 bool isBlocked = false;
                 for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
                 {

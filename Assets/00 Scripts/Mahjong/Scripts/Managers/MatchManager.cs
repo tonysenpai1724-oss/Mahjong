@@ -260,7 +260,7 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            if (!tileManager.IsTileSelectable(tappedTile))
+            if (!tileManager.IsTileTapSelectable(tappedTile, eventData.HitInfo))
             {
                 tappedTile.PlayBlockedTapFeedback();
                 return;
