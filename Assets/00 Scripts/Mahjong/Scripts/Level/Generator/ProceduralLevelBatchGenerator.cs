@@ -1328,7 +1328,7 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         private LevelTileDefinition CreateTileDefinition(int matchId, int tileIndex, TilePlacementData placement, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, float flippedTileChance, System.Random random)
         {
-            bool flipTile = random.NextDouble() <= flippedTileChance;
+            bool flipTile = ShouldFlipGeneratedTile(placement, flippedTileChance, random);
             return new LevelTileDefinition
             {
                 MatchId = matchId,
@@ -1338,6 +1338,21 @@ namespace MahjongOut3D.LevelSystem
                 LocalPosition = GetCompactedSurfaceTileLocalPosition(placement, shapeGridSize),
                 LocalEulerAngles = GetFacingRotationEuler(placement.FacingDirection, flipTile),
             };
+        }
+
+        private static bool ShouldFlipGeneratedTile(TilePlacementData placement, float flippedTileChance, System.Random random)
+        {
+            if (placement == null)
+            {
+                return false;
+            }
+
+            if (placement.UseCustomLocalPosition || placement.SurfaceSlotIndex >= -1)
+            {
+                return false;
+            }
+
+            return random != null && random.NextDouble() <= flippedTileChance;
         }
 
         /// <summary>

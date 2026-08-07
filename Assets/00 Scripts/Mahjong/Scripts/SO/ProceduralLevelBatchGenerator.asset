@@ -18,10 +18,10 @@ MonoBehaviour:
   outputFolder: Assets/00 Scripts/Mahjong/Generated Levels
   levelNamePrefix: Generated
   seed: 20260730
-  generationWriteMode: 0
+  generationWriteMode: 1
   normalSettings:
     label: Normal
-    levelCount: 0
+    levelCount: 20
     minLayerCount: 1
     maxLayerCount: 3
     minPairCount: 22
@@ -38,8 +38,8 @@ MonoBehaviour:
     minPairCount: 40
     maxPairCount: 70
     flippedTileChance: 0.55
-    shape: 2
-    allowedShapes: 02000000
+    shape: 1
+    allowedShapes: 01000000
     difficulty: 2
   superHardSettings:
     label: SuperHard
