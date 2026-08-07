@@ -30,6 +30,10 @@ namespace MahjongOut3D.LevelSystem
         [field: SerializeField]
         public LevelDifficulty Difficulty { get; private set; } = LevelDifficulty.Easy;
 
+        [field: Header("Visuals")]
+        [field: SerializeField]
+        public List<string> FillCategoryNames { get; private set; } = new List<string>();
+
         [field: Header("Tiles")]
         [field: SerializeField]
         public List<LevelTileDefinition> Tiles { get; private set; } = new List<LevelTileDefinition>();

@@ -79,6 +79,7 @@ namespace MahjongOut3D.LevelSystem
                 useSurfaceTilePlacement = definition.UseSurfaceTilePlacement,
                 shape = definition.Shape,
                 difficulty = definition.Difficulty,
+                fillCategoryNames = definition.FillCategoryNames != null ? new List<string>(definition.FillCategoryNames) : new List<string>(),
             };
 
             if (definition.Tiles == null)

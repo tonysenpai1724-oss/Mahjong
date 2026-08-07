@@ -16,6 +16,7 @@ namespace MahjongOut3D.LevelSystem
         public bool useSurfaceTilePlacement;
         public LevelShapeType shape;
         public LevelDifficulty difficulty;
+        public List<string> fillCategoryNames = new List<string>();
         public List<LevelJsonTileData> tiles = new List<LevelJsonTileData>();
     }
 

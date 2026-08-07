@@ -51,6 +51,7 @@ namespace MahjongOut3D.LevelSystem
 
         private readonly List<MahjongTile> spawnedTiles = new List<MahjongTile>();
         private readonly Dictionary<int, Texture2D> fillTexturesByMatchId = new Dictionary<int, Texture2D>();
+        private readonly List<Texture2D> activeLevelFillTextures = new List<Texture2D>();
         private ComponentPool<MahjongTile> tilePool;
         private GameContext context;
         private LevelManager levelManager;
@@ -119,6 +120,7 @@ namespace MahjongOut3D.LevelSystem
 
             levelDefinition = definition;
             levelManager?.SetActiveLevelDefinition(definition, definition.UseSurfaceTilePlacement);
+            ConfigureFillTexturePool(definition.FillCategoryNames);
 
             IList<LevelTileDefinition> runtimeTiles = BuildRuntimeTileDefinitions(
                 definition.UseSurfaceTilePlacement,
@@ -144,6 +146,7 @@ namespace MahjongOut3D.LevelSystem
 
             VoxelGridSize gridSize = new VoxelGridSize(jsonData.width, jsonData.height, jsonData.depth);
             levelManager?.SetActiveLevelDefinition(null, jsonData.useSurfaceTilePlacement);
+            ConfigureFillTexturePool(jsonData.fillCategoryNames);
             IList<LevelTileDefinition> runtimeTiles = BuildRuntimeTileDefinitions(
                 jsonData.useSurfaceTilePlacement,
                 jsonData.shape,
@@ -173,13 +176,7 @@ namespace MahjongOut3D.LevelSystem
 
         private Texture2D GetFillTextureForMatch(int matchId)
         {
-            if (mahjongMaterialSO == null)
-            {
-                return null;
-            }
-
-            List<Texture2D> activeFillTextures = mahjongMaterialSO.GetActiveFillTextures();
-            if (activeFillTextures == null || activeFillTextures.Count == 0)
+            if (activeLevelFillTextures.Count == 0)
             {
                 return null;
             }
@@ -189,8 +186,8 @@ namespace MahjongOut3D.LevelSystem
                 return cachedTexture;
             }
 
-            int randomIndex = Random.Range(0, activeFillTextures.Count);
-            Texture2D resolvedTexture = activeFillTextures[randomIndex];
+            int resolvedIndex = Mathf.Abs(matchId) % activeLevelFillTextures.Count;
+            Texture2D resolvedTexture = activeLevelFillTextures[resolvedIndex];
             fillTexturesByMatchId[matchId] = resolvedTexture;
             return resolvedTexture;
         }
@@ -235,6 +232,7 @@ namespace MahjongOut3D.LevelSystem
             }
 
             levelManager?.SetActiveLevelDefinition(null, false);
+            ConfigureFillTexturePool(null);
             return Generate("ArrayGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles);
         }
 
@@ -285,6 +283,7 @@ namespace MahjongOut3D.LevelSystem
             }
 
             levelManager?.SetActiveLevelDefinition(null, false);
+            ConfigureFillTexturePool(null);
             return Generate("MaskGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles);
         }
 
@@ -314,6 +313,7 @@ namespace MahjongOut3D.LevelSystem
 
             spawnedTiles.Clear();
             fillTexturesByMatchId.Clear();
+            activeLevelFillTextures.Clear();
             nextTileId = 0;
             levelManager?.ClearActiveGrid();
 
@@ -349,6 +349,10 @@ namespace MahjongOut3D.LevelSystem
             levelManager.SetActiveGrid(grid);
             pieceBaseMaterial = mahjongMaterialSO != null ? mahjongMaterialSO.PieceBaseMaterial : null;
             pieceTexture = RandomPieceTexture();
+            if (activeLevelFillTextures.Count == 0)
+            {
+                ConfigureFillTexturePool(levelDefinition != null ? levelDefinition.FillCategoryNames : null);
+            }
           
             if (tileDefinitions != null)
             {
@@ -368,6 +372,47 @@ namespace MahjongOut3D.LevelSystem
             FocusCameraOnGrid(grid);
             context.EventBus.Publish(new LevelGeneratedEvent(levelName, spawnedTiles.Count, grid));
             return spawnedTiles;
+        }
+
+        private void ConfigureFillTexturePool(IList<string> categoryNames)
+        {
+            activeLevelFillTextures.Clear();
+            fillTexturesByMatchId.Clear();
+
+            if (mahjongMaterialSO == null)
+            {
+                return;
+            }
+
+            List<Texture2D> resolvedTextures = mahjongMaterialSO.GetActiveFillTextures(categoryNames);
+            if ((resolvedTextures == null || resolvedTextures.Count == 0) && categoryNames != null && categoryNames.Count > 0)
+            {
+                resolvedTextures = mahjongMaterialSO.GetActiveFillTextures();
+            }
+
+            if (resolvedTextures == null || resolvedTextures.Count == 0)
+            {
+                return;
+            }
+
+            activeLevelFillTextures.AddRange(resolvedTextures);
+            Shuffle(activeLevelFillTextures);
+        }
+
+        private static void Shuffle<TValue>(IList<TValue> values)
+        {
+            if (values == null)
+            {
+                return;
+            }
+
+            for (int index = values.Count - 1; index > 0; index--)
+            {
+                int swapIndex = Random.Range(0, index + 1);
+                TValue temporary = values[index];
+                values[index] = values[swapIndex];
+                values[swapIndex] = temporary;
+            }
         }
 
         /// <summary>

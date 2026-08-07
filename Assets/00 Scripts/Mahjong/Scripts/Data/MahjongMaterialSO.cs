@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -55,10 +56,25 @@ namespace MahjongOut3D.Data
             return GetActiveTextures(fillCategories);
         }
 
+        /// <summary>
+        /// Returns the active fill textures filtered by category names.
+        /// When the selection is empty, all active fill textures are returned.
+        /// </summary>
+        public List<Texture2D> GetActiveFillTextures(IList<string> categoryNames)
+        {
+            return GetActiveTextures(fillCategories, categoryNames);
+        }
+
         private static List<Texture2D> GetActiveTextures(List<MahjongMaterialCategory> categories)
+        {
+            return GetActiveTextures(categories, null);
+        }
+
+        private static List<Texture2D> GetActiveTextures(List<MahjongMaterialCategory> categories, IList<string> categoryNames)
         {
             List<Texture2D> resolvedTextures = new List<Texture2D>();
             HashSet<Texture2D> seenTextures = new HashSet<Texture2D>();
+            HashSet<string> categoryLookup = BuildCategoryLookup(categoryNames);
             if (categories == null)
             {
                 return resolvedTextures;
@@ -72,6 +88,15 @@ namespace MahjongOut3D.Data
                     continue;
                 }
 
+                if (categoryLookup != null)
+                {
+                    string categoryName = string.IsNullOrWhiteSpace(category.CategoryName) ? string.Empty : category.CategoryName.Trim();
+                    if (!categoryLookup.Contains(categoryName))
+                    {
+                        continue;
+                    }
+                }
+
                 for (int textureIndex = 0; textureIndex < category.Textures.Count; textureIndex++)
                 {
                     Texture2D texture = category.Textures[textureIndex];
@@ -83,6 +108,26 @@ namespace MahjongOut3D.Data
             }
 
             return resolvedTextures;
+        }
+
+        private static HashSet<string> BuildCategoryLookup(IList<string> categoryNames)
+        {
+            if (categoryNames == null || categoryNames.Count == 0)
+            {
+                return null;
+            }
+
+            HashSet<string> lookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int index = 0; index < categoryNames.Count; index++)
+            {
+                string categoryName = categoryNames[index];
+                if (!string.IsNullOrWhiteSpace(categoryName))
+                {
+                    lookup.Add(categoryName.Trim());
+                }
+            }
+
+            return lookup.Count > 0 ? lookup : null;
         }
     }
 }

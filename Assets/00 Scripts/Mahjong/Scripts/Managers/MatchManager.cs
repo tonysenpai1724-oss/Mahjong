@@ -270,7 +270,7 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            MahjongTile matchingTrayTile = FindMatchingTrayTile(tappedTile.MatchId);
+            MahjongTile matchingTrayTile = FindMatchingTrayTile(tappedTile);
             if (selectedTiles.Count >= SelectionTrayCapacity && matchingTrayTile == null)
             {
                 GetAudioManager()?.PlayLose();
@@ -462,7 +462,7 @@ namespace MahjongOut3D.Managers
                         continue;
                     }
 
-                    if (tile.MatchId == trayTile.MatchId)
+                    if (tile.HasSameVisualIdentity(trayTile))
                     {
                         firstTile = trayTile;
                         secondTile = tile;
@@ -472,7 +472,7 @@ namespace MahjongOut3D.Managers
             }
 
             List<MahjongTile> hintCandidates = GetOrderedHintCandidates(tileManager);
-            Dictionary<int, MahjongTile> firstByMatchId = new Dictionary<int, MahjongTile>();
+            Dictionary<string, MahjongTile> firstByVisualKey = new Dictionary<string, MahjongTile>();
             for (int index = 0; index < hintCandidates.Count; index++)
             {
                 MahjongTile tile = hintCandidates[index];
@@ -481,14 +481,15 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
-                if (firstByMatchId.TryGetValue(tile.MatchId, out MahjongTile existingTile) && existingTile != tile)
+                string visualKey = tile.VisualMatchKey;
+                if (firstByVisualKey.TryGetValue(visualKey, out MahjongTile existingTile) && existingTile != tile)
                 {
                     firstTile = existingTile;
                     secondTile = tile;
                     return true;
                 }
 
-                firstByMatchId[tile.MatchId] = tile;
+                firstByVisualKey[visualKey] = tile;
             }
 
             return false;
@@ -656,7 +657,7 @@ namespace MahjongOut3D.Managers
                         continue;
                     }
 
-                    if (tile.MatchId == trayTile.MatchId)
+                    if (tile.HasSameVisualIdentity(trayTile))
                     {
                         firstTile = trayTile;
                         secondTile = tile;
@@ -665,7 +666,7 @@ namespace MahjongOut3D.Managers
                 }
             }
 
-            Dictionary<int, MahjongTile> firstByMatchId = new Dictionary<int, MahjongTile>();
+            Dictionary<string, MahjongTile> firstByVisualKey = new Dictionary<string, MahjongTile>();
             foreach (MahjongTile tile in tileManager.GetRemainingTiles())
             {
                 if (tile == null || tile.IsRemoved || tile.IsBufferedSelection || !IsTileAvailableForBoardPair(tileManager, tile))
@@ -673,14 +674,15 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
-                if (firstByMatchId.TryGetValue(tile.MatchId, out MahjongTile existingTile) && existingTile != tile)
+                string visualKey = tile.VisualMatchKey;
+                if (firstByVisualKey.TryGetValue(visualKey, out MahjongTile existingTile) && existingTile != tile)
                 {
                     firstTile = existingTile;
                     secondTile = tile;
                     return true;
                 }
 
-                firstByMatchId[tile.MatchId] = tile;
+                firstByVisualKey[visualKey] = tile;
             }
 
             return false;
@@ -974,14 +976,19 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Finds an already buffered tray tile with the supplied match id.
+        /// Finds an already buffered tray tile with the same visible image.
         /// </summary>
-        private MahjongTile FindMatchingTrayTile(int matchId)
+        private MahjongTile FindMatchingTrayTile(MahjongTile sourceTile)
         {
+            if (sourceTile == null)
+            {
+                return null;
+            }
+
             for (int index = 0; index < selectedTiles.Count; index++)
             {
                 MahjongTile tile = selectedTiles[index];
-                if (tile != null && !tile.IsRemoved && tile.MatchId == matchId)
+                if (tile != null && !tile.IsRemoved && tile.HasSameVisualIdentity(sourceTile))
                 {
                     return tile;
                 }
@@ -1032,7 +1039,7 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            Dictionary<int, List<MahjongTile>> tilesByMatchId = new Dictionary<int, List<MahjongTile>>();
+            Dictionary<string, List<MahjongTile>> tilesByVisualKey = new Dictionary<string, List<MahjongTile>>();
             for (int index = 0; index < tiles.Count; index++)
             {
                 MahjongTile tile = tiles[index];
@@ -1041,17 +1048,18 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
-                if (!tilesByMatchId.TryGetValue(tile.MatchId, out List<MahjongTile> pairTiles))
+                string visualKey = tile.VisualMatchKey;
+                if (!tilesByVisualKey.TryGetValue(visualKey, out List<MahjongTile> pairTiles))
                 {
-                    pairTiles = new List<MahjongTile>(2);
-                    tilesByMatchId.Add(tile.MatchId, pairTiles);
+                    pairTiles = new List<MahjongTile>();
+                    tilesByVisualKey.Add(visualKey, pairTiles);
                 }
 
                 pairTiles.Add(tile);
             }
 
-            List<PairShuffleGroup> groups = new List<PairShuffleGroup>(tilesByMatchId.Count);
-            foreach (KeyValuePair<int, List<MahjongTile>> pair in tilesByMatchId)
+            List<PairShuffleGroup> groups = new List<PairShuffleGroup>(tilesByVisualKey.Count);
+            foreach (KeyValuePair<string, List<MahjongTile>> pair in tilesByVisualKey)
             {
                 if (pair.Value == null || pair.Value.Count == 0)
                 {
@@ -1060,7 +1068,8 @@ namespace MahjongOut3D.Managers
 
                 groups.Add(new PairShuffleGroup
                 {
-                    MatchId = pair.Key,
+                    MatchId = pair.Value[0].MatchId,
+                    VisualKey = pair.Key,
                     FillTexture = pair.Value[0].FillTexture,
                     Tiles = pair.Value,
                 });
@@ -1101,6 +1110,8 @@ namespace MahjongOut3D.Managers
         private sealed class PairShuffleGroup
         {
             public int MatchId { get; set; }
+
+            public string VisualKey { get; set; }
 
             public Texture2D FillTexture { get; set; }
 

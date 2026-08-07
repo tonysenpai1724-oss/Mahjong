@@ -292,7 +292,7 @@ MonoBehaviour:
   outlineBehaviours: []
   outlineObjects: []
   outlineMaterial: {fileID: 2100000, guid: 9fa4385ce8d3ae54aac5bcb34467ac0d, type: 2}
-  outlineScale: 0
+  outlineScale: 1.05
   showOutlineOnCreate: 1
   hintOutlineColor: {r: 1, g: 0.85, b: 0.1, a: 1}
   hintBlinkSpeed: 2.5

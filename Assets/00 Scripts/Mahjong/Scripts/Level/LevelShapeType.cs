@@ -7,6 +7,7 @@ namespace MahjongOut3D.LevelSystem
     {
         Cube = 0,
         Pagoda = 1,
+        Pyramid = 2,
         Custom = 8,
     }
 }

@@ -130,6 +130,28 @@ namespace MahjongOut3D.TileSystem
         public Texture2D FillTexture => fillTexture;
 
         /// <summary>
+        /// Gets the visual match key used by gameplay matching.
+        /// Tiles sharing the same displayed image may match each other even when their authored match ids differ.
+        /// </summary>
+        public string VisualMatchKey
+        {
+            get
+            {
+                if (fillTexture != null)
+                {
+                    return $"fill:{fillTexture.name}:{fillTexture.GetEntityId()}";
+                }
+
+                if (pieceTexture != null)
+                {
+                    return $"piece:{pieceTexture.name}:{pieceTexture.GetEntityId()}";
+                }
+
+                return $"match:{matchId}";
+            }
+        }
+
+        /// <summary>
         /// Gets the tile collider used for hit testing.
         /// </summary>
         public Collider TileCollider => tileCollider;
@@ -414,6 +436,19 @@ namespace MahjongOut3D.TileSystem
         {
             matchId = newMatchId;
             gameObject.name = $"MahjongTile_{tileId}_{matchId}";
+        }
+
+        /// <summary>
+        /// Returns whether this tile may match another tile based on the currently displayed visuals.
+        /// </summary>
+        public bool HasSameVisualIdentity(MahjongTile other)
+        {
+            if (other == null || other == this)
+            {
+                return false;
+            }
+
+            return string.Equals(VisualMatchKey, other.VisualMatchKey, StringComparison.Ordinal);
         }
 
         /// <summary>

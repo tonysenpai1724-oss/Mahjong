@@ -31,11 +31,18 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private string outputFolder = "Assets/00 Scripts/Mahjong/Generated Levels";
         [SerializeField] private string levelNamePrefix = "Generated";
         [SerializeField] private int seed = 20260730;
-        [SerializeField] private bool replaceCatalogEntries = true;
-        [SerializeField] private bool overwriteExistingAssets = true;
+        [SerializeField] private GenerationWriteMode generationWriteMode = GenerationWriteMode.GenerateNew;
         [SerializeField] private DifficultyBatchDefinition normalSettings = DifficultyBatchDefinition.CreateNormalDefaults();
         [SerializeField] private DifficultyBatchDefinition hardSettings = DifficultyBatchDefinition.CreateHardDefaults();
         [SerializeField] private DifficultyBatchDefinition superHardSettings = DifficultyBatchDefinition.CreateSuperHardDefaults();
+
+        public enum GenerationWriteMode
+        {
+            GenerateNew = 0,
+            OverwriteMatching = 1,
+        }
+
+        public GenerationWriteMode WriteMode => generationWriteMode;
 
         /// <summary>
         /// Describes how many levels to generate for one difficulty tier and the shell-layer counts that tier may use.
@@ -153,11 +160,11 @@ namespace MahjongOut3D.LevelSystem
                     label = "Hard",
                     levelCount = 5,
                     minLayerCount = 5,
-                    maxLayerCount = 6,
-                    minPairCount = 34,
-                    maxPairCount = 40,
+                    maxLayerCount = 7,
+                    minPairCount = 40,
+                    maxPairCount = 60,
                     flippedTileChance = 0.55f,
-                    shape = LevelShapeType.Pagoda,
+                    shape = LevelShapeType.Pyramid,
                     allowedShapes = new List<LevelShapeType>(),
                     difficulty = LevelDifficulty.Hard,
                 };
@@ -172,12 +179,12 @@ namespace MahjongOut3D.LevelSystem
                 {
                     label = "SuperHard",
                     levelCount = 5,
-                    minLayerCount = 6,
-                    maxLayerCount = 7,
-                    minPairCount = 48,
-                    maxPairCount = 58,
+                    minLayerCount = 7,
+                    maxLayerCount = 9,
+                    minPairCount = 72,
+                    maxPairCount = 120,
                     flippedTileChance = 0.65f,
-                    shape = LevelShapeType.Pagoda,
+                    shape = LevelShapeType.Pyramid,
                     allowedShapes = new List<LevelShapeType>(),
                     difficulty = LevelDifficulty.Expert,
                 };
@@ -190,6 +197,7 @@ namespace MahjongOut3D.LevelSystem
             {
                 case LevelShapeType.Cube:
                 case LevelShapeType.Pagoda:
+                case LevelShapeType.Pyramid:
                 case LevelShapeType.Custom:
                     return shape;
                 default:
@@ -354,11 +362,11 @@ namespace MahjongOut3D.LevelSystem
         /// Creates a full batch of levels for all configured difficulty tiers.
         /// </summary>
         /// <returns>Generated level payloads.</returns>
-        public List<GeneratedLevelData> GenerateLevelData()
+        public List<GeneratedLevelData> GenerateLevelData(int startingSequence = 0)
         {
             List<GeneratedLevelData> results = new List<GeneratedLevelData>();
             System.Random random = new System.Random(seed);
-            int sequence = 0;
+            int sequence = Mathf.Max(0, startingSequence);
 
             AppendGeneratedTier(results, normalSettings, ref sequence, random);
             AppendGeneratedTier(results, hardSettings, ref sequence, random);
@@ -373,6 +381,15 @@ namespace MahjongOut3D.LevelSystem
         /// <returns>Created level asset references.</returns>
         public List<LevelDefinition> GenerateAssets()
         {
+            return GenerateAssets(generationWriteMode);
+        }
+
+        /// <summary>
+        /// Generates ScriptableObject level assets and writes them into the configured output folder.
+        /// </summary>
+        /// <returns>Created or updated level asset references.</returns>
+        public List<LevelDefinition> GenerateAssets(GenerationWriteMode writeMode)
+        {
             if (targetCatalog == null)
             {
                 throw new InvalidOperationException("ProceduralLevelBatchGenerator requires a target LevelCatalog.");
@@ -384,7 +401,8 @@ namespace MahjongOut3D.LevelSystem
             }
 
             EnsureFolderExists(outputFolder);
-            List<GeneratedLevelData> generatedData = GenerateLevelData();
+            int startingSequence = writeMode == GenerationWriteMode.GenerateNew ? GetHighestExistingSequence() : 0;
+            List<GeneratedLevelData> generatedData = GenerateLevelData(startingSequence);
             List<LevelDefinition> generatedAssets = new List<LevelDefinition>(generatedData.Count);
 
             for (int index = 0; index < generatedData.Count; index++)
@@ -393,18 +411,26 @@ namespace MahjongOut3D.LevelSystem
                 string safeLevelName = SanitizeFileName(data.LevelName);
                 string assetPath = $"{outputFolder}/{safeLevelName}.asset";
 
-                if (overwriteExistingAssets)
-                {
-                    AssetDatabase.DeleteAsset(assetPath);
-                }
-                else
+                if (writeMode == GenerationWriteMode.GenerateNew)
                 {
                     assetPath = AssetDatabase.GenerateUniqueAssetPath(assetPath);
                 }
 
-                LevelDefinition asset = CreateInstance<LevelDefinition>();
-                ApplyGeneratedData(asset, data);
-                AssetDatabase.CreateAsset(asset, assetPath);
+                LevelDefinition asset = writeMode == GenerationWriteMode.OverwriteMatching
+                    ? AssetDatabase.LoadAssetAtPath<LevelDefinition>(assetPath)
+                    : null;
+
+                if (asset == null)
+                {
+                    asset = CreateInstance<LevelDefinition>();
+                    ApplyGeneratedData(asset, data);
+                    AssetDatabase.CreateAsset(asset, assetPath);
+                }
+                else
+                {
+                    ApplyGeneratedData(asset, data);
+                }
+
                 generatedAssets.Add(asset);
             }
 
@@ -489,7 +515,7 @@ namespace MahjongOut3D.LevelSystem
                 return GetPreferredCubeTileCount(shells, targetLayerCount, minTileCount, maxTileCount);
             }
 
-            if (shape == LevelShapeType.Pagoda)
+            if (shape == LevelShapeType.Pagoda || shape == LevelShapeType.Pyramid)
             {
                 return GetPreferredPagodaTileCount(shells, minTileCount, maxTileCount);
             }
@@ -738,6 +764,13 @@ namespace MahjongOut3D.LevelSystem
 
                 case LevelShapeType.Pagoda:
                     return PagodaLevelShapeGenerator.BuildShells(
+                        targetLayerCount,
+                        ResolveCubeTileMetrics(),
+                        Mathf.Max(2, settings.MinPairCount * 2),
+                        Mathf.Max(2, settings.MaxPairCount * 2));
+
+                case LevelShapeType.Pyramid:
+                    return PyramidLevelShapeGenerator.BuildShells(
                         targetLayerCount,
                         ResolveCubeTileMetrics(),
                         Mathf.Max(2, settings.MinPairCount * 2),
@@ -1243,6 +1276,9 @@ namespace MahjongOut3D.LevelSystem
 
                 case LevelShapeType.Pagoda:
                     return PagodaLevelShapeGenerator.BuildGridSize(layerCount);
+
+                case LevelShapeType.Pyramid:
+                    return PyramidLevelShapeGenerator.BuildGridSize(layerCount);
             }
 
             return new VoxelGridSize(width, height, depth);
@@ -1734,21 +1770,71 @@ namespace MahjongOut3D.LevelSystem
             SerializedObject catalogObject = new SerializedObject(targetCatalog);
             SerializedProperty levelsProperty = catalogObject.FindProperty("<Levels>k__BackingField");
 
-            if (replaceCatalogEntries)
-            {
-                levelsProperty.ClearArray();
-            }
-
-            int insertIndex = levelsProperty.arraySize;
             for (int index = 0; index < generatedAssets.Count; index++)
             {
+                LevelDefinition generatedAsset = generatedAssets[index];
+                if (generatedAsset == null)
+                {
+                    continue;
+                }
+
+                int existingIndex = FindCatalogIndex(levelsProperty, generatedAsset);
+                if (existingIndex >= 0)
+                {
+                    levelsProperty.GetArrayElementAtIndex(existingIndex).objectReferenceValue = generatedAsset;
+                    continue;
+                }
+
+                int insertIndex = levelsProperty.arraySize;
                 levelsProperty.InsertArrayElementAtIndex(insertIndex);
-                levelsProperty.GetArrayElementAtIndex(insertIndex).objectReferenceValue = generatedAssets[index];
-                insertIndex++;
+                levelsProperty.GetArrayElementAtIndex(insertIndex).objectReferenceValue = generatedAsset;
             }
 
             catalogObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(targetCatalog);
+        }
+
+        private int GetHighestExistingSequence()
+        {
+            string[] assetGuids = AssetDatabase.FindAssets("t:LevelDefinition", new[] { outputFolder });
+            int highestSequence = 0;
+
+            for (int index = 0; index < assetGuids.Length; index++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(assetGuids[index]);
+                string assetName = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+                int separatorIndex = assetName.LastIndexOf('_');
+                if (separatorIndex < 0 || separatorIndex >= assetName.Length - 1)
+                {
+                    continue;
+                }
+
+                string suffix = assetName.Substring(separatorIndex + 1);
+                if (!int.TryParse(suffix, out int sequence))
+                {
+                    continue;
+                }
+
+                if (sequence > highestSequence)
+                {
+                    highestSequence = sequence;
+                }
+            }
+
+            return highestSequence;
+        }
+
+        private static int FindCatalogIndex(SerializedProperty levelsProperty, LevelDefinition targetLevel)
+        {
+            for (int index = 0; index < levelsProperty.arraySize; index++)
+            {
+                if (levelsProperty.GetArrayElementAtIndex(index).objectReferenceValue == targetLevel)
+                {
+                    return index;
+                }
+            }
+
+            return -1;
         }
 
         /// <summary>
