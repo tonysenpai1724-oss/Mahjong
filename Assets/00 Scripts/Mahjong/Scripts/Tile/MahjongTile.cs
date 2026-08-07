@@ -36,11 +36,17 @@ namespace MahjongOut3D.TileSystem
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
 
         private MaterialPropertyBlock baseColorPropertyBlock;
+        private MaterialPropertyBlock piecePropertyBlock;
+        private MaterialPropertyBlock fillPropertyBlock;
         private Coroutine blockedTapFeedbackRoutine;
         private bool hasDebugBaseColor;
         private Color debugBaseColor = Color.white;
+        private Texture2D pieceTexture;
+        private Texture2D fillTexture;
 
         /// <summary>
         /// Occurs when the tile changes runtime state.
@@ -114,6 +120,16 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Gets the current piece texture applied through the renderer property block.
+        /// </summary>
+        public Texture2D PieceTexture => pieceTexture;
+
+        /// <summary>
+        /// Gets the current fill texture applied through the renderer property block.
+        /// </summary>
+        public Texture2D FillTexture => fillTexture;
+
+        /// <summary>
         /// Gets the tile collider used for hit testing.
         /// </summary>
         public Collider TileCollider => tileCollider;
@@ -181,28 +197,28 @@ namespace MahjongOut3D.TileSystem
         }
         public void SetupPieceMaterial(Material pieceMaterial)
         {
-            if (pieceRenderer == null)
-            {
-                CacheReferences();
-            }
+            ApplyPieceAppearance(pieceMaterial, ResolveMaterialTexture(pieceMaterial));
+        }
 
-            if (pieceRenderer != null)
-            {
-                pieceRenderer.sharedMaterial = pieceMaterial;
-            }
+        /// <summary>
+        /// Applies a new piece texture while keeping the shared piece base material unchanged.
+        /// </summary>
+        public void SetupPieceTexture(Texture2D texture)
+        {
+            ApplyPieceAppearance(null, texture);
         }
 
         public void SetupFillMaterial(Material fillMaterial)
         {
-            if (fillRenderer == null)
-            {
-                CacheReferences();
-            }
+            ApplyFillAppearance(fillMaterial, ResolveMaterialTexture(fillMaterial));
+        }
 
-            if (fillRenderer != null)
-            {
-                fillRenderer.sharedMaterial = fillMaterial;
-            }
+        /// <summary>
+        /// Applies a new fill texture while keeping the shared base material unchanged.
+        /// </summary>
+        public void SetupFillTexture(Texture2D texture)
+        {
+            ApplyFillAppearance(null, texture);
         }
         /// <summary>
         /// Applies explicit piece and fill materials to the tile renderers.
@@ -216,12 +232,12 @@ namespace MahjongOut3D.TileSystem
 
             if (pieceRenderer != null)
             {
-                pieceRenderer.sharedMaterial = pieceMaterial;
+                ApplyPieceAppearance(pieceMaterial, ResolveMaterialTexture(pieceMaterial));
             }
 
             if (fillRenderer != null)
             {
-                fillRenderer.sharedMaterial = fillMaterial;
+                ApplyFillAppearance(fillMaterial, ResolveMaterialTexture(fillMaterial));
             }
         }
 
@@ -398,6 +414,137 @@ namespace MahjongOut3D.TileSystem
         {
             matchId = newMatchId;
             gameObject.name = $"MahjongTile_{tileId}_{matchId}";
+        }
+
+        /// <summary>
+        /// Resolves the fill texture from a source material asset.
+        /// </summary>
+        private static Texture2D ResolveMaterialTexture(Material material)
+        {
+            if (material == null)
+            {
+                return null;
+            }
+
+            if (material.HasProperty(BaseMapId))
+            {
+                return material.GetTexture(BaseMapId) as Texture2D;
+            }
+
+            if (material.HasProperty(MainTexId))
+            {
+                return material.GetTexture(MainTexId) as Texture2D;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Applies runtime piece visuals using a shared base material plus a texture property override.
+        /// </summary>
+        private void ApplyPieceAppearance(Material sourceMaterial, Texture2D texture)
+        {
+            if (pieceRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (pieceRenderer == null)
+            {
+                return;
+            }
+
+            if (pieceRenderer.sharedMaterial == null && sourceMaterial != null)
+            {
+                pieceRenderer.sharedMaterial = sourceMaterial;
+            }
+
+            Material sharedMaterial = pieceRenderer.sharedMaterial;
+            if (sharedMaterial == null)
+            {
+                return;
+            }
+
+            pieceTexture = texture;
+
+            if (piecePropertyBlock == null)
+            {
+                piecePropertyBlock = new MaterialPropertyBlock();
+            }
+
+            pieceRenderer.GetPropertyBlock(piecePropertyBlock);
+
+            bool applied = false;
+            if (sharedMaterial.HasProperty(BaseMapId))
+            {
+                piecePropertyBlock.SetTexture(BaseMapId, texture);
+                applied = true;
+            }
+
+            if (sharedMaterial.HasProperty(MainTexId))
+            {
+                piecePropertyBlock.SetTexture(MainTexId, texture);
+                applied = true;
+            }
+
+            if (applied)
+            {
+                pieceRenderer.SetPropertyBlock(piecePropertyBlock);
+            }
+        }
+
+        /// <summary>
+        /// Applies runtime fill visuals using a shared base material plus a texture property override.
+        /// </summary>
+        private void ApplyFillAppearance(Material sourceMaterial, Texture2D texture)
+        {
+            if (fillRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (fillRenderer == null)
+            {
+                return;
+            }
+
+            if (fillRenderer.sharedMaterial == null && sourceMaterial != null)
+            {
+                fillRenderer.sharedMaterial = sourceMaterial;
+            }
+
+            Material sharedMaterial = fillRenderer.sharedMaterial;
+            if (sharedMaterial == null)
+            {
+                return;
+            }
+
+            fillTexture = texture;
+
+            if (fillPropertyBlock == null)
+            {
+                fillPropertyBlock = new MaterialPropertyBlock();
+            }
+
+            fillRenderer.GetPropertyBlock(fillPropertyBlock);
+
+            bool applied = false;
+            if (sharedMaterial.HasProperty(BaseMapId))
+            {
+                fillPropertyBlock.SetTexture(BaseMapId, texture);
+                applied = true;
+            }
+
+            if (sharedMaterial.HasProperty(MainTexId))
+            {
+                fillPropertyBlock.SetTexture(MainTexId, texture);
+                applied = true;
+            }
+
+            if (applied)
+            {
+                fillRenderer.SetPropertyBlock(fillPropertyBlock);
+            }
         }
 
         /// <summary>

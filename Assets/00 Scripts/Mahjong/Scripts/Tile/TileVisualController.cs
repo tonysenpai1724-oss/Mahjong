@@ -316,7 +316,7 @@ namespace MahjongOut3D.TileSystem
                     continue;
                 }
 
-                propertyBlock.Clear();
+                renderer.GetPropertyBlock(propertyBlock);
                 Color emissionColor = Color.black;
 
                 if (hasRuntimeBaseColorOverride)

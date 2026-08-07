@@ -727,7 +727,7 @@ namespace MahjongOut3D.Managers
                     localEulerAngles = tile.BoardLocalEulerAngles,
                     state = tile.State,
                     isBufferedSelection = tile.IsBufferedSelection,
-                    fillMaterial = tile.FillMaterial,
+                    fillTexture = tile.FillTexture,
                 });
             }
 
@@ -783,7 +783,7 @@ namespace MahjongOut3D.Managers
                 }
 
                 tile.SetMatchId(snapshot.matchId);
-                tile.SetupFillMaterial(snapshot.fillMaterial);
+                tile.SetupFillTexture(snapshot.fillTexture);
                 tile.SetGridCoordinate(snapshot.gridCoordinate);
 
                 if (snapshot.isBufferedSelection)
@@ -857,7 +857,7 @@ namespace MahjongOut3D.Managers
                 levelManager.ActiveGrid.RemoveTile(snapshot.tileId);
 
                 tile.SetMatchId(snapshot.matchId);
-                tile.SetupFillMaterial(snapshot.fillMaterial);
+                tile.SetupFillTexture(snapshot.fillTexture);
                 tile.SetGridCoordinate(snapshot.gridCoordinate);
                 tile.SetBufferedSelection(false);
                 tile.RestoreBoardParent();
@@ -1061,7 +1061,7 @@ namespace MahjongOut3D.Managers
                 groups.Add(new PairShuffleGroup
                 {
                     MatchId = pair.Key,
-                    FillMaterial = pair.Value[0].FillMaterial,
+                    FillTexture = pair.Value[0].FillTexture,
                     Tiles = pair.Value,
                 });
             }
@@ -1093,7 +1093,7 @@ namespace MahjongOut3D.Managers
                     }
 
                     tile.SetMatchId(sourceGroup.MatchId);
-                    tile.SetupFillMaterial(sourceGroup.FillMaterial);
+                    tile.SetupFillTexture(sourceGroup.FillTexture);
                 }
             }
         }
@@ -1102,7 +1102,7 @@ namespace MahjongOut3D.Managers
         {
             public int MatchId { get; set; }
 
-            public Material FillMaterial { get; set; }
+            public Texture2D FillTexture { get; set; }
 
             public List<MahjongTile> Tiles { get; set; }
         }

@@ -12,36 +12,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cc49a7a38aef8cb58b2da6db5d0ace0, type: 3}
   m_Name: MahjongMaterial
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Data.MahjongMaterialSO
-  pieceMaterial:
-  - {fileID: 2100000, guid: c1cd76912aa7dcbda9ee7baa9dac49fd, type: 2}
-  - {fileID: 2100000, guid: bc9addc40e4feabfcb1d60cb0fe274cf, type: 2}
-  - {fileID: 2100000, guid: 2b20d5d45a08fc2458d2821f0feda56a, type: 2}
-  - {fileID: 2100000, guid: 9c3959dfb8d874a18b1f85eac5579694, type: 2}
-  - {fileID: 2100000, guid: ee5e8022e85f004c3bd703d439f99c85, type: 2}
-  - {fileID: 2100000, guid: d40678171a39d7206878dc2fcebe25a9, type: 2}
-  - {fileID: 2100000, guid: cb31d6d080a4773dfad8c83aa0a2754f, type: 2}
-  - {fileID: 2100000, guid: f324a6fab6806930386337d66af0282e, type: 2}
-  - {fileID: 2100000, guid: 4781b84171d05b76fb3d3977d14870c2, type: 2}
-  - {fileID: 2100000, guid: 572f203bc2a407ab08c0247488121ef0, type: 2}
-  - {fileID: 2100000, guid: 91161c6e3fe1b238f870cd173357cc3c, type: 2}
-  - {fileID: 2100000, guid: 4bd18279edca86e62a154454806bd6bc, type: 2}
-  - {fileID: 2100000, guid: 3f8704eb1fbcad54db2bae31bd97d4c3, type: 2}
-  - {fileID: 2100000, guid: 52cdf37a4cf7fd2dd83a773fc1cbc116, type: 2}
-  - {fileID: 2100000, guid: 0fb20ef682304b9d69dc57b3935e4054, type: 2}
-  - {fileID: 2100000, guid: a4cfc9e3b59740bf08d724b56f808e54, type: 2}
-  - {fileID: 2100000, guid: 5071f6f3f06e4ccaba11d10046d933ac, type: 2}
-  - {fileID: 2100000, guid: f344cfb2954054fe9bb0e3c27b23f419, type: 2}
-  - {fileID: 2100000, guid: 27b97053ae0649487a126898be171f51, type: 2}
-  - {fileID: 2100000, guid: 5a465557a52d171a18d8eb2cbf68eb8d, type: 2}
-  - {fileID: 2100000, guid: 63c51573f0b49dc3a96bc88a093cb323, type: 2}
-  - {fileID: 2100000, guid: 1b77ec44343a68f8cb4bb5d7b3c01321, type: 2}
-  fillMaterial:
-  - {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
-  - {fileID: 2100000, guid: 28c09dc37d3eac6d8b580b109e8d0521, type: 2}
-  - {fileID: 2100000, guid: d9d3fec2cfcf0a8f5b61aace7a9ac140, type: 2}
-  - {fileID: 2100000, guid: a4f2f6824ab666f6e872a361fd2ae143, type: 2}
-  - {fileID: 2100000, guid: 4dc9d62f4467aca9ab95607df762581a, type: 2}
-  - {fileID: 2100000, guid: 3c742708dedd57a6ba68151ea646641c, type: 2}
-  - {fileID: 2100000, guid: 002dd16a1f1d62681893369e1bc3f367, type: 2}
-  - {fileID: 2100000, guid: c5da8a13a750a776389c7773073f0761, type: 2}
-  - {fileID: 2100000, guid: 261e1043942b608a0b125c8320992ee9, type: 2}
+  pieceBaseMaterial: {fileID: 2100000, guid: c1cd76912aa7dcbda9ee7baa9dac49fd, type: 2}
+  pieceCategories:
+  - categoryName: Tile
+    textures:
+    - {fileID: 2800000, guid: 0bd7c7c0d4afe4e33bf45fb5e9eaf02d, type: 3}
+    - {fileID: 2800000, guid: f22c98b99c151d4ab8c74ca4142fb0bd, type: 3}
+    - {fileID: 2800000, guid: 3fd4f0998fcb67bcd9062c2a8532705c, type: 3}
+    - {fileID: 2800000, guid: ede84862a876b6852922c19ea01cdf51, type: 3}
+    - {fileID: 2800000, guid: 51f4d07194d295412a5995c12f2f757e, type: 3}
+    - {fileID: 2800000, guid: 849e69a11edac020ba3dddb974729710, type: 3}
+    - {fileID: 2800000, guid: 982580cac418c0bcd83593eb29812b67, type: 3}
+    - {fileID: 2800000, guid: c203bcd05933e9bdfa38b5e0570e0fd3, type: 3}
+    - {fileID: 2800000, guid: 7bdfee9648966c348aad4519f737d1b2, type: 3}
+    - {fileID: 2800000, guid: 7d090c89264696739b8fcb344de0c25a, type: 3}
+    - {fileID: 2800000, guid: e8476f936ad40c5479c0d11eec4e2842, type: 3}
+    - {fileID: 2800000, guid: 4d6ba5ea4c370b9e193a0c0e39f8753d, type: 3}
+    - {fileID: 2800000, guid: b3f60c8a4b70482ce9aefb72d62dbf84, type: 3}
+    - {fileID: 2800000, guid: ef5d9e3e097d2b102a22589d54beb7f4, type: 3}
+    - {fileID: 2800000, guid: ee030053385faf54e80ea427373ec02b, type: 3}
+    - {fileID: 2800000, guid: c923fb685299b7414b742113edd20d4e, type: 3}
+    - {fileID: 2800000, guid: 1718092e4e4c905759869658efa98d51, type: 3}
+    - {fileID: 2800000, guid: d3a0523795ec0384a8821d6840d5f075, type: 3}
+    - {fileID: 2800000, guid: a08c48b9ee8def352881070ff856ba59, type: 3}
+    - {fileID: 2800000, guid: a31c02c01e48ca2c687703dc954faf0e, type: 3}
+    - {fileID: 2800000, guid: d60d9daeb5ac4fc44880632072c69553, type: 3}
+    - {fileID: 2800000, guid: 8ab22d824ffbe4d87921a8df4f793c33, type: 3}
+  fillBaseMaterial: {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
+  fillCategories:
+  - categoryName: Number
+    textures:
+    - {fileID: 2800000, guid: 87e1fecaebf5a54718dee5390ee59c03, type: 3}
+    - {fileID: 2800000, guid: f5a9104eece80024aa354562ed7301c5, type: 3}
+    - {fileID: 2800000, guid: 16d8b24b4d31b12feb7c6567de0a52ba, type: 3}
+    - {fileID: 2800000, guid: d607d834b7e4229669b1d89a244e92f2, type: 3}
+    - {fileID: 2800000, guid: 2d7ff070ed0352c77a3c3bdb7ab28ddd, type: 3}
+    - {fileID: 2800000, guid: 9a6e115a51197e0f59ada63dc8653ffc, type: 3}
+    - {fileID: 2800000, guid: 575cdf5e6ef8e592aa0436cacd42179f, type: 3}
+    - {fileID: 2800000, guid: ae08ca2f6e0005f26b172899ed1f5a9e, type: 3}
+    - {fileID: 2800000, guid: 0d7989f75fff060de8927ea5d480a0c9, type: 3}
+  - categoryName: Flower
+    textures:
+    - {fileID: 2800000, guid: 8ad659c2a7408e628824eff18828b620, type: 3}
+    - {fileID: 2800000, guid: 04754158c4859b3e1baa8be0ce619905, type: 3}
+    - {fileID: 2800000, guid: 8e5e0177e78a24e55aa626593d024dd0, type: 3}
+    - {fileID: 2800000, guid: 42bbb1df1adf156bc8c92e03bb0fc9c9, type: 3}
+    - {fileID: 2800000, guid: 79abe7cbc44ebf5838c0bd1ab6929bad, type: 3}
+    - {fileID: 2800000, guid: 9aa9a539a05d9d9c6a56d10bff0fcf3a, type: 3}
+    - {fileID: 2800000, guid: bf9b434e2f15243e9aa2b28bbde441cf, type: 3}
+    - {fileID: 2800000, guid: 3cbceadb540d29c4c91c90da0702533f, type: 3}
+    - {fileID: 2800000, guid: 60d1e083ab2f4c2ef9ac2210bac5e4b5, type: 3}

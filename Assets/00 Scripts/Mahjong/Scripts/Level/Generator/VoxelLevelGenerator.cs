@@ -50,7 +50,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField, Min(1f)] private float cameraFramePaddingOnLoad = 1.7f;
 
         private readonly List<MahjongTile> spawnedTiles = new List<MahjongTile>();
-        private readonly Dictionary<int, Material> fillMaterialsByMatchId = new Dictionary<int, Material>();
+        private readonly Dictionary<int, Texture2D> fillTexturesByMatchId = new Dictionary<int, Texture2D>();
         private ComponentPool<MahjongTile> tilePool;
         private GameContext context;
         private LevelManager levelManager;
@@ -61,7 +61,8 @@ namespace MahjongOut3D.LevelSystem
         private MahjongTile runtimeFallbackTilePrefab;
         private Quaternion defaultTileRootLocalRotation = Quaternion.identity;
         public MahjongMaterialSO mahjongMaterialSO;
-        private Material pieceMaterial;
+        private Material pieceBaseMaterial;
+        private Texture2D pieceTexture;
         /// <summary>
         /// Initializes the generator with the shared runtime context.
         /// </summary>
@@ -151,36 +152,47 @@ namespace MahjongOut3D.LevelSystem
             return Generate(jsonData.levelName, gridSize, null, runtimeTiles);
         }
         /// <summary>
-        /// Returns a random tile material from the configured MahjongMaterialSO.
+        /// Returns a random piece texture from the configured MahjongMaterialSO.
         /// </summary>
-        /// <returns></returns>
-        public Material RandomTileMaterial()
+        public Texture2D RandomPieceTexture()
         {
-            if (mahjongMaterialSO == null || mahjongMaterialSO.pieceMaterial == null || mahjongMaterialSO.pieceMaterial.Count == 0)
+            if (mahjongMaterialSO == null)
             {
                 return null;
             }
 
-            int randomIndex = Random.Range(0, mahjongMaterialSO.pieceMaterial.Count);
-            return mahjongMaterialSO.pieceMaterial[randomIndex];
+            List<Texture2D> activePieceTextures = mahjongMaterialSO.GetActivePieceTextures();
+            if (activePieceTextures == null || activePieceTextures.Count == 0)
+            {
+                return null;
+            }
+
+            int randomIndex = Random.Range(0, activePieceTextures.Count);
+            return activePieceTextures[randomIndex];
         }
 
-        private Material GetFillMaterialForMatch(int matchId)
+        private Texture2D GetFillTextureForMatch(int matchId)
         {
-            if (mahjongMaterialSO == null || mahjongMaterialSO.fillMaterial == null || mahjongMaterialSO.fillMaterial.Count == 0)
+            if (mahjongMaterialSO == null)
             {
                 return null;
             }
 
-            if (fillMaterialsByMatchId.TryGetValue(matchId, out Material cachedMaterial))
+            List<Texture2D> activeFillTextures = mahjongMaterialSO.GetActiveFillTextures();
+            if (activeFillTextures == null || activeFillTextures.Count == 0)
             {
-                return cachedMaterial;
+                return null;
             }
 
-            int randomIndex = Random.Range(0, mahjongMaterialSO.fillMaterial.Count);
-            Material resolvedMaterial = mahjongMaterialSO.fillMaterial[randomIndex];
-            fillMaterialsByMatchId[matchId] = resolvedMaterial;
-            return resolvedMaterial;
+            if (fillTexturesByMatchId.TryGetValue(matchId, out Texture2D cachedTexture))
+            {
+                return cachedTexture;
+            }
+
+            int randomIndex = Random.Range(0, activeFillTextures.Count);
+            Texture2D resolvedTexture = activeFillTextures[randomIndex];
+            fillTexturesByMatchId[matchId] = resolvedTexture;
+            return resolvedTexture;
         }
         
         /// <summary>
@@ -301,7 +313,7 @@ namespace MahjongOut3D.LevelSystem
             }
 
             spawnedTiles.Clear();
-            fillMaterialsByMatchId.Clear();
+            fillTexturesByMatchId.Clear();
             nextTileId = 0;
             levelManager?.ClearActiveGrid();
 
@@ -335,7 +347,8 @@ namespace MahjongOut3D.LevelSystem
 
             VoxelGridData grid = levelManager.CreateGrid(gridSize, layoutOverride);
             levelManager.SetActiveGrid(grid);
-            pieceMaterial = RandomTileMaterial();
+            pieceBaseMaterial = mahjongMaterialSO != null ? mahjongMaterialSO.PieceBaseMaterial : null;
+            pieceTexture = RandomPieceTexture();
           
             if (tileDefinitions != null)
             {
@@ -684,7 +697,9 @@ namespace MahjongOut3D.LevelSystem
             };
 
             tile.ApplyRuntimeData(runtimeData);
-            tile.Setup(pieceMaterial, GetFillMaterialForMatch(definition.MatchId));
+            tile.Setup(pieceBaseMaterial, mahjongMaterialSO != null ? mahjongMaterialSO.FillBaseMaterial : null);
+            tile.SetupPieceTexture(pieceTexture);
+            tile.SetupFillTexture(GetFillTextureForMatch(definition.MatchId));
             if (applyTileBaseColor)
             {
                 tile.SetDebugMatchColor(tileBaseColor);
