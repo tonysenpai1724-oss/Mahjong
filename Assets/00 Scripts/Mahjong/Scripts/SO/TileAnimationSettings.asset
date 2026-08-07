@@ -26,5 +26,5 @@ MonoBehaviour:
   <TrayDistancePadding>k__BackingField: 0.75
   <ShakeDurationSeconds>k__BackingField: 0.18
   <ShakeAmplitude>k__BackingField: 0.12
-  <MatchParticlePrefab>k__BackingField: {fileID: 5024009746357069192, guid: ec3f674830402cc45bce805cf6493db7, type: 3}
+  <MatchParticlePrefab>k__BackingField: {fileID: 6222633865521517922, guid: abdea529c94b3ab1c880202d5008e49d, type: 3}
   <UseUnscaledTime>k__BackingField: 1

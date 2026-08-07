@@ -144,7 +144,8 @@ namespace MahjongOut3D.Managers
             Quaternion uprightCardRotation = GetTrayFacingRotation(cameraForward, Vector3.up);
 
             float slideDistance = GetMatchSlideDistance();
-            float stageOffset = Mathf.Max(0.45f, slideDistance * 0.45f);
+            float impactOffset = GetMatchContactCenterOffset(firstTile, secondTile, uprightCardRotation, cameraRight);
+            float stageOffset = Mathf.Max(impactOffset + 0.18f, slideDistance * 0.45f);
 
             Vector3 impactWorld = GetMatchCenterWorldPosition(firstTile, secondTile);
             Vector3 firstStageWorld = impactWorld - (cameraRight * stageOffset);
@@ -153,7 +154,6 @@ namespace MahjongOut3D.Managers
             Quaternion firstStageRotation = uprightCardRotation;
             Quaternion secondStageRotation = uprightCardRotation;
 
-            float impactOffset = Mathf.Max(0.025f, slideDistance * 0.03f);
             Vector3 firstImpactWorld = impactWorld - (cameraRight * impactOffset);
             Vector3 secondImpactWorld = impactWorld + (cameraRight * impactOffset);
             Quaternion firstImpactRotation = uprightCardRotation;
@@ -194,6 +194,12 @@ namespace MahjongOut3D.Managers
                     Quaternion.SlerpUnclamped(secondStageRotation, secondImpactRotation, easedT));
                 yield return null;
             }
+
+            firstTile.transform.SetPositionAndRotation(firstImpactWorld, firstImpactRotation);
+            secondTile.transform.SetPositionAndRotation(secondImpactWorld, secondImpactRotation);
+
+            firstTile.SetVisible(false);
+            secondTile.SetVisible(false);
 
             PlayMatchParticle(impactWorld);
             PlayCameraShake();
@@ -465,6 +471,50 @@ namespace MahjongOut3D.Managers
             }
 
             return Vector3.forward;
+        }
+
+        /// <summary>
+        /// Resolves the center offset where the two tile faces visually meet edge-to-edge along the match axis.
+        /// </summary>
+        private float GetMatchContactCenterOffset(MahjongTile firstTile, MahjongTile secondTile, Quaternion targetRotation, Vector3 matchAxis)
+        {
+            Vector3 axis = matchAxis.sqrMagnitude > Mathf.Epsilon ? matchAxis.normalized : Vector3.right;
+            float firstHalfExtent = GetProjectedHalfExtent(firstTile, targetRotation, axis);
+            float secondHalfExtent = GetProjectedHalfExtent(secondTile, targetRotation, axis);
+            float fallbackOffset = Mathf.Max(0.025f, GetMatchSlideDistance() * 0.12f);
+
+            if (firstHalfExtent <= Mathf.Epsilon && secondHalfExtent <= Mathf.Epsilon)
+            {
+                return fallbackOffset;
+            }
+
+            return Mathf.Max(fallbackOffset, (firstHalfExtent + secondHalfExtent) * 0.5f);
+        }
+
+        /// <summary>
+        /// Projects a tile's half-size onto the supplied world axis for edge-contact alignment.
+        /// </summary>
+        private static float GetProjectedHalfExtent(MahjongTile tile, Quaternion rotation, Vector3 worldAxis)
+        {
+            if (tile == null)
+            {
+                return 0f;
+            }
+
+            Vector3 tileSize = tile.GetPlacementSize();
+            if (tileSize.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return 0f;
+            }
+
+            Vector3 halfSize = tileSize * 0.5f;
+            Vector3 right = rotation * Vector3.right;
+            Vector3 up = rotation * Vector3.up;
+            Vector3 forward = rotation * Vector3.forward;
+
+            return (Mathf.Abs(Vector3.Dot(right, worldAxis)) * halfSize.x)
+                + (Mathf.Abs(Vector3.Dot(up, worldAxis)) * halfSize.y)
+                + (Mathf.Abs(Vector3.Dot(forward, worldAxis)) * halfSize.z);
         }
 
         private float GetMatchDurationSeconds() => animationSettings != null ? animationSettings.MatchDurationSeconds : 0.35f;
