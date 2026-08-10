@@ -13,6 +13,7 @@ namespace MahjongOut3D.LevelSystem
         public int width;
         public int height;
         public int depth;
+        public int layerCount;
         public bool useSurfaceTilePlacement;
         public LevelShapeType shape;
         public LevelDifficulty difficulty;

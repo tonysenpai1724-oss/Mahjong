@@ -14,6 +14,7 @@ namespace MahjongOut3D.Editor
     public sealed class LevelDefinitionEditor : UnityEditor.Editor
     {
         private const string FillCategoryPropertyName = "<FillCategoryNames>k__BackingField";
+        private const string LayerCountPropertyName = "<LayerCount>k__BackingField";
 
         /// <summary>
         /// Draws the inspector and replaces the raw fill category string list with a checklist.
@@ -22,10 +23,41 @@ namespace MahjongOut3D.Editor
         {
             serializedObject.Update();
 
-            DrawPropertiesExcluding(serializedObject, FillCategoryPropertyName);
+            DrawPropertiesExcluding(serializedObject, FillCategoryPropertyName, LayerCountPropertyName);
+            DrawLayerCountInspector();
+            DrawLayerRefreshButtons();
             DrawFillCategoryInspector(serializedObject.FindProperty(FillCategoryPropertyName));
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawLayerCountInspector()
+        {
+            LevelDefinition definition = target as LevelDefinition;
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.IntField("Layer Count", definition != null ? definition.GetResolvedLayerCount() : 0);
+            }
+        }
+
+        private void DrawLayerRefreshButtons()
+        {
+            EditorGUILayout.Space();
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Refresh Layer Count"))
+                {
+                    if (LevelDefinitionLayerTools.RefreshLevelDefinition(target as LevelDefinition))
+                    {
+                        serializedObject.Update();
+                    }
+                }
+
+                if (GUILayout.Button("Refresh All Levels"))
+                {
+                    LevelDefinitionLayerTools.RefreshAllLevelLayerCounts();
+                }
+            }
         }
 
         private static void DrawFillCategoryInspector(SerializedProperty fillCategoryProperty)

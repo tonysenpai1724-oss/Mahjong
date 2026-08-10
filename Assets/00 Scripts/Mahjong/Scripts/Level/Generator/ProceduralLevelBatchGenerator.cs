@@ -285,6 +285,11 @@ namespace MahjongOut3D.LevelSystem
             /// Gets or sets the generated tile list.
             /// </summary>
             public List<LevelTileDefinition> Tiles { get; set; } = new List<LevelTileDefinition>();
+
+            /// <summary>
+            /// Gets or sets the generated shell-layer count.
+            /// </summary>
+            public int LayerCount { get; set; }
         }
 
         /// <summary>
@@ -472,7 +477,7 @@ namespace MahjongOut3D.LevelSystem
                 {
                     candidate = CreateShapeCandidate(settings, random);
                     int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.Shape, candidate.TargetLayerCount, random);
-                    List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
+                    List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random, candidate.Shape);
                     logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
                     if (TryBuildTileDefinitions(occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions))
@@ -495,6 +500,7 @@ namespace MahjongOut3D.LevelSystem
                     Shape = candidate.Shape,
                     Difficulty = settings.Difficulty,
                     Tiles = tileDefinitions,
+                    LayerCount = GetLayerCount(tileDefinitions),
                 });
             }
         }
@@ -735,13 +741,16 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the occupied coordinates by taking shell layers in the order supplied by the shell builder.
         /// </summary>
-        private static List<TilePlacementData> BuildOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random)
+        private static List<TilePlacementData> BuildOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random, LevelShapeType shape)
         {
             List<TilePlacementData> orderedCoordinates = new List<TilePlacementData>(tileCount);
             for (int shellIndex = 0; shellIndex < shells.Count && orderedCoordinates.Count < tileCount; shellIndex++)
             {
                 List<TilePlacementData> shellCoordinates = new List<TilePlacementData>(shells[shellIndex]);
-                Shuffle(shellCoordinates, random);
+                if (shape != LevelShapeType.Bridge)
+                {
+                    Shuffle(shellCoordinates, random);
+                }
 
                 for (int coordinateIndex = 0; coordinateIndex < shellCoordinates.Count && orderedCoordinates.Count < tileCount; coordinateIndex++)
                 {
@@ -789,26 +798,6 @@ namespace MahjongOut3D.LevelSystem
                 case LevelShapeType.Cube:
                     return BuildNestedCubeShells(targetLayerCount, settings);
 
-                case LevelShapeType.Pagoda:
-                    return PagodaLevelShapeGenerator.BuildShells(
-                        targetLayerCount,
-                        ResolveCubeTileMetrics(),
-                        Mathf.Max(2, settings.MinPairCount * 2),
-                        Mathf.Max(2, settings.MaxPairCount * 2));
-
-                case LevelShapeType.Pyramid:
-                    return PyramidLevelShapeGenerator.BuildShells(
-                        targetLayerCount,
-                        ResolveCubeTileMetrics(),
-                        Mathf.Max(2, settings.MinPairCount * 2),
-                        Mathf.Max(2, settings.MaxPairCount * 2));
-
-                case LevelShapeType.Bridge:
-                    return BridgeLevelShapeGenerator.BuildShells(
-                        targetLayerCount,
-                        ResolveCubeTileMetrics(),
-                        Mathf.Max(2, settings.MinPairCount * 2),
-                        Mathf.Max(2, settings.MaxPairCount * 2));
             }
 
             return BuildShells(BuildShapeCoordinates(gridSize));
@@ -1308,14 +1297,7 @@ namespace MahjongOut3D.LevelSystem
                     break;
                 }
 
-                case LevelShapeType.Pagoda:
-                    return PagodaLevelShapeGenerator.BuildGridSize(layerCount);
-
-                case LevelShapeType.Pyramid:
-                    return PyramidLevelShapeGenerator.BuildGridSize(layerCount);
-
-                case LevelShapeType.Bridge:
-                    return BridgeLevelShapeGenerator.BuildGridSize(layerCount);
+              
             }
 
             return new VoxelGridSize(width, height, depth);
@@ -2064,6 +2046,7 @@ namespace MahjongOut3D.LevelSystem
             serializedObject.FindProperty("<LayoutOverride>k__BackingField").objectReferenceValue = data.LayoutOverride;
             serializedObject.FindProperty("<Shape>k__BackingField").intValue = (int)data.Shape;
             serializedObject.FindProperty("<UseSurfaceTilePlacement>k__BackingField").boolValue = true;
+            serializedObject.FindProperty("<LayerCount>k__BackingField").intValue = Mathf.Max(0, data.LayerCount);
             serializedObject.FindProperty("<Difficulty>k__BackingField").enumValueIndex = (int)data.Difficulty;
 
             SerializedProperty tilesProperty = serializedObject.FindProperty("<Tiles>k__BackingField");
@@ -2080,6 +2063,7 @@ namespace MahjongOut3D.LevelSystem
                 coordinateProperty.FindPropertyRelative("y").intValue = tile.GridCoordinate.y;
                 coordinateProperty.FindPropertyRelative("z").intValue = tile.GridCoordinate.z;
 
+                tileProperty.FindPropertyRelative("surfaceShellIndex").intValue = tile.SurfaceShellIndex;
                 tileProperty.FindPropertyRelative("useCustomLocalPosition").boolValue = tile.UseCustomLocalPosition;
 
                 SerializedProperty localPositionProperty = tileProperty.FindPropertyRelative("localPosition");
@@ -2091,6 +2075,33 @@ namespace MahjongOut3D.LevelSystem
 
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
+        }
+
+        /// <summary>
+        /// Resolves the number of shell layers represented by the generated tiles.
+        /// </summary>
+        private static int GetLayerCount(IReadOnlyList<LevelTileDefinition> tiles)
+        {
+            if (tiles == null || tiles.Count == 0)
+            {
+                return 0;
+            }
+
+            int maxShellIndex = 0;
+            bool hasTile = false;
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                LevelTileDefinition tile = tiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                hasTile = true;
+                maxShellIndex = Mathf.Max(maxShellIndex, tile.SurfaceShellIndex);
+            }
+
+            return hasTile ? maxShellIndex + 1 : 0;
         }
 
         /// <summary>

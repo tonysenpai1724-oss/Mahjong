@@ -27,6 +27,9 @@ namespace MahjongOut3D.LevelSystem
         [field: SerializeField]
         public bool UseSurfaceTilePlacement { get; private set; }
 
+        [field: SerializeField, Min(0)]
+        public int LayerCount { get; private set; }
+
         [field: SerializeField]
         public LevelDifficulty Difficulty { get; private set; } = LevelDifficulty.Easy;
 
@@ -101,6 +104,45 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return new VoxelGridSize(width, height, depth);
+        }
+
+        /// <summary>
+        /// Resolves the effective layer count stored in this asset.
+        /// Falls back to tile shell indices when older assets have not been backfilled yet.
+        /// </summary>
+        /// <returns>Resolved shell-layer count.</returns>
+        public int GetResolvedLayerCount()
+        {
+            return Mathf.Max(LayerCount, CalculateLayerCountFromTiles());
+        }
+
+        private void OnValidate()
+        {
+            LayerCount = CalculateLayerCountFromTiles();
+        }
+
+        private int CalculateLayerCountFromTiles()
+        {
+            if (Tiles == null || Tiles.Count == 0)
+            {
+                return 0;
+            }
+
+            bool hasAnyTile = false;
+            int maxShellIndex = 0;
+            for (int index = 0; index < Tiles.Count; index++)
+            {
+                LevelTileDefinition tile = Tiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                hasAnyTile = true;
+                maxShellIndex = Mathf.Max(maxShellIndex, tile.SurfaceShellIndex);
+            }
+
+            return hasAnyTile ? maxShellIndex + 1 : 0;
         }
     }
 }

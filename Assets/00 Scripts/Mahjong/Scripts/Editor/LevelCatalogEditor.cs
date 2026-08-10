@@ -60,8 +60,9 @@ namespace MahjongOut3D.Editor
 
         private void DrawLevelEntry(int index, LevelDefinition levelDefinition, List<string> availableCategoryNames)
         {
+            int layerCount = levelDefinition != null ? levelDefinition.GetResolvedLayerCount() : 0;
             string levelLabel = levelDefinition != null
-                ? $"{index + 1}. {levelDefinition.name}"
+                ? $"{index + 1}. {levelDefinition.name}   |   Layer {layerCount}   |   {levelDefinition.Shape}"
                 : $"{index + 1}. Missing Level";
             string foldoutKey = levelDefinition != null ? AssetDatabase.GetAssetPath(levelDefinition) : $"missing_{index}";
             bool isExpanded = levelFoldouts.TryGetValue(foldoutKey, out bool storedState) && storedState;
@@ -83,6 +84,12 @@ namespace MahjongOut3D.Editor
 
                 string levelPath = AssetDatabase.GetAssetPath(levelDefinition);
                 EditorGUILayout.ObjectField("Level", levelDefinition, typeof(LevelDefinition), false);
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.IntField("Layer Count", layerCount);
+                    EditorGUILayout.EnumPopup("Shape", levelDefinition.Shape);
+                    EditorGUILayout.EnumPopup("Difficulty", levelDefinition.Difficulty);
+                }
                 if (!string.IsNullOrEmpty(levelPath))
                 {
                     EditorGUILayout.LabelField("Asset", levelPath);

@@ -76,6 +76,7 @@ namespace MahjongOut3D.LevelSystem
                 width = definition.GridSize.Width,
                 height = definition.GridSize.Height,
                 depth = definition.GridSize.Depth,
+                layerCount = definition.GetResolvedLayerCount(),
                 useSurfaceTilePlacement = definition.UseSurfaceTilePlacement,
                 shape = definition.Shape,
                 difficulty = definition.Difficulty,

@@ -17,6 +17,7 @@ namespace MahjongOut3D.LevelSystem.ArrowOutGeneration
         private const string LayoutOverrideProperty = "<LayoutOverride>k__BackingField";
         private const string ShapeProperty = "<Shape>k__BackingField";
         private const string UseSurfaceTilePlacementProperty = "<UseSurfaceTilePlacement>k__BackingField";
+        private const string LayerCountProperty = "<LayerCount>k__BackingField";
         private const string DifficultyProperty = "<Difficulty>k__BackingField";
         private const string TilesProperty = "<Tiles>k__BackingField";
 
@@ -61,6 +62,12 @@ namespace MahjongOut3D.LevelSystem.ArrowOutGeneration
                 useSurfaceTilePlacement.boolValue = false;
             }
 
+            SerializedProperty layerCount = serializedObject.FindProperty(LayerCountProperty);
+            if (layerCount != null)
+            {
+                layerCount.intValue = level.Tiles != null && level.Tiles.Count > 0 ? 1 : 0;
+            }
+
             FindRequiredProperty(serializedObject, DifficultyProperty).enumValueIndex = (int)level.Difficulty;
             WriteTiles(FindRequiredProperty(serializedObject, TilesProperty), level.Tiles);
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
@@ -100,6 +107,7 @@ namespace MahjongOut3D.LevelSystem.ArrowOutGeneration
                 GeneratedTileData tile = tiles[index];
                 tileProperty.FindPropertyRelative("matchId").intValue = tile.MatchId;
                 tileProperty.FindPropertyRelative("gridCoordinate").vector3IntValue = tile.Coordinate;
+                tileProperty.FindPropertyRelative("surfaceShellIndex").intValue = 0;
                 tileProperty.FindPropertyRelative("useCustomLocalPosition").boolValue = false;
                 tileProperty.FindPropertyRelative("localPosition").vector3Value = Vector3.zero;
                 tileProperty.FindPropertyRelative("localEulerAngles").vector3Value = tile.LocalEulerAngles;
