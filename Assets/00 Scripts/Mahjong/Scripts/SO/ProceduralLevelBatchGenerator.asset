@@ -21,7 +21,7 @@ MonoBehaviour:
   generationWriteMode: 1
   normalSettings:
     label: Normal
-    levelCount: 0
+    levelCount: 20
     minLayerCount: 1
     maxLayerCount: 3
     minPairCount: 22

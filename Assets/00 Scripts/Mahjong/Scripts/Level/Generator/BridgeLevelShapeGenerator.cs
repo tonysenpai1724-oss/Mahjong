@@ -268,12 +268,24 @@ namespace MahjongOut3D.LevelSystem
         private static List<ProceduralLevelBatchGenerator.TilePlacementData> ExtractSurfaceShell(HashSet<Vector3Int> occupiedCoordinates)
         {
             List<ProceduralLevelBatchGenerator.TilePlacementData> shell = new List<ProceduralLevelBatchGenerator.TilePlacementData>();
+            if (occupiedCoordinates == null || occupiedCoordinates.Count == 0)
+            {
+                return shell;
+            }
+
+            GetBounds(occupiedCoordinates, out Vector3Int min, out Vector3Int max);
             foreach (Vector3Int coordinate in occupiedCoordinates)
             {
                 for (int directionIndex = 0; directionIndex < NeighborDirections.Length; directionIndex++)
                 {
-                    Vector3Int neighbor = coordinate + NeighborDirections[directionIndex];
+                    Vector3Int direction = NeighborDirections[directionIndex];
+                    Vector3Int neighbor = coordinate + direction;
                     if (occupiedCoordinates.Contains(neighbor))
+                    {
+                        continue;
+                    }
+
+                    if (!IsOutermostFaceInDirection(occupiedCoordinates, coordinate, direction, min, max))
                     {
                         continue;
                     }
@@ -281,13 +293,49 @@ namespace MahjongOut3D.LevelSystem
                     shell.Add(new ProceduralLevelBatchGenerator.TilePlacementData
                     {
                         Coordinate = coordinate,
-                        FacingDirection = ToGridDirection(NeighborDirections[directionIndex]),
+                        FacingDirection = ToGridDirection(direction),
                         SurfaceSlotIndex = -1,
                     });
                 }
             }
 
             return shell;
+        }
+
+        private static void GetBounds(HashSet<Vector3Int> occupiedCoordinates, out Vector3Int min, out Vector3Int max)
+        {
+            min = Vector3Int.zero;
+            max = Vector3Int.zero;
+            bool initialized = false;
+            foreach (Vector3Int coordinate in occupiedCoordinates)
+            {
+                if (!initialized)
+                {
+                    min = coordinate;
+                    max = coordinate;
+                    initialized = true;
+                    continue;
+                }
+
+                min = Vector3Int.Min(min, coordinate);
+                max = Vector3Int.Max(max, coordinate);
+            }
+        }
+
+        private static bool IsOutermostFaceInDirection(HashSet<Vector3Int> occupiedCoordinates, Vector3Int coordinate, Vector3Int direction, Vector3Int min, Vector3Int max)
+        {
+            Vector3Int probe = coordinate + direction;
+            while (probe.x >= min.x && probe.x <= max.x && probe.y >= min.y && probe.y <= max.y && probe.z >= min.z && probe.z <= max.z)
+            {
+                if (occupiedCoordinates.Contains(probe))
+                {
+                    return false;
+                }
+
+                probe += direction;
+            }
+
+            return true;
         }
 
         private static VoxelGridDirection ToGridDirection(Vector3Int offset)

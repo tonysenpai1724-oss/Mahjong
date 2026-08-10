@@ -334,6 +334,7 @@ namespace MahjongOut3D.LevelSystem
                 SurfaceSlotIndex = -1,
                 CustomLocalPosition = localPosition,
                 UseCustomLocalPosition = true,
+                ApplyShellCompaction = true,
             };
         }
 

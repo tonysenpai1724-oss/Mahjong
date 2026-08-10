@@ -15,6 +15,8 @@ namespace MahjongOut3D.LevelSystem
     [CreateAssetMenu(menuName = "Mahjong Out 3D/Level/Procedural Batch Generator", fileName = "ProceduralLevelBatchGenerator")]
     public sealed class ProceduralLevelBatchGenerator : ScriptableObject
     {
+        private const int MaxSolvableGenerationAttemptsPerLevel = 32;
+
         private static readonly Vector3Int[] NeighborDirections =
         {
             new Vector3Int(1, 0, 0),
@@ -319,6 +321,11 @@ namespace MahjongOut3D.LevelSystem
             /// Gets or sets a value indicating whether the custom local position override should be used.
             /// </summary>
             public bool UseCustomLocalPosition { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether nested shell compaction should still be applied to the custom local position.
+            /// </summary>
+            public bool ApplyShellCompaction { get; set; }
         }
 
         /// <summary>
@@ -456,11 +463,29 @@ namespace MahjongOut3D.LevelSystem
             for (int index = 0; index < settings.LevelCount; index++)
             {
                 sequence++;
-                ShapeCandidate candidate = CreateShapeCandidate(settings, random);
-                int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.Shape, candidate.TargetLayerCount, random);
-                List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
-                VoxelGridSize logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
-                List<LevelTileDefinition> tileDefinitions = BuildTileDefinitions(occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random);
+                ShapeCandidate candidate = null;
+                VoxelGridSize logicalGridSize = default;
+                List<LevelTileDefinition> tileDefinitions = null;
+                bool solved = false;
+
+                for (int attempt = 0; attempt < MaxSolvableGenerationAttemptsPerLevel; attempt++)
+                {
+                    candidate = CreateShapeCandidate(settings, random);
+                    int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.Shape, candidate.TargetLayerCount, random);
+                    List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
+                    logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
+
+                    if (TryBuildTileDefinitions(occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions))
+                    {
+                        solved = true;
+                        break;
+                    }
+                }
+
+                if (!solved || candidate == null || tileDefinitions == null)
+                {
+                    throw new InvalidOperationException($"Failed to generate a solvable level for difficulty '{settings.Label}' after {MaxSolvableGenerationAttemptsPerLevel} attempts.");
+                }
 
                 results.Add(new GeneratedLevelData
                 {
@@ -750,6 +775,7 @@ namespace MahjongOut3D.LevelSystem
                 SurfaceSlotIndex = placement.SurfaceSlotIndex,
                 CustomLocalPosition = placement.CustomLocalPosition,
                 UseCustomLocalPosition = placement.UseCustomLocalPosition,
+                ApplyShellCompaction = placement.ApplyShellCompaction,
             };
         }
 
@@ -1318,20 +1344,297 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds tile definitions and assigns match ids in pairs.
         /// </summary>
-        private List<LevelTileDefinition> BuildTileDefinitions(List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, DifficultyBatchDefinition settings, System.Random random)
+        private bool TryBuildTileDefinitions(List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, DifficultyBatchDefinition settings, System.Random random, out List<LevelTileDefinition> tileDefinitions)
         {
-            List<LevelTileDefinition> tileDefinitions = new List<LevelTileDefinition>(occupiedCoordinates.Count);
-            int pairCount = occupiedCoordinates.Count / 2;
-
-            for (int pairIndex = 0; pairIndex < pairCount; pairIndex++)
+            tileDefinitions = new List<LevelTileDefinition>(occupiedCoordinates != null ? occupiedCoordinates.Count : 0);
+            if (occupiedCoordinates == null || occupiedCoordinates.Count == 0)
             {
-                int firstIndex = pairIndex * 2;
-                int secondIndex = firstIndex + 1;
-                tileDefinitions.Add(CreateTileDefinition(pairIndex, firstIndex, occupiedCoordinates[firstIndex], shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
-                tileDefinitions.Add(CreateTileDefinition(pairIndex, secondIndex, occupiedCoordinates[secondIndex], shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+                return true;
             }
 
-            return tileDefinitions;
+            if (occupiedCoordinates.Count % 2 != 0)
+            {
+                return false;
+            }
+
+            if (!TryBuildSolvablePairSequence(occupiedCoordinates, shapeGridSize, random, out List<TilePlacementPair> orderedPairs))
+            {
+                tileDefinitions.Clear();
+                return false;
+            }
+
+            int tileIndex = 0;
+            for (int pairIndex = 0; pairIndex < orderedPairs.Count; pairIndex++)
+            {
+                TilePlacementPair pair = orderedPairs[pairIndex];
+                tileDefinitions.Add(CreateTileDefinition(pairIndex, tileIndex++, pair.First, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+                tileDefinitions.Add(CreateTileDefinition(pairIndex, tileIndex++, pair.Second, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Builds a guaranteed-removable pair order by repeatedly choosing two currently exposed surface tiles.
+        /// </summary>
+        private bool TryBuildSolvablePairSequence(List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, System.Random random, out List<TilePlacementPair> orderedPairs)
+        {
+            orderedPairs = new List<TilePlacementPair>();
+            if (occupiedCoordinates == null || occupiedCoordinates.Count == 0)
+            {
+                return true;
+            }
+
+            Dictionary<TilePlacementData, Vector3> localPositionsByPlacement = new Dictionary<TilePlacementData, Vector3>(occupiedCoordinates.Count);
+            List<TilePlacementData> remainingPlacements = new List<TilePlacementData>(occupiedCoordinates.Count);
+            for (int index = 0; index < occupiedCoordinates.Count; index++)
+            {
+                TilePlacementData placement = occupiedCoordinates[index];
+                if (placement == null)
+                {
+                    continue;
+                }
+
+                remainingPlacements.Add(placement);
+                localPositionsByPlacement[placement] = GetCompactedSurfaceTileLocalPosition(placement, shapeGridSize);
+            }
+
+            while (remainingPlacements.Count > 0)
+            {
+                List<TilePlacementData> exposedPlacements = GetExposedPlacements(remainingPlacements, localPositionsByPlacement);
+                if (exposedPlacements.Count < 2)
+                {
+                    orderedPairs.Clear();
+                    return false;
+                }
+
+                exposedPlacements.Sort((left, right) => CompareExposedPlacements(left, right, localPositionsByPlacement));
+                TilePlacementData first = exposedPlacements[0];
+                TilePlacementData second = FindBestPairCandidate(first, exposedPlacements, localPositionsByPlacement, random);
+                if (first == null || second == null)
+                {
+                    orderedPairs.Clear();
+                    return false;
+                }
+
+                orderedPairs.Add(new TilePlacementPair(first, second));
+                remainingPlacements.Remove(first);
+                remainingPlacements.Remove(second);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Collects every tile placement that currently has no outer tile covering its selectable face.
+        /// </summary>
+        private List<TilePlacementData> GetExposedPlacements(List<TilePlacementData> remainingPlacements, Dictionary<TilePlacementData, Vector3> localPositionsByPlacement)
+        {
+            List<TilePlacementData> exposedPlacements = new List<TilePlacementData>();
+            if (remainingPlacements == null || localPositionsByPlacement == null)
+            {
+                return exposedPlacements;
+            }
+
+            for (int index = 0; index < remainingPlacements.Count; index++)
+            {
+                TilePlacementData candidate = remainingPlacements[index];
+                if (candidate == null || !localPositionsByPlacement.ContainsKey(candidate))
+                {
+                    continue;
+                }
+
+                if (IsPlacementExposed(candidate, remainingPlacements, localPositionsByPlacement))
+                {
+                    exposedPlacements.Add(candidate);
+                }
+            }
+
+            return exposedPlacements;
+        }
+
+        /// <summary>
+        /// Determines whether a tile placement has a clear outward-facing path on the current shell.
+        /// </summary>
+        private bool IsPlacementExposed(TilePlacementData placement, List<TilePlacementData> remainingPlacements, Dictionary<TilePlacementData, Vector3> localPositionsByPlacement)
+        {
+            if (placement == null || remainingPlacements == null || localPositionsByPlacement == null || !localPositionsByPlacement.TryGetValue(placement, out Vector3 placementPosition))
+            {
+                return false;
+            }
+
+            Vector3 outwardNormal = ((Vector3)VoxelGridDirections.GetOffset(placement.FacingDirection)).normalized;
+            float depthEpsilon = Mathf.Max(0.01f, GetSurfaceShellThickness() * 0.25f);
+            Vector2 columnTolerance = GetSurfaceColumnTolerance(placement.FacingDirection);
+
+            for (int index = 0; index < remainingPlacements.Count; index++)
+            {
+                TilePlacementData blocker = remainingPlacements[index];
+                if (blocker == null || blocker == placement || blocker.FacingDirection != placement.FacingDirection || !localPositionsByPlacement.TryGetValue(blocker, out Vector3 blockerPosition))
+                {
+                    continue;
+                }
+
+                if (Vector3.Dot(blockerPosition, outwardNormal) <= Vector3.Dot(placementPosition, outwardNormal) + depthEpsilon)
+                {
+                    continue;
+                }
+
+                if (SharesSurfaceColumn(placement.FacingDirection, placementPosition, blockerPosition, columnTolerance))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Orders exposed placements so pairing peels the outer shells evenly.
+        /// </summary>
+        private int CompareExposedPlacements(TilePlacementData left, TilePlacementData right, Dictionary<TilePlacementData, Vector3> localPositionsByPlacement)
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return 0;
+            }
+
+            if (left == null)
+            {
+                return 1;
+            }
+
+            if (right == null)
+            {
+                return -1;
+            }
+
+            int shellComparison = left.ShellIndex.CompareTo(right.ShellIndex);
+            if (shellComparison != 0)
+            {
+                return shellComparison;
+            }
+
+            if (!localPositionsByPlacement.TryGetValue(left, out Vector3 leftPosition) || !localPositionsByPlacement.TryGetValue(right, out Vector3 rightPosition))
+            {
+                return left.FacingDirection.CompareTo(right.FacingDirection);
+            }
+
+            float leftDepth = Vector3.Dot(leftPosition, ((Vector3)VoxelGridDirections.GetOffset(left.FacingDirection)).normalized);
+            float rightDepth = Vector3.Dot(rightPosition, ((Vector3)VoxelGridDirections.GetOffset(right.FacingDirection)).normalized);
+            int depthComparison = rightDepth.CompareTo(leftDepth);
+            if (depthComparison != 0)
+            {
+                return depthComparison;
+            }
+
+            int facingComparison = left.FacingDirection.CompareTo(right.FacingDirection);
+            if (facingComparison != 0)
+            {
+                return facingComparison;
+            }
+
+            return leftPosition.sqrMagnitude.CompareTo(rightPosition.sqrMagnitude);
+        }
+
+        /// <summary>
+        /// Chooses the most local partner for the exposed tile so the authored solve path stays readable.
+        /// </summary>
+        private TilePlacementData FindBestPairCandidate(TilePlacementData first, List<TilePlacementData> exposedPlacements, Dictionary<TilePlacementData, Vector3> localPositionsByPlacement, System.Random random)
+        {
+            if (first == null || exposedPlacements == null || localPositionsByPlacement == null || !localPositionsByPlacement.TryGetValue(first, out Vector3 firstPosition))
+            {
+                return null;
+            }
+
+            TilePlacementData bestCandidate = null;
+            float bestScore = float.MinValue;
+            for (int index = 0; index < exposedPlacements.Count; index++)
+            {
+                TilePlacementData candidate = exposedPlacements[index];
+                if (candidate == null || candidate == first || !localPositionsByPlacement.TryGetValue(candidate, out Vector3 candidatePosition))
+                {
+                    continue;
+                }
+
+                float distance = Vector3.Distance(firstPosition, candidatePosition);
+                float score = 0f;
+                score += candidate.ShellIndex == first.ShellIndex ? 1000f : -Mathf.Abs(candidate.ShellIndex - first.ShellIndex) * 250f;
+                score += candidate.FacingDirection == first.FacingDirection ? 150f : 0f;
+                score -= distance * 25f;
+
+                if (score > bestScore || (Mathf.Approximately(score, bestScore) && random != null && random.NextDouble() < 0.5d))
+                {
+                    bestScore = score;
+                    bestCandidate = candidate;
+                }
+            }
+
+            return bestCandidate;
+        }
+
+        /// <summary>
+        /// Determines whether two placements occupy the same face column across nested shells.
+        /// </summary>
+        private static bool SharesSurfaceColumn(VoxelGridDirection facingDirection, Vector3 firstPosition, Vector3 secondPosition, Vector2 columnTolerance)
+        {
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return Mathf.Abs(firstPosition.y - secondPosition.y) <= columnTolerance.x
+                        && Mathf.Abs(firstPosition.z - secondPosition.z) <= columnTolerance.y;
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return Mathf.Abs(firstPosition.x - secondPosition.x) <= columnTolerance.x
+                        && Mathf.Abs(firstPosition.z - secondPosition.z) <= columnTolerance.y;
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return Mathf.Abs(firstPosition.x - secondPosition.x) <= columnTolerance.x
+                        && Mathf.Abs(firstPosition.y - secondPosition.y) <= columnTolerance.y;
+            }
+        }
+
+        /// <summary>
+        /// Resolves the tolerance used to decide whether two shells overlap on the same face column.
+        /// </summary>
+        private Vector2 GetSurfaceColumnTolerance(VoxelGridDirection facingDirection)
+        {
+            Vector3 step = layoutOverride != null ? layoutOverride.CellStep : Vector3.one;
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return new Vector2(Mathf.Max(0.05f, step.y * 0.35f), Mathf.Max(0.05f, step.z * 0.35f));
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return new Vector2(Mathf.Max(0.05f, step.x * 0.35f), Mathf.Max(0.05f, step.z * 0.35f));
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return new Vector2(Mathf.Max(0.05f, step.x * 0.35f), Mathf.Max(0.05f, step.y * 0.35f));
+            }
+        }
+
+        /// <summary>
+        /// Stores one exposed pair selected for the authored solve path.
+        /// </summary>
+        private sealed class TilePlacementPair
+        {
+            public TilePlacementPair(TilePlacementData first, TilePlacementData second)
+            {
+                First = first;
+                Second = second;
+            }
+
+            public TilePlacementData First { get; }
+
+            public TilePlacementData Second { get; }
         }
 
         /// <summary>
@@ -1376,12 +1679,14 @@ namespace MahjongOut3D.LevelSystem
                 return Vector3.zero;
             }
 
-            if (placement.UseCustomLocalPosition)
-            {
-                return placement.CustomLocalPosition;
-            }
+            Vector3 localPosition = placement.UseCustomLocalPosition
+                ? placement.CustomLocalPosition
+                : GetSurfaceTileLocalPosition(placement, shapeGridSize);
 
-            Vector3 localPosition = GetSurfaceTileLocalPosition(placement, shapeGridSize);
+            if (placement.UseCustomLocalPosition && !placement.ApplyShellCompaction)
+            {
+                return localPosition;
+            }
 
             int shellIndex = Mathf.Max(0, placement.ShellIndex);
             if (shellIndex == 0)
