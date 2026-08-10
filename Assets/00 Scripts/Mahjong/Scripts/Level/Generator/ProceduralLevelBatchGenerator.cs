@@ -198,6 +198,7 @@ namespace MahjongOut3D.LevelSystem
                 case LevelShapeType.Cube:
                 case LevelShapeType.Pagoda:
                 case LevelShapeType.Pyramid:
+                case LevelShapeType.Bridge:
                 case LevelShapeType.Custom:
                     return shape;
                 default:
@@ -515,7 +516,7 @@ namespace MahjongOut3D.LevelSystem
                 return GetPreferredCubeTileCount(shells, targetLayerCount, minTileCount, maxTileCount);
             }
 
-            if (shape == LevelShapeType.Pagoda || shape == LevelShapeType.Pyramid)
+            if (shape == LevelShapeType.Pagoda || shape == LevelShapeType.Pyramid || shape == LevelShapeType.Bridge)
             {
                 return GetPreferredPagodaTileCount(shells, minTileCount, maxTileCount);
             }
@@ -771,6 +772,13 @@ namespace MahjongOut3D.LevelSystem
 
                 case LevelShapeType.Pyramid:
                     return PyramidLevelShapeGenerator.BuildShells(
+                        targetLayerCount,
+                        ResolveCubeTileMetrics(),
+                        Mathf.Max(2, settings.MinPairCount * 2),
+                        Mathf.Max(2, settings.MaxPairCount * 2));
+
+                case LevelShapeType.Bridge:
+                    return BridgeLevelShapeGenerator.BuildShells(
                         targetLayerCount,
                         ResolveCubeTileMetrics(),
                         Mathf.Max(2, settings.MinPairCount * 2),
@@ -1279,6 +1287,9 @@ namespace MahjongOut3D.LevelSystem
 
                 case LevelShapeType.Pyramid:
                     return PyramidLevelShapeGenerator.BuildGridSize(layerCount);
+
+                case LevelShapeType.Bridge:
+                    return BridgeLevelShapeGenerator.BuildGridSize(layerCount);
             }
 
             return new VoxelGridSize(width, height, depth);

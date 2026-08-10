@@ -21,7 +21,7 @@ MonoBehaviour:
   generationWriteMode: 1
   normalSettings:
     label: Normal
-    levelCount: 20
+    levelCount: 0
     minLayerCount: 1
     maxLayerCount: 3
     minPairCount: 22
@@ -33,13 +33,13 @@ MonoBehaviour:
   hardSettings:
     label: Hard
     levelCount: 2
-    minLayerCount: 1
-    maxLayerCount: 1
+    minLayerCount: 2
+    maxLayerCount: 3
     minPairCount: 40
     maxPairCount: 70
     flippedTileChance: 0.55
-    shape: 1
-    allowedShapes: 01000000
+    shape: 3
+    allowedShapes: 03000000
     difficulty: 2
   superHardSettings:
     label: SuperHard
