@@ -113,6 +113,8 @@ namespace MahjongOut3D.LevelSystem
             /// </summary>
             public LevelShapeType GetRandomShape(System.Random random)
             {
+                SanitizeShapeConfiguration();
+
                 LevelShapeType selectedShape;
                 if (allowedShapes != null && allowedShapes.Count > 0)
                 {
@@ -130,6 +132,34 @@ namespace MahjongOut3D.LevelSystem
                 }
 
                 return NormalizeSupportedShapeType(shape);
+            }
+
+            /// <summary>
+            /// Normalizes stale serialized shape values after enum members are removed.
+            /// </summary>
+            public void SanitizeShapeConfiguration()
+            {
+                shape = NormalizeSupportedShapeType(shape);
+
+                if (allowedShapes == null)
+                {
+                    allowedShapes = new List<LevelShapeType>();
+                    return;
+                }
+
+                bool hasSupportedShape = false;
+                for (int index = allowedShapes.Count - 1; index >= 0; index--)
+                {
+                    LevelShapeType normalizedShape = NormalizeSupportedShapeType(allowedShapes[index]);
+                    if (normalizedShape != LevelShapeType.Cube || hasSupportedShape)
+                    {
+                        allowedShapes.RemoveAt(index);
+                        continue;
+                    }
+
+                    allowedShapes[index] = normalizedShape;
+                    hasSupportedShape = true;
+                }
             }
 
             /// <summary>
@@ -166,7 +196,7 @@ namespace MahjongOut3D.LevelSystem
                     minPairCount = 40,
                     maxPairCount = 60,
                     flippedTileChance = 0.55f,
-                    shape = LevelShapeType.Pyramid,
+                    shape = LevelShapeType.Cube,
                     allowedShapes = new List<LevelShapeType>(),
                     difficulty = LevelDifficulty.Hard,
                 };
@@ -186,7 +216,7 @@ namespace MahjongOut3D.LevelSystem
                     minPairCount = 72,
                     maxPairCount = 120,
                     flippedTileChance = 0.65f,
-                    shape = LevelShapeType.Pyramid,
+                    shape = LevelShapeType.Cube,
                     allowedShapes = new List<LevelShapeType>(),
                     difficulty = LevelDifficulty.Expert,
                 };
@@ -195,17 +225,7 @@ namespace MahjongOut3D.LevelSystem
 
         private static LevelShapeType NormalizeSupportedShapeType(LevelShapeType shape)
         {
-            switch (shape)
-            {
-                case LevelShapeType.Cube:
-                case LevelShapeType.Pagoda:
-                case LevelShapeType.Pyramid:
-                case LevelShapeType.Bridge:
-                case LevelShapeType.Custom:
-                    return shape;
-                default:
-                    return LevelShapeType.Cube;
-            }
+            return LevelShapeType.Cube;
         }
 
         /// <summary>
@@ -377,6 +397,8 @@ namespace MahjongOut3D.LevelSystem
         /// <returns>Generated level payloads.</returns>
         public List<GeneratedLevelData> GenerateLevelData(int startingSequence = 0)
         {
+            SanitizeSerializedConfiguration();
+
             List<GeneratedLevelData> results = new List<GeneratedLevelData>();
             System.Random random = new System.Random(seed);
             int sequence = Mathf.Max(0, startingSequence);
@@ -385,6 +407,33 @@ namespace MahjongOut3D.LevelSystem
             AppendGeneratedTier(results, hardSettings, ref sequence, random);
             AppendGeneratedTier(results, superHardSettings, ref sequence, random);
             return results;
+        }
+
+        private void OnValidate()
+        {
+            SanitizeSerializedConfiguration();
+        }
+
+        private void SanitizeSerializedConfiguration()
+        {
+            if (normalSettings == null)
+            {
+                normalSettings = DifficultyBatchDefinition.CreateNormalDefaults();
+            }
+
+            if (hardSettings == null)
+            {
+                hardSettings = DifficultyBatchDefinition.CreateHardDefaults();
+            }
+
+            if (superHardSettings == null)
+            {
+                superHardSettings = DifficultyBatchDefinition.CreateSuperHardDefaults();
+            }
+
+            normalSettings.SanitizeShapeConfiguration();
+            hardSettings.SanitizeShapeConfiguration();
+            superHardSettings.SanitizeShapeConfiguration();
         }
 
 #if UNITY_EDITOR
@@ -476,8 +525,8 @@ namespace MahjongOut3D.LevelSystem
                 for (int attempt = 0; attempt < MaxSolvableGenerationAttemptsPerLevel; attempt++)
                 {
                     candidate = CreateShapeCandidate(settings, random);
-                    int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.Shape, candidate.TargetLayerCount, random);
-                    List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random, candidate.Shape);
+                    int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.TargetLayerCount);
+                    List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
                     logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
                     if (TryBuildTileDefinitions(occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions))
@@ -532,7 +581,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Chooses a compact tile count that preserves full outer layers whenever possible.
         /// </summary>
-        private static int GetTargetTileCount(DifficultyBatchDefinition settings, List<List<TilePlacementData>> shells, LevelShapeType shape, int targetLayerCount, System.Random random)
+        private static int GetTargetTileCount(DifficultyBatchDefinition settings, List<List<TilePlacementData>> shells, int targetLayerCount)
         {
             if (shells == null || shells.Count == 0)
             {
@@ -542,97 +591,8 @@ namespace MahjongOut3D.LevelSystem
             int maxTileCount = Mathf.Max(2, settings.MaxPairCount * 2);
             int minTileCount = Mathf.Max(2, settings.MinPairCount * 2);
 
-            if (shape == LevelShapeType.Cube)
-            {
-                return GetPreferredCubeTileCount(shells, targetLayerCount, minTileCount, maxTileCount);
-            }
+            return GetPreferredCubeTileCount(shells, targetLayerCount, minTileCount, maxTileCount);
 
-            if (shape == LevelShapeType.Pagoda || shape == LevelShapeType.Pyramid || shape == LevelShapeType.Bridge)
-            {
-                return GetPreferredPagodaTileCount(shells, minTileCount, maxTileCount);
-            }
-
-            List<int> completeLayerCounts = new List<int>(shells.Count);
-            int cumulativeCount = 0;
-
-            for (int shellIndex = 0; shellIndex < shells.Count; shellIndex++)
-            {
-                cumulativeCount += shells[shellIndex].Count;
-                if (cumulativeCount >= 2 && cumulativeCount % 2 == 0)
-                {
-                    completeLayerCounts.Add(cumulativeCount);
-                }
-            }
-
-            if (completeLayerCounts.Count == 0)
-            {
-                int fallbackTileCount = Mathf.Min(GetShellTileCapacity(shells), maxTileCount);
-                return fallbackTileCount % 2 == 0 ? fallbackTileCount : fallbackTileCount - 1;
-            }
-
-            List<int> preferredCounts = new List<int>();
-            for (int index = 0; index < completeLayerCounts.Count; index++)
-            {
-                int count = completeLayerCounts[index];
-                if (count >= minTileCount && count <= maxTileCount)
-                {
-                    preferredCounts.Add(count);
-                }
-            }
-
-            if (preferredCounts.Count > 0)
-            {
-                return preferredCounts[random.Next(0, preferredCounts.Count)];
-            }
-
-            for (int index = completeLayerCounts.Count - 1; index >= 0; index--)
-            {
-                if (completeLayerCounts[index] <= maxTileCount)
-                {
-                    return completeLayerCounts[index];
-                }
-            }
-
-            return completeLayerCounts[0];
-        }
-
-        private static int GetPreferredPagodaTileCount(List<List<TilePlacementData>> shells, int minTileCount, int maxTileCount)
-        {
-            int cumulativeCount = 0;
-            int smallestValidCount = 0;
-            int bestInRangeCount = 0;
-
-            for (int index = 0; index < shells.Count; index++)
-            {
-                cumulativeCount += Mathf.Max(0, shells[index].Count);
-                if (cumulativeCount < 2 || cumulativeCount % 2 != 0)
-                {
-                    continue;
-                }
-
-                if (smallestValidCount == 0)
-                {
-                    smallestValidCount = cumulativeCount;
-                }
-
-                if (cumulativeCount >= minTileCount && cumulativeCount <= maxTileCount)
-                {
-                    bestInRangeCount = cumulativeCount;
-                }
-            }
-
-            if (bestInRangeCount >= 2)
-            {
-                return bestInRangeCount;
-            }
-
-            if (smallestValidCount >= 2)
-            {
-                return smallestValidCount;
-            }
-
-            int fallbackCount = GetShellTileCapacity(shells);
-            return fallbackCount % 2 == 0 ? fallbackCount : fallbackCount - 1;
         }
 
         /// <summary>
@@ -741,16 +701,13 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the occupied coordinates by taking shell layers in the order supplied by the shell builder.
         /// </summary>
-        private static List<TilePlacementData> BuildOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random, LevelShapeType shape)
+        private static List<TilePlacementData> BuildOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random)
         {
             List<TilePlacementData> orderedCoordinates = new List<TilePlacementData>(tileCount);
             for (int shellIndex = 0; shellIndex < shells.Count && orderedCoordinates.Count < tileCount; shellIndex++)
             {
                 List<TilePlacementData> shellCoordinates = new List<TilePlacementData>(shells[shellIndex]);
-                if (shape != LevelShapeType.Bridge)
-                {
-                    Shuffle(shellCoordinates, random);
-                }
+                Shuffle(shellCoordinates, random);
 
                 for (int coordinateIndex = 0; coordinateIndex < shellCoordinates.Count && orderedCoordinates.Count < tileCount; coordinateIndex++)
                 {
