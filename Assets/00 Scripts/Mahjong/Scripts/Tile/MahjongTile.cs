@@ -43,6 +43,7 @@ namespace MahjongOut3D.TileSystem
         private MaterialPropertyBlock piecePropertyBlock;
         private MaterialPropertyBlock fillPropertyBlock;
         private Coroutine blockedTapFeedbackRoutine;
+        private Vector3 blockedTapBaseLocalPosition;
         private bool hasDebugBaseColor;
         private Color debugBaseColor = Color.white;
         private Texture2D pieceTexture;
@@ -700,9 +701,24 @@ namespace MahjongOut3D.TileSystem
             if (blockedTapFeedbackRoutine != null)
             {
                 StopCoroutine(blockedTapFeedbackRoutine);
+                SetBlockedOutlineHighlighted(false);
+                transform.localPosition = blockedTapBaseLocalPosition;
             }
 
             blockedTapFeedbackRoutine = StartCoroutine(PlayBlockedTapFeedbackRoutine());
+        }
+
+        private void SetBlockedOutlineHighlighted(bool isHighlighted)
+        {
+            if (outlinePresenter == null)
+            {
+                CacheReferences();
+            }
+
+            if (outlinePresenter != null)
+            {
+                outlinePresenter.SetBlockedHighlighted(isHighlighted);
+            }
         }
 
         /// <summary>
@@ -739,10 +755,13 @@ namespace MahjongOut3D.TileSystem
 
         private IEnumerator PlayBlockedTapFeedbackRoutine()
         {
-            Vector3 startLocalPosition = transform.localPosition;
-            const float durationSeconds = 0.16f;
-            const float amplitude = 0.015f;
-            const float oscillationCount = 3.5f;
+            blockedTapBaseLocalPosition = transform.localPosition;
+            const float durationSeconds = 0.24f;
+            const float amplitude = 0.03f;
+            const float oscillationCount = 4.5f;
+            Vector3 localShakeAxis = ResolveBlockedTapLocalShakeAxis();
+
+            SetBlockedOutlineHighlighted(true);
 
             float elapsed = 0f;
             while (elapsed < durationSeconds)
@@ -751,12 +770,76 @@ namespace MahjongOut3D.TileSystem
                 float normalizedTime = Mathf.Clamp01(elapsed / durationSeconds);
                 float damping = 1f - normalizedTime;
                 float offset = Mathf.Sin(normalizedTime * oscillationCount * Mathf.PI * 2f) * amplitude * damping;
-                transform.localPosition = startLocalPosition + (Vector3.right * offset);
+                transform.localPosition = blockedTapBaseLocalPosition + (localShakeAxis * offset);
                 yield return null;
             }
 
-            transform.localPosition = startLocalPosition;
+            transform.localPosition = blockedTapBaseLocalPosition;
+            SetBlockedOutlineHighlighted(false);
             blockedTapFeedbackRoutine = null;
+        }
+
+        private Vector3 ResolveBlockedTapLocalShakeAxis()
+        {
+            Vector3 worldShakeAxis = ResolveBlockedTapWorldShakeAxis();
+
+            if (transform.parent == null)
+            {
+                return worldShakeAxis.normalized;
+            }
+
+            Vector3 localShakeAxis = transform.parent.InverseTransformDirection(worldShakeAxis);
+            if (localShakeAxis.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return Vector3.right;
+            }
+
+            return localShakeAxis.normalized;
+        }
+
+        private Vector3 ResolveBlockedTapWorldShakeAxis()
+        {
+            if (tileCollider is BoxCollider boxCollider)
+            {
+                Transform colliderTransform = boxCollider.transform;
+                Vector3 absoluteScale = new Vector3(
+                    Mathf.Abs(colliderTransform.lossyScale.x),
+                    Mathf.Abs(colliderTransform.lossyScale.y),
+                    Mathf.Abs(colliderTransform.lossyScale.z));
+                Vector3 scaledSize = Vector3.Scale(boxCollider.size, absoluteScale);
+
+                Vector3 primaryAxis = colliderTransform.right;
+                float primaryLength = Mathf.Abs(scaledSize.x);
+                float secondaryLength = Mathf.Abs(scaledSize.z);
+                if (secondaryLength > primaryLength)
+                {
+                    primaryAxis = colliderTransform.forward;
+                }
+
+                if (primaryAxis.sqrMagnitude > Mathf.Epsilon)
+                {
+                    return primaryAxis.normalized;
+                }
+            }
+
+            if (meshRenderer != null)
+            {
+                Vector3 rendererSize = meshRenderer.bounds.size;
+                Vector3 primaryAxis = transform.right;
+                float primaryLength = rendererSize.x;
+
+                if (rendererSize.z > primaryLength)
+                {
+                    primaryAxis = transform.forward;
+                }
+
+                if (primaryAxis.sqrMagnitude > Mathf.Epsilon)
+                {
+                    return primaryAxis.normalized;
+                }
+            }
+
+            return transform.right;
         }
 
         /// <summary>

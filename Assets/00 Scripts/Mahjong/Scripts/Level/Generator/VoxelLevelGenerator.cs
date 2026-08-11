@@ -16,6 +16,34 @@ namespace MahjongOut3D.LevelSystem
     [DisallowMultipleComponent]
     public sealed class VoxelLevelGenerator : MonoBehaviour
     {
+        private sealed class MatchFillGroup
+        {
+            private readonly HashSet<int> shellIndices = new HashSet<int>();
+
+            public MatchFillGroup(int matchId)
+            {
+                MatchId = matchId;
+            }
+
+            public int MatchId { get; }
+
+            public int OuterShellIndex { get; private set; } = int.MaxValue;
+
+            public int InnerShellIndex { get; private set; } = int.MinValue;
+
+            public int ShellSpan => shellIndices.Count <= 1 ? 0 : InnerShellIndex - OuterShellIndex;
+
+            public IEnumerable<int> ShellIndices => shellIndices;
+
+            public void RegisterShell(int shellIndex)
+            {
+                int normalizedShellIndex = Mathf.Max(0, shellIndex);
+                shellIndices.Add(normalizedShellIndex);
+                OuterShellIndex = Mathf.Min(OuterShellIndex, normalizedShellIndex);
+                InnerShellIndex = Mathf.Max(InnerShellIndex, normalizedShellIndex);
+            }
+        }
+
         private const string DefaultFallbackVisualSourceName = "Bamboo_1";
         private static readonly Color[] DebugMatchPalette =
         {
@@ -156,6 +184,7 @@ namespace MahjongOut3D.LevelSystem
         }
         /// <summary>
         /// Returns a random piece texture from the configured MahjongMaterialSO.
+        /// The whole generated block shares one common piece texture.
         /// </summary>
         public Texture2D RandomPieceTexture()
         {
@@ -164,14 +193,14 @@ namespace MahjongOut3D.LevelSystem
                 return null;
             }
 
-            List<Texture2D> activePieceTextures = mahjongMaterialSO.GetActivePieceTextures();
-            if (activePieceTextures == null || activePieceTextures.Count == 0)
+            List<Texture2D> resolvedPieceTextures = mahjongMaterialSO.GetActivePieceTextures();
+            if (resolvedPieceTextures == null || resolvedPieceTextures.Count == 0)
             {
                 return null;
             }
 
-            int randomIndex = Random.Range(0, activePieceTextures.Count);
-            return activePieceTextures[randomIndex];
+            int randomIndex = Random.Range(0, resolvedPieceTextures.Count);
+            return resolvedPieceTextures[randomIndex];
         }
 
         private Texture2D GetFillTextureForMatch(int matchId)
@@ -353,6 +382,8 @@ namespace MahjongOut3D.LevelSystem
             {
                 ConfigureFillTexturePool(levelDefinition != null ? levelDefinition.FillCategoryNames : null);
             }
+
+            PrepareFillTexturesForLevel(tileDefinitions);
           
             if (tileDefinitions != null)
             {
@@ -397,6 +428,128 @@ namespace MahjongOut3D.LevelSystem
 
             activeLevelFillTextures.AddRange(resolvedTextures);
             Shuffle(activeLevelFillTextures);
+        }
+
+        /// <summary>
+        /// Pre-assigns fill textures per match so outer shells avoid sharing the same fill as much as possible.
+        /// This keeps the block from exposing too many interchangeable pairs on the outer layer.
+        /// </summary>
+        private void PrepareFillTexturesForLevel(IList<LevelTileDefinition> tileDefinitions)
+        {
+            fillTexturesByMatchId.Clear();
+            if (tileDefinitions == null || tileDefinitions.Count == 0 || activeLevelFillTextures.Count == 0)
+            {
+                return;
+            }
+
+            Dictionary<int, MatchFillGroup> groupsByMatchId = new Dictionary<int, MatchFillGroup>();
+            for (int index = 0; index < tileDefinitions.Count; index++)
+            {
+                LevelTileDefinition definition = tileDefinitions[index];
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                if (!groupsByMatchId.TryGetValue(definition.MatchId, out MatchFillGroup group))
+                {
+                    group = new MatchFillGroup(definition.MatchId);
+                    groupsByMatchId.Add(definition.MatchId, group);
+                }
+
+                group.RegisterShell(definition.SurfaceShellIndex);
+            }
+
+            List<MatchFillGroup> groups = new List<MatchFillGroup>(groupsByMatchId.Values);
+            groups.Sort((left, right) =>
+            {
+                int outerShellComparison = left.OuterShellIndex.CompareTo(right.OuterShellIndex);
+                if (outerShellComparison != 0)
+                {
+                    return outerShellComparison;
+                }
+
+                int shellSpanComparison = right.ShellSpan.CompareTo(left.ShellSpan);
+                if (shellSpanComparison != 0)
+                {
+                    return shellSpanComparison;
+                }
+
+                return left.MatchId.CompareTo(right.MatchId);
+            });
+
+            Dictionary<int, HashSet<Texture2D>> usedTexturesByShell = new Dictionary<int, HashSet<Texture2D>>();
+            Dictionary<Texture2D, int> usageCounts = new Dictionary<Texture2D, int>();
+
+            for (int index = 0; index < groups.Count; index++)
+            {
+                MatchFillGroup group = groups[index];
+                Texture2D selectedTexture = ChooseFillTextureForGroup(group, usedTexturesByShell, usageCounts);
+                if (selectedTexture == null)
+                {
+                    continue;
+                }
+
+                fillTexturesByMatchId[group.MatchId] = selectedTexture;
+                if (!usageCounts.ContainsKey(selectedTexture))
+                {
+                    usageCounts[selectedTexture] = 0;
+                }
+
+                usageCounts[selectedTexture]++;
+                foreach (int shellIndex in group.ShellIndices)
+                {
+                    if (!usedTexturesByShell.TryGetValue(shellIndex, out HashSet<Texture2D> usedTextures))
+                    {
+                        usedTextures = new HashSet<Texture2D>();
+                        usedTexturesByShell.Add(shellIndex, usedTextures);
+                    }
+
+                    usedTextures.Add(selectedTexture);
+                }
+            }
+        }
+
+        private Texture2D ChooseFillTextureForGroup(MatchFillGroup group, Dictionary<int, HashSet<Texture2D>> usedTexturesByShell, Dictionary<Texture2D, int> usageCounts)
+        {
+            Texture2D bestTexture = null;
+            int bestUsage = int.MaxValue;
+            bool bestTouchesShellReuse = true;
+
+            for (int index = 0; index < activeLevelFillTextures.Count; index++)
+            {
+                Texture2D candidate = activeLevelFillTextures[index];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                bool touchesShellReuse = false;
+                foreach (int shellIndex in group.ShellIndices)
+                {
+                    if (usedTexturesByShell.TryGetValue(shellIndex, out HashSet<Texture2D> usedTextures) && usedTextures.Contains(candidate))
+                    {
+                        touchesShellReuse = true;
+                        break;
+                    }
+                }
+
+                int usage = usageCounts.TryGetValue(candidate, out int count) ? count : 0;
+                bool isBetter = bestTexture == null
+                    || (bestTouchesShellReuse && !touchesShellReuse)
+                    || (bestTouchesShellReuse == touchesShellReuse && usage < bestUsage);
+
+                if (!isBetter)
+                {
+                    continue;
+                }
+
+                bestTexture = candidate;
+                bestUsage = usage;
+                bestTouchesShellReuse = touchesShellReuse;
+            }
+
+            return bestTexture;
         }
 
         private static void Shuffle<TValue>(IList<TValue> values)
@@ -748,7 +901,7 @@ namespace MahjongOut3D.LevelSystem
                 LocalEulerAngles = definition.LocalEulerAngles,
                 SurfaceShellIndex = definition.SurfaceShellIndex,
             };
-
+            
             tile.ApplyRuntimeData(runtimeData);
             tile.Setup(pieceBaseMaterial, mahjongMaterialSO != null ? mahjongMaterialSO.FillBaseMaterial : null);
             tile.SetupPieceTexture(pieceTexture);

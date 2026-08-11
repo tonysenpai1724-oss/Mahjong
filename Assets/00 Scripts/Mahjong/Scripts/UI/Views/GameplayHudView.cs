@@ -10,6 +10,7 @@ namespace MahjongOut3D.UI
     /// </summary>
     public sealed class GameplayHudView : UIScreenView
     {
+        [SerializeField] private TMP_Text levelText;
         [SerializeField] private TMP_Text coinText;
         [SerializeField] private TMP_Text progressText;
         [SerializeField] private Image progressSlider;
@@ -41,6 +42,17 @@ namespace MahjongOut3D.UI
             if (coinText != null)
             {
                 coinText.text = coins.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Updates the visible gameplay level label.
+        /// </summary>
+        public void SetLevel(int levelIndex)
+        {
+            if (levelText != null)
+            {
+                levelText.text = $"Level {Mathf.Max(1, levelIndex + 1)}";
             }
         }
 

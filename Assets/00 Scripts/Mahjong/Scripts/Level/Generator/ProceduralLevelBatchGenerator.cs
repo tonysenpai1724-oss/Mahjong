@@ -34,6 +34,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private string levelNamePrefix = "Generated";
         [SerializeField] private int seed = 20260730;
         [SerializeField] private GenerationWriteMode generationWriteMode = GenerationWriteMode.GenerateNew;
+        [SerializeField] private DifficultyBatchDefinition easySettings = DifficultyBatchDefinition.CreateEasyDefaults();
         [SerializeField] private DifficultyBatchDefinition normalSettings = DifficultyBatchDefinition.CreateNormalDefaults();
         [SerializeField] private DifficultyBatchDefinition hardSettings = DifficultyBatchDefinition.CreateHardDefaults();
         [SerializeField] private DifficultyBatchDefinition superHardSettings = DifficultyBatchDefinition.CreateSuperHardDefaults();
@@ -160,6 +161,26 @@ namespace MahjongOut3D.LevelSystem
                     allowedShapes[index] = normalizedShape;
                     hasSupportedShape = true;
                 }
+            }
+
+            /// <summary>
+            /// Creates the default Easy tier settings.
+            /// </summary>
+            public static DifficultyBatchDefinition CreateEasyDefaults()
+            {
+                return new DifficultyBatchDefinition
+                {
+                    label = "Easy",
+                    levelCount = 5,
+                    minLayerCount = 1,
+                    maxLayerCount = 2,
+                    minPairCount = 12,
+                    maxPairCount = 18,
+                    flippedTileChance = 0.35f,
+                    shape = LevelShapeType.Cube,
+                    allowedShapes = new List<LevelShapeType>(),
+                    difficulty = LevelDifficulty.Easy,
+                };
             }
 
             /// <summary>
@@ -403,6 +424,7 @@ namespace MahjongOut3D.LevelSystem
             System.Random random = new System.Random(seed);
             int sequence = Mathf.Max(0, startingSequence);
 
+            AppendGeneratedTier(results, easySettings, ref sequence, random);
             AppendGeneratedTier(results, normalSettings, ref sequence, random);
             AppendGeneratedTier(results, hardSettings, ref sequence, random);
             AppendGeneratedTier(results, superHardSettings, ref sequence, random);
@@ -416,6 +438,11 @@ namespace MahjongOut3D.LevelSystem
 
         private void SanitizeSerializedConfiguration()
         {
+            if (easySettings == null)
+            {
+                easySettings = DifficultyBatchDefinition.CreateEasyDefaults();
+            }
+
             if (normalSettings == null)
             {
                 normalSettings = DifficultyBatchDefinition.CreateNormalDefaults();
@@ -431,6 +458,7 @@ namespace MahjongOut3D.LevelSystem
                 superHardSettings = DifficultyBatchDefinition.CreateSuperHardDefaults();
             }
 
+            easySettings.SanitizeShapeConfiguration();
             normalSettings.SanitizeShapeConfiguration();
             hardSettings.SanitizeShapeConfiguration();
             superHardSettings.SanitizeShapeConfiguration();
@@ -1296,7 +1324,7 @@ namespace MahjongOut3D.LevelSystem
                 return false;
             }
 
-            if (!TryBuildSolvablePairSequence(occupiedCoordinates, shapeGridSize, random, out List<TilePlacementPair> orderedPairs))
+            if (!TryBuildSolvablePairSequence(occupiedCoordinates, shapeGridSize, settings.Difficulty, random, out List<TilePlacementPair> orderedPairs))
             {
                 tileDefinitions.Clear();
                 return false;
@@ -1316,7 +1344,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds a guaranteed-removable pair order by repeatedly choosing two currently exposed surface tiles.
         /// </summary>
-        private bool TryBuildSolvablePairSequence(List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, System.Random random, out List<TilePlacementPair> orderedPairs)
+        private bool TryBuildSolvablePairSequence(List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, LevelDifficulty difficulty, System.Random random, out List<TilePlacementPair> orderedPairs)
         {
             orderedPairs = new List<TilePlacementPair>();
             if (occupiedCoordinates == null || occupiedCoordinates.Count == 0)
@@ -1349,7 +1377,7 @@ namespace MahjongOut3D.LevelSystem
 
                 exposedPlacements.Sort((left, right) => CompareExposedPlacements(left, right, localPositionsByPlacement));
                 TilePlacementData first = exposedPlacements[0];
-                TilePlacementData second = FindBestPairCandidate(first, exposedPlacements, localPositionsByPlacement, random);
+                TilePlacementData second = FindBestPairCandidate(first, exposedPlacements, localPositionsByPlacement, difficulty, random);
                 if (first == null || second == null)
                 {
                     orderedPairs.Clear();
@@ -1477,9 +1505,9 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Chooses the most local partner for the exposed tile so the authored solve path stays readable.
+        /// Chooses a partner for the exposed tile using the scoring profile of the current difficulty tier.
         /// </summary>
-        private TilePlacementData FindBestPairCandidate(TilePlacementData first, List<TilePlacementData> exposedPlacements, Dictionary<TilePlacementData, Vector3> localPositionsByPlacement, System.Random random)
+        private TilePlacementData FindBestPairCandidate(TilePlacementData first, List<TilePlacementData> exposedPlacements, Dictionary<TilePlacementData, Vector3> localPositionsByPlacement, LevelDifficulty difficulty, System.Random random)
         {
             if (first == null || exposedPlacements == null || localPositionsByPlacement == null || !localPositionsByPlacement.TryGetValue(first, out Vector3 firstPosition))
             {
@@ -1497,10 +1525,7 @@ namespace MahjongOut3D.LevelSystem
                 }
 
                 float distance = Vector3.Distance(firstPosition, candidatePosition);
-                float score = 0f;
-                score += candidate.ShellIndex == first.ShellIndex ? 1000f : -Mathf.Abs(candidate.ShellIndex - first.ShellIndex) * 250f;
-                score += candidate.FacingDirection == first.FacingDirection ? 150f : 0f;
-                score -= distance * 25f;
+                float score = ScorePairCandidate(first, candidate, distance, difficulty);
 
                 if (score > bestScore || (Mathf.Approximately(score, bestScore) && random != null && random.NextDouble() < 0.5d))
                 {
@@ -1510,6 +1535,59 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return bestCandidate;
+        }
+
+        /// <summary>
+        /// Scores a candidate pair based on the configured difficulty tier.
+        /// Easy keeps pairs close and often on one face, while harder tiers increasingly split matches across faces and shell layers.
+        /// </summary>
+        private static float ScorePairCandidate(TilePlacementData first, TilePlacementData candidate, float distance, LevelDifficulty difficulty)
+        {
+            int shellDelta = Mathf.Abs(candidate.ShellIndex - first.ShellIndex);
+            bool sameShell = shellDelta == 0;
+            bool sameFacing = candidate.FacingDirection == first.FacingDirection;
+            bool oppositeFacing = IsOppositeFacingDirection(first.FacingDirection, candidate.FacingDirection);
+            float shellSpread = Mathf.Min(3, shellDelta);
+
+            switch (difficulty)
+            {
+                case LevelDifficulty.Easy:
+                    return (sameShell ? 1000f : -shellDelta * 250f)
+                        + (sameFacing ? 150f : 0f)
+                        - (distance * 25f);
+
+                case LevelDifficulty.Normal:
+                    return (sameShell ? -60f : 160f + (shellSpread * 80f))
+                        + (sameFacing ? 20f : 70f)
+                        + (oppositeFacing ? 30f : 0f)
+                        + (distance * 6f);
+
+                case LevelDifficulty.Hard:
+                    return (sameShell ? -220f : 260f + (shellSpread * 140f))
+                        + (sameFacing ? -70f : 150f)
+                        + (oppositeFacing ? 60f : 0f)
+                        + (distance * 14f);
+
+                case LevelDifficulty.Expert:
+                default:
+                    return (sameShell ? -420f : 380f + (shellSpread * 220f))
+                        + (sameFacing ? -120f : 220f)
+                        + (oppositeFacing ? 100f : 0f)
+                        + (distance * 22f);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether two surface directions are on opposite faces of the wrapped shell.
+        /// </summary>
+        private static bool IsOppositeFacingDirection(VoxelGridDirection first, VoxelGridDirection second)
+        {
+            return (first == VoxelGridDirection.Left && second == VoxelGridDirection.Right)
+                || (first == VoxelGridDirection.Right && second == VoxelGridDirection.Left)
+                || (first == VoxelGridDirection.Down && second == VoxelGridDirection.Up)
+                || (first == VoxelGridDirection.Up && second == VoxelGridDirection.Down)
+                || (first == VoxelGridDirection.Back && second == VoxelGridDirection.Forward)
+                || (first == VoxelGridDirection.Forward && second == VoxelGridDirection.Back);
         }
 
         /// <summary>
@@ -1788,14 +1866,43 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         private static Vector3 GetFacingRotationEuler(VoxelGridDirection facingDirection, bool flipTile)
         {
-            Vector3 outwardNormal = VoxelGridDirections.GetOffset(facingDirection);
-            Quaternion outwardRotation = Quaternion.FromToRotation(Vector3.up, outwardNormal);
+            Quaternion outwardRotation = Quaternion.Euler(GetFacingBaseEuler(facingDirection));
             if (flipTile)
             {
+                Vector3 outwardNormal = VoxelGridDirections.GetOffset(facingDirection);
                 outwardRotation = Quaternion.AngleAxis(180f, outwardNormal) * outwardRotation;
             }
 
             return outwardRotation.eulerAngles;
+        }
+
+        /// <summary>
+        /// Resolves the exact face rotation convention already used by loaded level assets.
+        /// Opposite faces share the same reading direction convention, while side faces stay vertical.
+        /// </summary>
+        private static Vector3 GetFacingBaseEuler(VoxelGridDirection facingDirection)
+        {
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                    return new Vector3(0f, 0f, 90f);
+
+                case VoxelGridDirection.Right:
+                    return new Vector3(0f, 0f, 270f);
+
+                case VoxelGridDirection.Down:
+                    return new Vector3(0f, 0f, 180f);
+
+                case VoxelGridDirection.Up:
+                    return Vector3.zero;
+
+                case VoxelGridDirection.Back:
+                    return new Vector3(270f, 0f, 0f);
+
+                case VoxelGridDirection.Forward:
+                default:
+                    return new Vector3(90f, 0f, 0f);
+            }
         }
 
         /// <summary>

@@ -22,6 +22,7 @@ namespace MahjongOut3D.TileSystem
         [SerializeField] private float outlineScale = 1.1f;
         [SerializeField] private bool showOutlineOnCreate = true;
         [SerializeField] private Color hintOutlineColor = new Color(1f, 0.85f, 0.1f, 1f);
+        [SerializeField] private Color blockedOutlineColor = new Color(1f, 0.2f, 0.2f, 1f);
         [SerializeField] private float hintBlinkSpeed = 2.5f;
         [SerializeField, Range(0f, 1f)] private float hintBlinkStrength = 0.3f;
 
@@ -34,6 +35,7 @@ namespace MahjongOut3D.TileSystem
         private Material generatedOutlineRuntimeMaterial;
         private Color defaultOutlineColor = Color.black;
         private bool isHintHighlighted;
+        private bool isBlockedHighlighted;
         private bool isOutlineVisible = true;
 
         private void Awake()
@@ -100,6 +102,16 @@ namespace MahjongOut3D.TileSystem
         public void SetHintHighlighted(bool isHighlighted)
         {
             isHintHighlighted = isHighlighted;
+            ApplyOutlineAppearance();
+        }
+
+        /// <summary>
+        /// Enables or disables blocked-tap outline feedback.
+        /// </summary>
+        /// <param name="isHighlighted">True to show the blocked outline; otherwise false.</param>
+        public void SetBlockedHighlighted(bool isHighlighted)
+        {
+            isBlockedHighlighted = isHighlighted;
             ApplyOutlineAppearance();
         }
 
@@ -186,6 +198,13 @@ namespace MahjongOut3D.TileSystem
             }
 
             ApplyOutlineScale(generatedOutlineRuntimeMaterial);
+
+            if (isBlockedHighlighted)
+            {
+                ApplyOutlineColor(generatedOutlineRuntimeMaterial, blockedOutlineColor);
+                SetGeneratedOutlineVisible(isOutlineVisible);
+                return;
+            }
 
             if (!isHintHighlighted)
             {

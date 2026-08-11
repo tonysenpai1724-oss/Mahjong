@@ -25,6 +25,8 @@ namespace MahjongOut3D.CameraSystem
         private const float FallbackRotationSmoothing = 0.08f;
         private const float FallbackZoomSmoothing = 0.2f;
         private const float FallbackFocusSmoothing = 0.12f;
+        private const float FallbackFramedMinZoomFactor = 0.65f;
+        private const float FallbackFramedMaxZoomFactor = 1.45f;
 
         [Header("References")]
         [SerializeField] private Camera managedCamera;
@@ -37,6 +39,10 @@ namespace MahjongOut3D.CameraSystem
 
         [Header("Initial Orbit")]
         [SerializeField] private float initialYaw;
+
+        [Header("Dynamic Zoom Limits")]
+        [SerializeField, Min(0.1f)] private float framedMinZoomFactor = FallbackFramedMinZoomFactor;
+        [SerializeField, Min(1f)] private float framedMaxZoomFactor = FallbackFramedMaxZoomFactor;
 
         private bool isInitialized;
         private float targetYaw;
@@ -58,6 +64,8 @@ namespace MahjongOut3D.CameraSystem
         private float shakeEndTime;
         private float shakeAmplitude;
         private int lastDragFrame = -1;
+        private float runtimeMinZoomDistance;
+        private float runtimeMaxZoomDistance;
 
         /// <summary>
         /// Gets the camera driven by this orbit controller.
@@ -101,10 +109,11 @@ namespace MahjongOut3D.CameraSystem
 
             targetYaw = initialYaw;
             currentYaw = targetYaw;
+            ResetRuntimeZoomLimits();
 
             targetPitch = Mathf.Clamp(GetDefaultPitch(), GetMinPitch(), GetMaxPitch());
             currentPitch = targetPitch;
-            targetDistance = Mathf.Clamp(GetDefaultZoomDistance(), GetMinZoomDistance(), GetMaxZoomDistance());
+            targetDistance = Mathf.Clamp(GetDefaultZoomDistance(), GetActiveMinZoomDistance(), GetActiveMaxZoomDistance());
             currentDistance = targetDistance;
 
             currentFocusPoint = ResolveDesiredFocusPoint();
@@ -118,6 +127,7 @@ namespace MahjongOut3D.CameraSystem
         public void Shutdown()
         {
             isInitialized = false;
+            ResetRuntimeZoomLimits();
             inertialRotationVelocity = Vector2.zero;
             yawSmoothVelocity = 0f;
             pitchSmoothVelocity = 0f;
@@ -162,7 +172,7 @@ namespace MahjongOut3D.CameraSystem
             }
 
             float scaledZoom = zoomDelta * GetZoomSpeed() * GetZoomInputScale();
-            targetDistance = Mathf.Clamp(targetDistance - scaledZoom, GetMinZoomDistance(), GetMaxZoomDistance());
+            targetDistance = Mathf.Clamp(targetDistance - scaledZoom, GetActiveMinZoomDistance(), GetActiveMaxZoomDistance());
         }
 
         /// <summary>
@@ -172,7 +182,7 @@ namespace MahjongOut3D.CameraSystem
         /// <param name="snap">True to snap immediately; otherwise smooth toward the target.</param>
         public void SetZoomDistance(float distance, bool snap = false)
         {
-            float clampedDistance = Mathf.Clamp(distance, GetMinZoomDistance(), GetMaxZoomDistance());
+            float clampedDistance = Mathf.Clamp(distance, GetActiveMinZoomDistance(), GetActiveMaxZoomDistance());
             targetDistance = clampedDistance;
 
             if (snap || !isInitialized)
@@ -199,12 +209,12 @@ namespace MahjongOut3D.CameraSystem
         /// <summary>
         /// Gets the configured minimum orbit distance.
         /// </summary>
-        public float MinDistance => GetMinZoomDistance();
+        public float MinDistance => GetActiveMinZoomDistance();
 
         /// <summary>
         /// Gets the configured maximum orbit distance.
         /// </summary>
-        public float MaxDistance => GetMaxZoomDistance();
+        public float MaxDistance => GetActiveMaxZoomDistance();
 
         /// <summary>
         /// Updates the orbit focus target at runtime.
@@ -246,7 +256,8 @@ namespace MahjongOut3D.CameraSystem
 
             float safePadding = Mathf.Max(1f, paddingMultiplier);
             float framingDistance = CalculateFramingDistance(worldBounds, safePadding);
-            targetDistance = Mathf.Clamp(framingDistance, GetMinZoomDistance(), GetMaxZoomDistance());
+            UpdateRuntimeZoomLimits(framingDistance);
+            targetDistance = Mathf.Clamp(framingDistance, GetActiveMinZoomDistance(), GetActiveMaxZoomDistance());
 
             if (snap || !isInitialized)
             {
@@ -390,6 +401,41 @@ namespace MahjongOut3D.CameraSystem
             float distanceByDepth = paddedSize.z * 0.5f;
 
             return Mathf.Max(radius, distanceByHeight, distanceByWidth, distanceByDepth);
+        }
+
+        private void ResetRuntimeZoomLimits()
+        {
+            runtimeMinZoomDistance = GetMinZoomDistance();
+            runtimeMaxZoomDistance = Mathf.Max(runtimeMinZoomDistance, GetMaxZoomDistance());
+        }
+
+        private void UpdateRuntimeZoomLimits(float framingDistance)
+        {
+            float absoluteMin = GetMinZoomDistance();
+            float absoluteMax = Mathf.Max(absoluteMin, GetMaxZoomDistance());
+            float safeFramingDistance = Mathf.Max(absoluteMin, framingDistance);
+
+            float framedMin = Mathf.Max(absoluteMin, safeFramingDistance * GetFramedMinZoomFactor());
+            float framedMax = Mathf.Min(absoluteMax, safeFramingDistance * GetFramedMaxZoomFactor());
+
+            runtimeMinZoomDistance = framedMin;
+            runtimeMaxZoomDistance = Mathf.Max(runtimeMinZoomDistance, framedMax);
+        }
+
+        private float GetActiveMinZoomDistance()
+        {
+            return runtimeMinZoomDistance > 0f ? runtimeMinZoomDistance : GetMinZoomDistance();
+        }
+
+        private float GetActiveMaxZoomDistance()
+        {
+            float activeMin = GetActiveMinZoomDistance();
+            if (runtimeMaxZoomDistance <= 0f)
+            {
+                return Mathf.Max(activeMin, GetMaxZoomDistance());
+            }
+
+            return Mathf.Max(activeMin, runtimeMaxZoomDistance);
         }
 
         /// <summary>
@@ -591,6 +637,16 @@ namespace MahjongOut3D.CameraSystem
         private float GetFocusSmoothing()
         {
             return settings != null ? settings.FocusSmoothing : FallbackFocusSmoothing;
+        }
+
+        private float GetFramedMinZoomFactor()
+        {
+            return Mathf.Max(0.1f, framedMinZoomFactor);
+        }
+
+        private float GetFramedMaxZoomFactor()
+        {
+            return Mathf.Max(1f, framedMaxZoomFactor);
         }
 
         /// <summary>

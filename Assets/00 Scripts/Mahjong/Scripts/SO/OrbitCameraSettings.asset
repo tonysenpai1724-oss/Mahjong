@@ -17,7 +17,7 @@ MonoBehaviour:
   <VerticalRotationMultiplier>k__BackingField: 1.9
   <ZoomSpeed>k__BackingField: 3
   <ZoomInputScale>k__BackingField: 0.02
-  <MinZoomDistance>k__BackingField: 6
+  <MinZoomDistance>k__BackingField: 3
   <MaxZoomDistance>k__BackingField: 24
   <DefaultPitch>k__BackingField: 25
   <MinPitch>k__BackingField: -15

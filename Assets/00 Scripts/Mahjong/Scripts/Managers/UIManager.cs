@@ -1,6 +1,7 @@
 using MahjongOut3D.Core;
 using MahjongOut3D.Data;
 using MahjongOut3D.Gameplay;
+using MahjongOut3D.LevelSystem;
 using MahjongOut3D.UI;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,6 +17,7 @@ namespace MahjongOut3D.Managers
         [SerializeField] private MainMenuView mainMenuView;
         [SerializeField] private LevelSelectView levelSelectView;
         [SerializeField] private GameplayHudView gameplayHudView;
+        [SerializeField] private TraySlotAnchorProvider traySlotAnchorProvider;
         [SerializeField] private PauseMenuView pauseMenuView;
         [SerializeField] private ResultScreenView resultScreenView;
 
@@ -23,6 +25,9 @@ namespace MahjongOut3D.Managers
         /// Gets the currently active UI screen.
         /// </summary>
         public UIScreenType CurrentScreen { get; private set; } = UIScreenType.None;
+
+        public GameplayHudView GameplayHudView => gameplayHudView;
+        public TraySlotAnchorProvider TraySlotAnchorProvider => traySlotAnchorProvider;
 
         /// <summary>
         /// Gets the bootstrap order for the UI manager.
@@ -40,6 +45,7 @@ namespace MahjongOut3D.Managers
             Context.EventBus.Subscribe<GameFlowStateChangedEvent>(HandleGameFlowStateChanged);
             Context.EventBus.Subscribe<SaveDataLoadedEvent>(HandleSaveDataLoaded);
             Context.EventBus.Subscribe<GameplayProgressChangedEvent>(HandleProgressChanged);
+            Context.EventBus.Subscribe<LevelGeneratedEvent>(HandleLevelGenerated);
 
             if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
             {
@@ -61,6 +67,7 @@ namespace MahjongOut3D.Managers
             Context.EventBus.Unsubscribe<GameFlowStateChangedEvent>(HandleGameFlowStateChanged);
             Context.EventBus.Unsubscribe<SaveDataLoadedEvent>(HandleSaveDataLoaded);
             Context.EventBus.Unsubscribe<GameplayProgressChangedEvent>(HandleProgressChanged);
+            Context.EventBus.Unsubscribe<LevelGeneratedEvent>(HandleLevelGenerated);
         }
 
         /// <summary>
@@ -110,6 +117,16 @@ namespace MahjongOut3D.Managers
             if (gameplayHudView == null)
             {
                 gameplayHudView = GetComponentInChildren<GameplayHudView>(true);
+            }
+
+            if (traySlotAnchorProvider == null)
+            {
+                traySlotAnchorProvider = GetComponentInChildren<TraySlotAnchorProvider>(true);
+            }
+
+            if (traySlotAnchorProvider == null)
+            {
+                traySlotAnchorProvider = FindFirstObjectByType<TraySlotAnchorProvider>(FindObjectsInactive.Include);
             }
 
             if (pauseMenuView == null)
@@ -175,6 +192,7 @@ namespace MahjongOut3D.Managers
                     ShowScreen(UIScreenType.LevelSelect);
                     break;
                 case GameFlowState.Gameplay:
+                    UpdateGameplayHudInfo();
                     ShowScreen(UIScreenType.GameplayHud);
                     break;
                 case GameFlowState.Paused:
@@ -207,6 +225,16 @@ namespace MahjongOut3D.Managers
             gameplayHudView?.SetCoins(coins);
         }
 
+        private void UpdateGameplayHudInfo()
+        {
+            if (gameplayHudView == null || !Context.Services.TryGet(out LevelManager levelManager))
+            {
+                return;
+            }
+
+            gameplayHudView.SetLevel(levelManager.CurrentLevelIndex);
+        }
+
         /// <summary>
         /// Updates level-select labels from the current level and save data.
         /// </summary>
@@ -236,11 +264,17 @@ namespace MahjongOut3D.Managers
         private void HandleProgressChanged(GameplayProgressChangedEvent eventData)
         {
             gameplayHudView?.SetProgress(eventData.RemainingTiles, eventData.TotalTiles, eventData.CompletionRatio);
+            UpdateGameplayHudInfo();
 
             if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
             {
                 UpdateCoinDisplays(saveManager.CurrentSave.coins);
             }
+        }
+
+        private void HandleLevelGenerated(LevelGeneratedEvent eventData)
+        {
+            UpdateGameplayHudInfo();
         }
 
         private void HandlePlayPressed()

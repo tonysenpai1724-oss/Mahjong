@@ -61,6 +61,22 @@ namespace MahjongOut3D.Managers
             IsResolvingMatch = false;
         }
 
+        private void LateUpdate()
+        {
+            if (selectedTiles.Count == 0)
+            {
+                return;
+            }
+
+            AnimationManager animationManager = GetAnimationManager();
+            if (animationManager == null || animationManager.IsAnimationLocked)
+            {
+                return;
+            }
+
+            ReflowSelectionTray();
+        }
+
         /// <summary>
         /// Starts a match resolution block if none is active.
         /// </summary>

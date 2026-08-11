@@ -579,7 +579,7 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Validates that a tap lands on the tile's outward-facing selectable face.
+        /// Validates that a tap lands directly on the currently selectable tile.
         /// </summary>
         private bool IsTapOnSurfaceFace(MahjongTile tile, RaycastHit hitInfo)
         {
@@ -594,9 +594,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            Vector3 outwardNormal = tile.transform.up.normalized;
-            float normalAlignment = Vector3.Dot(hitInfo.normal.normalized, outwardNormal);
-            return normalAlignment >= 0.85f;
+            return true;
         }
 
         /// <summary>

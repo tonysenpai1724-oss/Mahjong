@@ -2,6 +2,7 @@ using MahjongOut3D.Core;
 using MahjongOut3D.CameraSystem;
 using MahjongOut3D.Data;
 using MahjongOut3D.TileSystem;
+using MahjongOut3D.UI;
 using MahjongOut3D.Utilities;
 using System;
 using System.Collections;
@@ -15,6 +16,7 @@ namespace MahjongOut3D.Managers
     public sealed class AnimationManager : ManagerBehaviour
     {
         [SerializeField] private TileAnimationSettings animationSettings;
+        [SerializeField] private TraySlotAnchorProvider traySlotAnchorProvider;
 
         private ComponentPool<ParticleSystem> particlePool;
         private MahjongTile activeHintFirstTile;
@@ -102,6 +104,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
+            tile.transform.SetParent(null, true);
             tile.transform.SetPositionAndRotation(position, rotation);
             return true;
         }
@@ -300,6 +303,7 @@ namespace MahjongOut3D.Managers
                 yield return null;
             }
 
+            tile.transform.SetParent(null, true);
             tile.transform.SetPositionAndRotation(targetPosition, targetRotation);
             onCompleted?.Invoke();
             SetAnimationLock(false);
@@ -319,13 +323,49 @@ namespace MahjongOut3D.Managers
             }
 
             Camera activeCamera = cameraManager.ActiveCamera;
+            float z = GetTrayTargetDistance(activeCamera, tile);
+            rotation = GetTrayFacingRotation(activeCamera.transform.forward, activeCamera.transform.up);
+
+            if (TryGetTraySlotScreenPoint(slotIndex, out Vector2 trayScreenPoint))
+            {
+                position = activeCamera.ScreenToWorldPoint(new Vector3(trayScreenPoint.x, trayScreenPoint.y, z));
+                return true;
+            }
+
             float x = 0.5f + ((Mathf.Clamp(slotIndex, 0, 3) - 1.5f) * GetTrayViewportSlotSpacing());
             float y = GetTrayViewportY();
-            float z = GetTrayTargetDistance(activeCamera, tile);
-
             position = activeCamera.ViewportToWorldPoint(new Vector3(x, y, z));
-            rotation = GetTrayFacingRotation(activeCamera.transform.forward, activeCamera.transform.up);
             return true;
+        }
+
+        private bool TryGetTraySlotScreenPoint(int slotIndex, out Vector2 screenPoint)
+        {
+            screenPoint = default;
+
+            TraySlotAnchorProvider provider = ResolveTraySlotAnchorProvider();
+            if (provider == null)
+            {
+                return false;
+            }
+
+            return provider.TryGetTraySlotScreenPoint(slotIndex, out screenPoint);
+        }
+
+        private TraySlotAnchorProvider ResolveTraySlotAnchorProvider()
+        {
+            if (traySlotAnchorProvider != null)
+            {
+                return traySlotAnchorProvider;
+            }
+
+            if (Context.Services.TryGet(out UIManager uiManager) && uiManager.TraySlotAnchorProvider != null)
+            {
+                traySlotAnchorProvider = uiManager.TraySlotAnchorProvider;
+                return traySlotAnchorProvider;
+            }
+
+            traySlotAnchorProvider = FindFirstObjectByType<TraySlotAnchorProvider>(FindObjectsInactive.Include);
+            return traySlotAnchorProvider;
         }
 
         /// <summary>
