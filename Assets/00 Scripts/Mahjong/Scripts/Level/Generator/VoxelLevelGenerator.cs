@@ -427,6 +427,7 @@ namespace MahjongOut3D.LevelSystem
 
             List<LevelTileDefinition> runtimeTiles = new List<LevelTileDefinition>(sourceTiles.Count);
             List<float> shellMagnitudes = useSurfaceTilePlacement ? new List<float>(sourceTiles.Count) : null;
+            bool hasAuthoredNestedShellIndices = false;
 
             for (int index = 0; index < sourceTiles.Count; index++)
             {
@@ -437,6 +438,7 @@ namespace MahjongOut3D.LevelSystem
                 }
 
                 runtimeTiles.Add(clone);
+                hasAuthoredNestedShellIndices |= clone.SurfaceShellIndex > 0;
                 if (!useSurfaceTilePlacement)
                 {
                     continue;
@@ -453,6 +455,7 @@ namespace MahjongOut3D.LevelSystem
             }
 
             List<float> uniqueMagnitudes = BuildUniqueDescendingMagnitudes(shellMagnitudes);
+            bool inferredNestedShellIndices = false;
             for (int index = 0; index < runtimeTiles.Count; index++)
             {
                 LevelTileDefinition tile = runtimeTiles[index];
@@ -463,10 +466,15 @@ namespace MahjongOut3D.LevelSystem
 
                 VoxelGridDirection facingDirection = ResolveFacingDirection(tile.LocalEulerAngles);
                 float shellMagnitude = GetCubeShellNormalMagnitude(tile.LocalPosition, facingDirection);
-                tile.SurfaceShellIndex = ResolveShellIndex(shellMagnitude, uniqueMagnitudes);
+                int resolvedShellIndex = ResolveShellIndex(shellMagnitude, uniqueMagnitudes);
+                tile.SurfaceShellIndex = resolvedShellIndex;
+                inferredNestedShellIndices |= resolvedShellIndex > 0;
             }
 
-            CompactSurfaceShellLayers(runtimeTiles, layoutOverride);
+            if (!hasAuthoredNestedShellIndices && inferredNestedShellIndices)
+            {
+                CompactSurfaceShellLayers(runtimeTiles, layoutOverride);
+            }
 
             return runtimeTiles;
         }
