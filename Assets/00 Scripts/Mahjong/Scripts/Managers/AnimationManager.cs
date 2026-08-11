@@ -19,6 +19,7 @@ namespace MahjongOut3D.Managers
         [SerializeField] private TraySlotAnchorProvider traySlotAnchorProvider;
 
         private ComponentPool<ParticleSystem> particlePool;
+        private MatchUiShardEffect matchUiShardEffect;
         private MahjongTile activeHintFirstTile;
         private MahjongTile activeHintSecondTile;
 
@@ -41,6 +42,12 @@ namespace MahjongOut3D.Managers
             {
                 particlePool = new ComponentPool<ParticleSystem>(animationSettings.MatchParticlePrefab);
             }
+
+            if (animationSettings != null && animationSettings.UseMatchUiShards && matchUiShardEffect == null)
+            {
+                matchUiShardEffect = MatchUiShardEffect.Create(transform);
+                matchUiShardEffect?.Prewarm();
+            }
         }
 
         /// <summary>
@@ -51,6 +58,12 @@ namespace MahjongOut3D.Managers
             ClearHintHighlight();
             particlePool?.Clear();
             particlePool = null;
+            if (matchUiShardEffect != null)
+            {
+                matchUiShardEffect.Clear();
+                Destroy(matchUiShardEffect.gameObject);
+                matchUiShardEffect = null;
+            }
         }
 
         /// <summary>
@@ -201,10 +214,9 @@ namespace MahjongOut3D.Managers
             firstTile.transform.SetPositionAndRotation(firstImpactWorld, firstImpactRotation);
             secondTile.transform.SetPositionAndRotation(secondImpactWorld, secondImpactRotation);
 
+            PlayMatchFeedback(firstTile, secondTile, impactWorld);
             firstTile.SetVisible(false);
             secondTile.SetVisible(false);
-
-            PlayMatchParticle(impactWorld);
             PlayCameraShake();
 
             onCompleted?.Invoke();
@@ -458,6 +470,50 @@ namespace MahjongOut3D.Managers
             {
                 Destroy(particle.gameObject);
             }
+        }
+
+        /// <summary>
+        /// Plays the configured UI shard burst or falls back to the particle effect.
+        /// </summary>
+        private void PlayMatchFeedback(MahjongTile firstTile, MahjongTile secondTile, Vector3 worldPosition)
+        {
+            if (TryPlayMatchUiShardEffect(firstTile, secondTile))
+            {
+                return;
+            }
+
+            PlayMatchParticle(worldPosition);
+        }
+
+        /// <summary>
+        /// Spawns the screen-space UI shard burst when enabled.
+        /// </summary>
+        private bool TryPlayMatchUiShardEffect(MahjongTile firstTile, MahjongTile secondTile)
+        {
+            if (animationSettings == null || !animationSettings.UseMatchUiShards)
+            {
+                return false;
+            }
+
+            Camera worldCamera = null;
+            if (Context.Services.TryGet(out CameraManager cameraManager))
+            {
+                worldCamera = cameraManager.ActiveCamera;
+            }
+
+            if (worldCamera == null)
+            {
+                return false;
+            }
+
+            if (matchUiShardEffect == null)
+            {
+                matchUiShardEffect = MatchUiShardEffect.Create(transform);
+            }
+
+            matchUiShardEffect?.Prewarm();
+
+            return matchUiShardEffect != null && matchUiShardEffect.Play(firstTile, secondTile, worldCamera, animationSettings);
         }
 
         /// <summary>

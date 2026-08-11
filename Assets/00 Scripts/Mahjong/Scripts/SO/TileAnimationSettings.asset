@@ -26,5 +26,69 @@ MonoBehaviour:
   <TrayDistancePadding>k__BackingField: 0.75
   <ShakeDurationSeconds>k__BackingField: 0.18
   <ShakeAmplitude>k__BackingField: 0.12
+  <UseMatchUiShards>k__BackingField: 1
+  <MatchUiShardRows>k__BackingField: 10
+  <MatchUiShardColumns>k__BackingField: 12
+  <MatchUiShardScale>k__BackingField: 0.95
+  <MatchUiLifetimeSeconds>k__BackingField: 1.15
+  <MatchUiEmissionDurationSeconds>k__BackingField: 0.18
+  <MatchUiBurstSpeedMin>k__BackingField: 240
+  <MatchUiBurstSpeedMax>k__BackingField: 360
+  <MatchUiUpwardSpeedMin>k__BackingField: 320
+  <MatchUiUpwardSpeedMax>k__BackingField: 500
+  <MatchUiGravityDelaySeconds>k__BackingField: 0.055
+  <MatchUiGravity>k__BackingField: 2400
+  <MatchUiSpinSpeedMin>k__BackingField: 160
+  <MatchUiSpinSpeedMax>k__BackingField: 520
+  <MatchUiFadeStartNormalized>k__BackingField: 0.78
+  <MatchUiShardSprites>k__BackingField:
+  - {fileID: -331495723, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1065015847, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -876285349, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1924652789, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 431392705, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -1563775624, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -865599706, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -197267921, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1868764623, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -49412092, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 854162947, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -404672969, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1862206997, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 257079642, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1615003737, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 510364208, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -1611680244, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -327548200, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 21313232, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1252972863, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1897259603, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 978795591, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -417025870, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1631418731, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 511125538, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 892853212, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -341740244, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -1491012794, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -1912645471, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 838765121, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -439531365, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -2081664468, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 34608834, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1130993272, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 967532064, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1303088984, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -214479582, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 571451990, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -290927087, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -1596471648, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 242438240, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -1241341902, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 2078241997, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -229669049, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -585825790, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -259079200, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: 1419661792, guid: b8a87ca1833834ca288155d897936d74, type: 3}
+  - {fileID: -667058765, guid: b8a87ca1833834ca288155d897936d74, type: 3}
   <MatchParticlePrefab>k__BackingField: {fileID: 6222633865521517922, guid: abdea529c94b3ab1c880202d5008e49d, type: 3}
   <UseUnscaledTime>k__BackingField: 1

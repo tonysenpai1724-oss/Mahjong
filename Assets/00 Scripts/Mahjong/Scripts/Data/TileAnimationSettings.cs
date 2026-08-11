@@ -55,6 +55,54 @@ namespace MahjongOut3D.Data
 
         [field: Header("FX")]
         [field: SerializeField]
+        public bool UseMatchUiShards { get; private set; } = true;
+
+        [field: SerializeField, Range(1, 12)]
+        public int MatchUiShardRows { get; private set; } = 10;
+
+        [field: SerializeField, Range(1, 20)]
+        public int MatchUiShardColumns { get; private set; } = 12;
+
+        [field: SerializeField, Min(0.1f)]
+        public float MatchUiShardScale { get; private set; } = 0.95f;
+
+        [field: SerializeField, Min(0.1f)]
+        public float MatchUiLifetimeSeconds { get; private set; } = 1.15f;
+
+        [field: SerializeField, Min(0.01f)]
+        public float MatchUiEmissionDurationSeconds { get; private set; } = 0.18f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiBurstSpeedMin { get; private set; } = 240f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiBurstSpeedMax { get; private set; } = 360f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiUpwardSpeedMin { get; private set; } = 320f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiUpwardSpeedMax { get; private set; } = 500f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiGravityDelaySeconds { get; private set; } = 0.055f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiGravity { get; private set; } = 2400f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiSpinSpeedMin { get; private set; } = 160f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchUiSpinSpeedMax { get; private set; } = 520f;
+
+        [field: SerializeField, Range(0f, 1f)]
+        public float MatchUiFadeStartNormalized { get; private set; } = 0.78f;
+
+        [field: SerializeField]
+        public Sprite[] MatchUiShardSprites { get; private set; }
+
+        [field: SerializeField]
         public ParticleSystem MatchParticlePrefab { get; private set; }
 
         [field: SerializeField]
