@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using MahjongOut3D.Data;
+using MahjongOut3D.Gameplay;
 using MahjongOut3D.LevelSystem;
+using MahjongOut3D.Managers;
 using MahjongOut3D.Utilities;
 using UnityEngine;
 
@@ -57,6 +59,10 @@ namespace MahjongOut3D.Core
 
             ApplyProjectSettings();
             CacheManagers();
+            EnsureGameplayManager();
+
+            GameManager gameManager = GameManager.Instance;
+            gameManager?.SetState(GameFlowState.Bootstrapping);
 
             ServiceRegistry serviceRegistry = new ServiceRegistry();
             EventBus eventBus = new EventBus();
@@ -85,8 +91,25 @@ namespace MahjongOut3D.Core
                 }
             }
 
+            if (gameManager != null && projectSettings != null)
+            {
+                gameManager.SetState(projectSettings.InitialGameState);
+            }
+
             context.EventBus.Publish(new BootstrapCompletedEvent());
             hasBootstrapped = true;
+        }
+
+        private void EnsureGameplayManager()
+        {
+            if (GameplayManager.Instance != null)
+            {
+                return;
+            }
+
+            GameObject gameplayManagerObject = new GameObject("Gameplay Manager");
+            gameplayManagerObject.transform.SetParent(transform, false);
+            gameplayManagerObject.AddComponent<GameplayManager>();
         }
 
         /// <summary>

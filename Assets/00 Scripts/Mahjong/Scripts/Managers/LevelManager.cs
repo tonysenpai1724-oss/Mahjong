@@ -68,13 +68,14 @@ namespace MahjongOut3D.Managers
         {
             if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
             {
-                CurrentLevelIndex = saveManager.CurrentSave.currentLevel;
+                int playerProgressLevelIndex = Mathf.Max(0, IPlayerInfoController.Instance.CurrentLevel() - 1);
+                CurrentLevelIndex = Mathf.Max(saveManager.CurrentSave.currentLevel, playerProgressLevelIndex);
                 return;
             }
 
             if (Context.ProjectSettings != null)
             {
-                CurrentLevelIndex = Context.ProjectSettings.DefaultLevelIndex;
+                CurrentLevelIndex = Mathf.Max(Context.ProjectSettings.DefaultLevelIndex, IPlayerInfoController.Instance.CurrentLevel() - 1);
             }
         }
 
@@ -107,6 +108,7 @@ namespace MahjongOut3D.Managers
         /// <returns>True when the level was loaded; otherwise false.</returns>
         public bool LoadCurrentLevel()
         {
+            Debug.Log($"[Mahjong] LevelManager.LoadCurrentLevel -> index {CurrentLevelIndex}");
             return LoadLevel(CurrentLevelIndex);
         }
 
@@ -119,16 +121,19 @@ namespace MahjongOut3D.Managers
         {
             if (levelCatalog == null || !levelCatalog.TryGetLevel(levelIndex, out LevelDefinition definition))
             {
+                Debug.LogWarning($"[Mahjong] LoadLevel failed. Invalid catalog or missing level at index {levelIndex}.");
                 return false;
             }
 
             if (!Context.Services.TryGet(out VoxelLevelGenerator generator))
             {
+                Debug.LogWarning($"[Mahjong] LoadLevel failed. Missing VoxelLevelGenerator for level index {levelIndex}.");
                 return false;
             }
 
             SetCurrentLevel(levelIndex);
             SetActiveLevelDefinition(definition, definition != null && definition.UseSurfaceTilePlacement);
+            Debug.Log($"[Mahjong] LoadLevel success path. Generating level '{definition.name}' at index {levelIndex}.");
             generator.GenerateFromDefinition(definition);
             return true;
         }
@@ -168,6 +173,7 @@ namespace MahjongOut3D.Managers
         /// <returns>True when the next level was loaded; otherwise false.</returns>
         public bool LoadNextLevel()
         {
+            Debug.Log($"[Mahjong] LevelManager.LoadNextLevel from {CurrentLevelIndex} to {CurrentLevelIndex + 1}");
             return LoadLevel(CurrentLevelIndex + 1);
         }
 

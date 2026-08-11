@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using MahjongOut3D.Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 public class SceneHelper : Singleton<SceneHelper>
@@ -55,6 +56,7 @@ public class SceneHelper : Singleton<SceneHelper>
         yield return StartCoroutine(IEChangeSceneGameplay());
         yield return StartCoroutine(IELoadMap());
         yield return StartCoroutine(UIManager.Instance.IEGamgeInit());
+        yield return StartCoroutine(IELoadMahjongLevelAfterSceneReady());
         yield return StartCoroutine(LoadingPanel.Instance.IEEndTransition());
         GameManager.Instance.SetState(EGameState.Gameplay);
     }
@@ -75,5 +77,32 @@ public class SceneHelper : Singleton<SceneHelper>
     {
         yield return new WaitUntil(() => GameplayManager.Instance);
         yield return StartCoroutine(GameplayManager.Instance.IEInit());
+    }
+
+    IEnumerator IELoadMahjongLevelAfterSceneReady()
+    {
+        if (GameManager.Instance.GameType != EGameType.Campaign)
+            yield break;
+
+        Debug.Log("[Mahjong] SceneHelper waiting to load campaign level.");
+
+        int retryCount = 20;
+        while (retryCount-- > 0)
+        {
+            LevelManager levelManager = FindObjectOfType<LevelManager>();
+            if (levelManager != null)
+            {
+                Debug.Log($"[Mahjong] SceneHelper load attempt {20 - retryCount}/20 with level index {levelManager.CurrentLevelIndex}.");
+                if (levelManager.LoadCurrentLevel())
+                {
+                    Debug.Log($"[Mahjong] SceneHelper loaded campaign level {levelManager.CurrentLevelIndex}.");
+                    yield break;
+                }
+            }
+
+            yield return null;
+        }
+
+        Debug.LogWarning("[Mahjong] SceneHelper failed to load campaign level after scene ready.");
     }
 }

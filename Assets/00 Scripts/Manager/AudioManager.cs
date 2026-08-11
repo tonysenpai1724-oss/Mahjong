@@ -78,6 +78,8 @@ public class AudioManager : Singleton<AudioManager>
     {
         if (GameManager.Instance.GameState != EGameState.Home && GameManager.Instance.GameState != EGameState.Gameplay)
             return null;
+        if (sfx == null || sfxSourcePrefabs == null || ObjectPooler.Instance == null || IGameSettingController.Instance == null || lstPlayingSource == null)
+            return null;
         if (!IGameSettingController.Instance.GetSetting(EGameSetting.Sound) || lstPlayingSource.Contains(sfx.GetEntityId().GetHashCode()))
             return null;
         //DebugCustom.Log("Play Sound", sfx);
@@ -90,6 +92,8 @@ public class AudioManager : Singleton<AudioManager>
     public SfxAudioSource PlaySfx(List<AudioClip> sfx, float volume = 1f, float timePlay = 0)
     {
         if (GameManager.Instance.GameState != EGameState.Home && GameManager.Instance.GameState != EGameState.Gameplay)
+            return null;
+        if (sfx == null || sfx.Count == 0 || sfxSourcePrefabs == null || ObjectPooler.Instance == null || IGameSettingController.Instance == null || lstPlayingSource == null)
             return null;
         int random = Random.Range(0, sfx.Count);
         if (!IGameSettingController.Instance.GetSetting(EGameSetting.Sound) || lstPlayingSource.Contains(sfx[random].GetEntityId().GetHashCode()))
@@ -105,6 +109,8 @@ public class AudioManager : Singleton<AudioManager>
     {
         if (GameManager.Instance.GameState != EGameState.Home && GameManager.Instance.GameState != EGameState.Gameplay)
             return null;
+        if (audioRef == null || audioRef.audioClip == null || sfxSourcePrefabs == null || ObjectPooler.Instance == null || IGameSettingController.Instance == null || lstPlayingSource == null)
+            return null;
         if (!IGameSettingController.Instance.GetSetting(EGameSetting.Sound) ||
             lstPlayingSource.Contains(audioRef.audioClip.GetEntityId().GetHashCode()))
             return null;
@@ -119,6 +125,8 @@ public class AudioManager : Singleton<AudioManager>
     {
         if (GameManager.Instance.GameState != EGameState.Home && GameManager.Instance.GameState != EGameState.Gameplay)
             return null;
+        if (audioRef == null || audioRef.Count == 0 || sfxSourcePrefabs == null || ObjectPooler.Instance == null || IGameSettingController.Instance == null || lstPlayingSource == null)
+            return null;
         int random = Random.Range(0, audioRef.Count);
         if (!IGameSettingController.Instance.GetSetting(EGameSetting.Sound) ||
             lstPlayingSource.Contains(audioRef[random].audioClip.GetEntityId().GetHashCode()))
@@ -132,6 +140,8 @@ public class AudioManager : Singleton<AudioManager>
 
     public SfxAudioSource PlaySfx(ESfx sfx)
     {
+        if (DataSystem.Instance == null || DataSystem.Instance.dataSoundEffect == null || !DataSystem.Instance.dataSoundEffect.dicSfx.ContainsKey(sfx))
+            return null;
         return PlaySfx(DataSystem.Instance.dataSoundEffect.dicSfx[sfx]);
     }
     public void AddActiveLaser(GameObject laser, bool active)

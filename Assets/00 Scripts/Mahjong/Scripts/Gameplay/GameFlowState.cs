@@ -11,7 +11,5 @@ namespace MahjongOut3D.Gameplay
         LevelSelect = 3,
         Gameplay = 4,
         Paused = 5,
-        Win = 6,
-        Lose = 7,
     }
 }

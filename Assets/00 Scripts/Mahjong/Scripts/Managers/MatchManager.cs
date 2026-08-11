@@ -261,10 +261,10 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private void HandleTileTapped(TileTappedEvent eventData)
         {
-            GameManager gameManager = GetGameManager();
             TileManager tileManager = GetTileManager();
             AnimationManager animationManager = GetAnimationManager();
-            if (gameManager == null || tileManager == null || gameManager.CurrentState != GameFlowState.Gameplay || IsResolvingMatch || (animationManager != null && animationManager.IsAnimationLocked))
+            GameManager gameManager = GetGameManager();
+            if (gameManager == null || tileManager == null || gameManager.CurrentFlowState != GameFlowState.Gameplay || IsResolvingMatch || (animationManager != null && animationManager.IsAnimationLocked))
             {
                 return;
             }
@@ -311,6 +311,10 @@ namespace MahjongOut3D.Managers
             selectedTiles.Clear();
             history.Clear();
             totalTiles = eventData.SpawnedTileCount;
+            if (GameplayManager.Instance != null)
+            {
+                GameplayManager.Instance.SetState(EGamePlayState.Running);
+            }
             GetGameManager()?.StartGameplay();
             PublishProgress();
         }
@@ -630,7 +634,11 @@ namespace MahjongOut3D.Managers
             if (remainingTileCount == 0)
             {
                 GetSaveManager()?.AddCoins(GetCoinsPerLevelWin());
-                GetSaveManager()?.MarkLevelCompleted(GetLevelManager() != null ? GetLevelManager().CurrentLevelIndex : 0);
+                IPlayerInfoController.Instance.WinLevel();
+                if (GetLevelManager() != null)
+                {
+                    GetLevelManager().SetCurrentLevel(Mathf.Max(0, IPlayerInfoController.Instance.CurrentLevel() - 1));
+                }
                 GetAudioManager()?.PlayWin();
                 gameManager.WinGameplay();
                 return;
@@ -1160,7 +1168,7 @@ namespace MahjongOut3D.Managers
 
         private TileManager GetTileManager() => Context.Services.Get<TileManager>();
         private LevelManager GetLevelManager() => Context.Services.Get<LevelManager>();
-        private GameManager GetGameManager() => Context.Services.Get<GameManager>();
+        private GameManager GetGameManager() => GameManager.Instance;
         private AnimationManager GetAnimationManager() => Context.Services.Get<AnimationManager>();
         private AudioManager GetAudioManager() => Context.Services.Get<AudioManager>();
         private SaveManager GetSaveManager() => Context.Services.Get<SaveManager>();

@@ -47,7 +47,8 @@ public class CommonButton : MonoBehaviour
     }
     public void PlaySoundButton()
     {
-        AudioManager.Instance.PlaySfx(ESfx.ButtonSfx);
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySfx(ESfx.ButtonSfx);
     }
     protected void OnButtonStateChange()
     {

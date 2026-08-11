@@ -27,10 +27,10 @@ MonoBehaviour:
   <ShakeDurationSeconds>k__BackingField: 0.18
   <ShakeAmplitude>k__BackingField: 0.12
   <UseMatchUiShards>k__BackingField: 1
-  <MatchUiShardRows>k__BackingField: 10
-  <MatchUiShardColumns>k__BackingField: 12
-  <MatchUiShardScale>k__BackingField: 0.95
-  <MatchUiLifetimeSeconds>k__BackingField: 1.15
+  <MatchUiShardRows>k__BackingField: 6
+  <MatchUiShardColumns>k__BackingField: 8
+  <MatchUiShardScale>k__BackingField: 4
+  <MatchUiLifetimeSeconds>k__BackingField: 3
   <MatchUiEmissionDurationSeconds>k__BackingField: 0.18
   <MatchUiBurstSpeedMin>k__BackingField: 240
   <MatchUiBurstSpeedMax>k__BackingField: 360

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using MahjongOut3D.Gameplay;
 using UniRx;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -21,6 +22,10 @@ public class GameManager : Singleton<GameManager>
     public EGameState GameState => _gameState;
     [SerializeField, ReadOnly]
     EGameState _gameState;
+    public GameFlowState CurrentFlowState => _gameFlowState;
+    [SerializeField, ReadOnly]
+    GameFlowState _gameFlowState;
+    public event Action<GameFlowStateChangedEvent> GameFlowStateChanged;
     public Dictionary<EButtonType, bool> DicButtonState { get; private set; }
     public EGameType GameType { get; private set; }
     public EBuildType BuildType { get; private set; }
@@ -166,6 +171,39 @@ public class GameManager : Singleton<GameManager>
     public void SetState(EGameState gameState)
     {
         _gameState = gameState;
+    }
+    public void SetState(GameFlowState gameFlowState)
+    {
+        if (_gameFlowState == gameFlowState)
+            return;
+
+        GameFlowState previousState = _gameFlowState;
+        _gameFlowState = gameFlowState;
+        GameFlowStateChanged?.Invoke(new GameFlowStateChangedEvent(previousState, _gameFlowState));
+    }
+    public void StartGameplay()
+    {
+        SetState(GameFlowState.Gameplay);
+    }
+    public void PauseGameplay()
+    {
+        if (_gameFlowState == GameFlowState.Gameplay)
+            SetState(GameFlowState.Paused);
+    }
+    public void ResumeGameplay()
+    {
+        if (_gameFlowState == GameFlowState.Paused)
+            SetState(GameFlowState.Gameplay);
+    }
+    public void WinGameplay()
+    {
+        if (GameplayManager.Instance != null)
+            GameplayManager.Instance.EndGame(true);
+    }
+    public void LoseGameplay()
+    {
+        if (GameplayManager.Instance != null)
+            GameplayManager.Instance.EndGame(false);
     }
     public void SaveData(string key, string value)
     {

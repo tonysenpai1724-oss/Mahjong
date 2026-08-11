@@ -295,6 +295,7 @@ MonoBehaviour:
   outlineScale: 1.05
   showOutlineOnCreate: 1
   hintOutlineColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  blockedOutlineColor: {r: 1, g: 0.2, b: 0.2, a: 1}
   hintBlinkSpeed: 2.5
   hintBlinkStrength: 0.3
 --- !u!114 &8141867978421522323
@@ -404,7 +405,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5209493928864738192}
-  m_Mesh: {fileID: -1023079352466244123, guid: a7c72d0e1898fcaa2bb294c9b22a98e7, type: 3}
+  m_Mesh: {fileID: -1023079352466244123, guid: d38bcf640f21d5c3dbc558b3c563e733, type: 3}
 --- !u!23 &4464203543105403120
 MeshRenderer:
   m_ObjectHideFlags: 0

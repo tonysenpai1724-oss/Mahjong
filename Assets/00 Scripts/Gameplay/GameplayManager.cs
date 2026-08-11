@@ -29,10 +29,24 @@ public class GameplayManager : Singleton<GameplayManager>
         CurrentLevel = IPlayerInfoController.Instance.CurrentLevel();
         yield return new WaitUntil(() => ResolutionManager.Instance);
         yield return new WaitUntil(() => ResolutionManager.Instance.IsInitilized);
-        yield return new WaitUntil(() => UIManager.Instance.uIGameplay);
+
+        if (GameManager.Instance.GameType != EGameType.Campaign)
+        {
+            yield return new WaitUntil(() => UIManager.Instance.uIGameplay);
+        }
+        else
+        {
+            Debug.Log("[Mahjong] Skip legacy UiGameplay wait in GameplayManager.IEInit for Campaign.");
+        }
+
         if (GameManager.Instance.GameType == EGameType.Endless)
             IAchievementController.Instance.UpdateAchievementProgress(EAchievementType.EndlessPlay);
-        UIManager.Instance.uIGameplay.Initialize();
+
+        if (GameManager.Instance.GameType != EGameType.Campaign && UIManager.Instance.uIGameplay != null)
+        {
+            UIManager.Instance.uIGameplay.Initialize();
+        }
+
         StartGame();
         TigerForge.EventManager.StartListening(Constant.EVENT_TIMER_TICK, OnTick);
         TigerForge.EventManager.EmitEvent(Constant.EVENT_LEVEL_INITED);
@@ -80,7 +94,7 @@ public class GameplayManager : Singleton<GameplayManager>
     public void EndGame(bool win)
     {
         DebugCustom.LogColor("End Game");
-        winGame = win;
+        SetGameOver(win);
         if (winGame)
         {
             IPlayerInfoController.Instance.WinLevel();
@@ -107,6 +121,11 @@ public class GameplayManager : Singleton<GameplayManager>
             }
             UIManager.Instance.ShowPopupEndGame();
         }
+    }
+    public void SetGameOver(bool win)
+    {
+        winGame = win;
+        SetState(EGamePlayState.GameOver);
     }
     public void OnClick(Vector3 pos)
     {

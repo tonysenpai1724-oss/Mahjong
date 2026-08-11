@@ -3,6 +3,7 @@ using MahjongOut3D.Gameplay;
 using MahjongOut3D.GameplayInput;
 using MahjongOut3D.Utilities;
 using UnityEngine;
+using TigerForge;
 
 namespace MahjongOut3D.Managers
 {
@@ -45,15 +46,13 @@ namespace MahjongOut3D.Managers
                 inputSource.ZoomChanged += HandleZoomChanged;
             }
 
-            Context.EventBus.Subscribe<GameFlowStateChangedEvent>(HandleGameFlowStateChanged);
-
-            if (Context.Services.TryGet(out GameManager gameManager))
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
             {
-                SetInputEnabled(gameManager.CurrentState == GameFlowState.Gameplay);
-                return;
+                gameManager.GameFlowStateChanged += HandleGameFlowStateChanged;
             }
-
-            SetInputEnabled(false);
+            EventManager.StartListening(Constant.ON_GAME_STATE_CHANGE, HandleGameplayStateChanged);
+            RefreshInputEnabled();
         }
 
         /// <summary>
@@ -61,7 +60,13 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnShutdown()
         {
-            Context.EventBus.Unsubscribe<GameFlowStateChangedEvent>(HandleGameFlowStateChanged);
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                gameManager.GameFlowStateChanged -= HandleGameFlowStateChanged;
+            }
+
+            EventManager.StopListening(Constant.ON_GAME_STATE_CHANGE, HandleGameplayStateChanged);
 
             if (inputSource != null)
             {
@@ -101,7 +106,20 @@ namespace MahjongOut3D.Managers
         /// <param name="eventData">Published game flow state change.</param>
         private void HandleGameFlowStateChanged(GameFlowStateChangedEvent eventData)
         {
-            SetInputEnabled(eventData.CurrentState == GameFlowState.Gameplay);
+            RefreshInputEnabled();
+        }
+
+        private void HandleGameplayStateChanged()
+        {
+            RefreshInputEnabled();
+        }
+
+        private void RefreshInputEnabled()
+        {
+            GameManager gameManager = GameManager.Instance;
+            bool isGameplayFlow = gameManager != null && gameManager.CurrentFlowState == GameFlowState.Gameplay;
+            bool isGameplayRunning = GameplayManager.Instance == null || GameplayManager.Instance.State == EGamePlayState.Running;
+            SetInputEnabled(isGameplayFlow && isGameplayRunning);
         }
 
         /// <summary>

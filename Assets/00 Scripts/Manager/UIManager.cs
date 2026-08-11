@@ -80,6 +80,14 @@ public class UIManager : Singleton<UIManager>
         if (uIDialog != null)
             uIDialog.gameObject.SetActive(false);
         yield return StartCoroutine(IEWaitSafeZone());
+
+        if (GameManager.Instance != null && GameManager.Instance.GameType == EGameType.Campaign)
+        {
+            Debug.Log("[Mahjong] Skip legacy UIManager.IEGamgeInit wait for Campaign.");
+            Initialized = true;
+            yield break;
+        }
+
         yield return StartCoroutine(IEWaitUIGameplay());
         Initialized = true;
     }

@@ -136,7 +136,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &7262290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -478,50 +478,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &176450001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 176450002}
-  - component: {fileID: 176450003}
-  m_Layer: 0
-  m_Name: GameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &176450002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 176450001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 758055964}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &176450003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 176450001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2e4871ef10f32394b66a338de847f48, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.GameManager
 --- !u!1 &176450011
 GameObject:
   m_ObjectHideFlags: 0
@@ -972,7 +928,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &214966568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1331,7 +1287,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &321875659
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3142,7 +3098,6 @@ Transform:
   - {fileID: 1356005094}
   - {fileID: 1402399102}
   - {fileID: 2042463329}
-  - {fileID: 176450002}
   - {fileID: 176450012}
   - {fileID: 176450022}
   - {fileID: 176450032}
@@ -6133,6 +6088,7 @@ GameObject:
   - component: {fileID: 1526993170}
   - component: {fileID: 1526993169}
   - component: {fileID: 1526993172}
+  - component: {fileID: 1526993173}
   m_Layer: 5
   m_Name: CanvasGamePlay
   m_TagString: Untagged
@@ -6252,6 +6208,23 @@ MonoBehaviour:
   - {fileID: 1050816297}
   - {fileID: 1433255381}
   - {fileID: 589436258}
+--- !u!114 &1526993173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1526993167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c61317cc6ea61164c9b52125fc784c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UiGameplay
+  txtLevel: {fileID: 0}
+  txtTimer: {fileID: 0}
+  txtTut: {fileID: 0}
+  txtScore: {fileID: 0}
+  tutBox: {fileID: 0}
 --- !u!1 &1544091990
 GameObject:
   m_ObjectHideFlags: 0
@@ -6842,45 +6815,73 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4601639544022071112, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -1023079352466244123, guid: d38bcf640f21d5c3dbc558b3c563e733, type: 3}
+    - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 100
+      objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.324
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.087
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.83175
+      value: 4.55
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.48985842
+      value: 0.11047818
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.5078054
+      value: 0.10795038
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.486689
+      value: -0.71750563
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.51507896
+      value: -0.6792106
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0.221
+      value: -71.957
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 270.604
+      value: -99.84
       objectReference: {fileID: 0}
     - target: {fileID: 5448961886125422897, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 92.656
+      value: -79.952
+      objectReference: {fileID: 0}
+    - target: {fileID: 7050144525233716744, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7050144525233716744, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0002
+      objectReference: {fileID: 0}
+    - target: {fileID: 7050144525233716744, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.00001
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7388,6 +7389,7 @@ GameObject:
   - component: {fileID: 1853129374}
   - component: {fileID: 1853129373}
   - component: {fileID: 1853129375}
+  - component: {fileID: 1853129376}
   m_Layer: 5
   m_Name: CanvasUI
   m_TagString: Untagged
@@ -7537,6 +7539,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3a0cc90ce724e58a4032e24748109e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.UI.MatchUiShardEffect
+--- !u!114 &1853129376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1853129368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb7dfc832b064384d98ed1de0de862b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SafeArea
+  canvas: {fileID: 1853129371}
 --- !u!1 &1896039677
 GameObject:
   m_ObjectHideFlags: 0

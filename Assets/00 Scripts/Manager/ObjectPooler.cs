@@ -163,7 +163,13 @@ public class ObjectPooler : Singleton<ObjectPooler>
 
     public static T Spawn<T>(T refPrefabs, Transform parent = null) where T : PoolingObject
     {
+        if (Instance == null || refPrefabs == null)
+            return null;
+
         T obj = Instance.GetObject(refPrefabs) as T;
+        if (obj == null)
+            return null;
+
         obj.transform.SetParent(parent, true);
         obj.transform.localPosition = Vector3.zero;
         obj.OnSpawn();

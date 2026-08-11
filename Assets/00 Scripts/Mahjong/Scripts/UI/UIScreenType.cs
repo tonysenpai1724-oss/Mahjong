@@ -10,7 +10,6 @@ namespace MahjongOut3D.UI
         LevelSelect = 2,
         GameplayHud = 3,
         Pause = 4,
-        Win = 5,
-        Lose = 6,
+        Result = 5,
     }
 }

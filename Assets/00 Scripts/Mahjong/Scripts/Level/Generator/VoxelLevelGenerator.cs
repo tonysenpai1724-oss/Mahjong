@@ -130,7 +130,7 @@ namespace MahjongOut3D.LevelSystem
                 return;
             }
 
-            GenerateFromDefinition(levelDefinition);
+            //GenerateFromDefinition(levelDefinition);
         }
 
         /// <summary>

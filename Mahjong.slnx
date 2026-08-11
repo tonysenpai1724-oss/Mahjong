@@ -1,7 +1,6 @@
 ﻿<Solution>
-  <Project Path="MahjongOut3D.Runtime.csproj" />
-  <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="spine-unity-examples.csproj" />
   <Project Path="ACTk.Runtime.csproj" />
   <Project Path="spine-unity-editor.csproj" />
@@ -9,7 +8,6 @@
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="spine-csharp.csproj" />
   <Project Path="spine-unity.csproj" />
-  <Project Path="MahjongOut3D.Editor.csproj" />
   <Project Path="spine-unity-examples-editor.csproj" />
   <Project Path="Assembly-CSharp-Editor-firstpass.csproj" />
   <Project Path="Sirenix.OdinInspector.Modules.UnityMathematics.csproj" />

@@ -4,6 +4,7 @@ using MahjongOut3D.Gameplay;
 using MahjongOut3D.LevelSystem;
 using MahjongOut3D.UI;
 using System.Collections.Generic;
+using TigerForge;
 using UnityEngine;
 
 namespace MahjongOut3D.Managers
@@ -42,7 +43,6 @@ namespace MahjongOut3D.Managers
             CacheScreenReferences();
             BindViews();
 
-            Context.EventBus.Subscribe<GameFlowStateChangedEvent>(HandleGameFlowStateChanged);
             Context.EventBus.Subscribe<SaveDataLoadedEvent>(HandleSaveDataLoaded);
             Context.EventBus.Subscribe<GameplayProgressChangedEvent>(HandleProgressChanged);
             Context.EventBus.Subscribe<LevelGeneratedEvent>(HandleLevelGenerated);
@@ -53,10 +53,14 @@ namespace MahjongOut3D.Managers
                 UpdateLevelSelectInfo();
             }
 
-            if (Context.Services.TryGet(out GameManager gameManager))
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
             {
-                ApplyGameFlowState(gameManager.CurrentState);
+                gameManager.GameFlowStateChanged += HandleGameFlowStateChanged;
             }
+
+            EventManager.StartListening(Constant.ON_GAME_STATE_CHANGE, HandleGameplayStateChanged);
+            RefreshScreenState();
         }
 
         /// <summary>
@@ -64,10 +68,17 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnShutdown()
         {
-            Context.EventBus.Unsubscribe<GameFlowStateChangedEvent>(HandleGameFlowStateChanged);
             Context.EventBus.Unsubscribe<SaveDataLoadedEvent>(HandleSaveDataLoaded);
             Context.EventBus.Unsubscribe<GameplayProgressChangedEvent>(HandleProgressChanged);
             Context.EventBus.Unsubscribe<LevelGeneratedEvent>(HandleLevelGenerated);
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                gameManager.GameFlowStateChanged -= HandleGameFlowStateChanged;
+            }
+
+            EventManager.StopListening(Constant.ON_GAME_STATE_CHANGE, HandleGameplayStateChanged);
         }
 
         /// <summary>
@@ -86,7 +97,7 @@ namespace MahjongOut3D.Managers
                     bool isVisible = screen.ScreenType == screenType;
                     if (screen == resultScreenView)
                     {
-                        isVisible = screenType == UIScreenType.Win || screenType == UIScreenType.Lose;
+                        isVisible = screenType == UIScreenType.Result;
                     }
 
                     screen.SetVisible(isVisible);
@@ -198,22 +209,26 @@ namespace MahjongOut3D.Managers
                 case GameFlowState.Paused:
                     ShowScreen(UIScreenType.Pause);
                     break;
-                case GameFlowState.Win:
-                    if (resultScreenView != null)
-                    {
-                        resultScreenView.SetResult(true);
-                    }
+            }
+        }
 
-                    ShowScreen(UIScreenType.Win);
-                    break;
-                case GameFlowState.Lose:
-                    if (resultScreenView != null)
-                    {
-                        resultScreenView.SetResult(false);
-                    }
+        private void RefreshScreenState()
+        {
+            if (GameplayManager.Instance != null && GameplayManager.Instance.State == EGamePlayState.GameOver)
+            {
+                if (resultScreenView != null)
+                {
+                    resultScreenView.SetResult(GameplayManager.Instance.winGame);
+                }
 
-                    ShowScreen(UIScreenType.Lose);
-                    break;
+                ShowScreen(UIScreenType.Result);
+                return;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                ApplyGameFlowState(gameManager.CurrentFlowState);
             }
         }
 
@@ -240,15 +255,22 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private void UpdateLevelSelectInfo()
         {
-            if (levelSelectView == null || !Context.Services.TryGet(out LevelManager levelManager) || !Context.Services.TryGet(out SaveManager saveManager) || saveManager.CurrentSave == null)
+            if (levelSelectView == null || !Context.Services.TryGet(out LevelManager levelManager))
             {
                 return;
             }
 
-            levelSelectView.SetLevelInfo(levelManager.CurrentLevelIndex, saveManager.CurrentSave.highestUnlockedLevel);
+            levelSelectView.SetLevelInfo(levelManager.CurrentLevelIndex, GetHighestUnlockedLevel());
         }
 
-        private void HandleGameFlowStateChanged(GameFlowStateChangedEvent eventData) => ApplyGameFlowState(eventData.CurrentState);
+        private int GetHighestUnlockedLevel()
+        {
+            return Mathf.Max(1, IPlayerInfoController.Instance.CurrentLevel());
+        }
+
+        private void HandleGameFlowStateChanged(GameFlowStateChangedEvent eventData) => RefreshScreenState();
+
+        private void HandleGameplayStateChanged() => RefreshScreenState();
 
         private void HandleSaveDataLoaded(SaveDataLoadedEvent eventData)
         {
@@ -281,13 +303,13 @@ namespace MahjongOut3D.Managers
         {
             if (!Context.Services.Get<LevelManager>().LoadCurrentLevel())
             {
-                Context.Services.Get<GameManager>().SetState(GameFlowState.LevelSelect);
+                GameManager.Instance.SetState(GameFlowState.LevelSelect);
             }
         }
 
         private void HandleLevelSelectPressed()
         {
-            Context.Services.Get<GameManager>().SetState(GameFlowState.LevelSelect);
+            GameManager.Instance.SetState(GameFlowState.LevelSelect);
         }
 
         private void HandlePreviousLevelPressed()
@@ -300,13 +322,8 @@ namespace MahjongOut3D.Managers
 
         private void HandleNextLevelPressed()
         {
-            if (!Context.Services.TryGet(out SaveManager saveManager) || saveManager.CurrentSave == null)
-            {
-                return;
-            }
-
             LevelManager levelManager = Context.Services.Get<LevelManager>();
-            int maxAllowedIndex = Mathf.Max(0, saveManager.CurrentSave.highestUnlockedLevel - 1);
+            int maxAllowedIndex = Mathf.Max(0, GetHighestUnlockedLevel() - 1);
             int nextIndex = Mathf.Min(maxAllowedIndex, levelManager.CurrentLevelIndex + 1);
             levelManager.SetCurrentLevel(nextIndex);
             UpdateLevelSelectInfo();
@@ -319,12 +336,12 @@ namespace MahjongOut3D.Managers
 
         private void HandlePausePressed()
         {
-            Context.Services.Get<GameManager>().PauseGameplay();
+            GameManager.Instance.PauseGameplay();
         }
 
         private void HandleResumePressed()
         {
-            Context.Services.Get<GameManager>().ResumeGameplay();
+            GameManager.Instance.ResumeGameplay();
         }
 
         private void HandleRetryPressed()
@@ -334,15 +351,14 @@ namespace MahjongOut3D.Managers
 
         private void HandleHomePressed()
         {
-            Context.Services.Get<GameManager>().SetState(GameFlowState.MainMenu);
+            GameManager.Instance.SetState(GameFlowState.MainMenu);
         }
 
         private void HandleResultPrimaryPressed()
         {
-            GameManager gameManager = Context.Services.Get<GameManager>();
             LevelManager levelManager = Context.Services.Get<LevelManager>();
 
-            if (gameManager.CurrentState == GameFlowState.Win && levelManager.LoadNextLevel())
+            if (GameplayManager.Instance != null && GameplayManager.Instance.winGame && levelManager.LoadNextLevel())
             {
                 return;
             }
