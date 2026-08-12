@@ -66,17 +66,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnInitialize()
         {
-            if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
-            {
-                int playerProgressLevelIndex = Mathf.Max(0, IPlayerInfoController.Instance.CurrentLevel() - 1);
-                CurrentLevelIndex = Mathf.Max(saveManager.CurrentSave.currentLevel, playerProgressLevelIndex);
-                return;
-            }
-
-            if (Context.ProjectSettings != null)
-            {
-                CurrentLevelIndex = Mathf.Max(Context.ProjectSettings.DefaultLevelIndex, IPlayerInfoController.Instance.CurrentLevel() - 1);
-            }
+            CurrentLevelIndex = Mathf.Max(0, IPlayerInfoController.Instance.CurrentLevel() - 1);
         }
 
         /// <summary>
@@ -95,11 +85,6 @@ namespace MahjongOut3D.Managers
         public void SetCurrentLevel(int levelIndex)
         {
             CurrentLevelIndex = levelIndex;
-
-            if (Context.Services.TryGet(out SaveManager saveManager))
-            {
-                saveManager.SetCurrentLevel(levelIndex);
-            }
         }
 
         /// <summary>

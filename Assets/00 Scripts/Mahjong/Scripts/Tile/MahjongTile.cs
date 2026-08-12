@@ -33,17 +33,24 @@ namespace MahjongOut3D.TileSystem
 
         [Header("Runtime")]
         [SerializeField] private TileState state = TileState.Hidden;
+        [SerializeField] private bool isFaceDown;
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        private const float FaceFlipDurationSeconds = 0.18f;
+        private static readonly Quaternion FaceFlipDeltaRotation = Quaternion.Euler(180f, 0f, 0f);
 
         private MaterialPropertyBlock baseColorPropertyBlock;
         private MaterialPropertyBlock piecePropertyBlock;
         private MaterialPropertyBlock fillPropertyBlock;
         private Coroutine blockedTapFeedbackRoutine;
+        private Coroutine faceFlipRoutine;
         private Vector3 blockedTapBaseLocalPosition;
+        private Quaternion pieceFaceBaseLocalRotation;
+        private Quaternion fillFaceBaseLocalRotation;
+        private bool hasCachedFaceBaseLocalRotations;
         private bool hasDebugBaseColor;
         private Color debugBaseColor = Color.white;
         private Texture2D pieceTexture;
@@ -193,6 +200,11 @@ namespace MahjongOut3D.TileSystem
         public bool IsMatched => state == TileState.Matched;
 
         /// <summary>
+        /// Gets a value indicating whether the tile is currently shown face-down.
+        /// </summary>
+        public bool IsFaceDown => isFaceDown;
+
+        /// <summary>
         /// Applies serialized defaults once the component awakens.
         /// </summary>
         private void Awake()
@@ -282,6 +294,7 @@ namespace MahjongOut3D.TileSystem
             boardLocalPosition = runtimeData.LocalPosition;
             boardLocalEulerAngles = runtimeData.LocalEulerAngles;
             isBufferedSelection = false;
+            isFaceDown = false;
             boardParent = transform.parent;
             transform.localPosition = runtimeData.LocalPosition;
             transform.localRotation = Quaternion.Euler(runtimeData.LocalEulerAngles);
@@ -395,6 +408,8 @@ namespace MahjongOut3D.TileSystem
         /// </summary>
         public void ResetTile()
         {
+            isFaceDown = false;
+            ApplyFaceVisualState(true);
             SetState(TileState.Hidden, true);
         }
 
@@ -406,6 +421,31 @@ namespace MahjongOut3D.TileSystem
         {
             isBufferedSelection = false;
             SetState(isVisible ? TileState.Visible : TileState.Hidden, true);
+        }
+
+        /// <summary>
+        /// Sets whether the tile should currently display its back face.
+        /// </summary>
+        public void SetFaceDown(bool faceDown, bool instant = true)
+        {
+            isFaceDown = faceDown;
+            ApplyFaceVisualState(instant);
+        }
+
+        /// <summary>
+        /// Animates the tile into a face-up presentation.
+        /// </summary>
+        public Coroutine FlipFaceUp(Action onCompleted = null, bool instant = false)
+        {
+            return FlipFaceState(false, onCompleted, instant);
+        }
+
+        /// <summary>
+        /// Animates the tile into a face-down presentation.
+        /// </summary>
+        public Coroutine FlipFaceDown(Action onCompleted = null, bool instant = false)
+        {
+            return FlipFaceState(true, onCompleted, instant);
         }
 
         /// <summary>
@@ -450,6 +490,23 @@ namespace MahjongOut3D.TileSystem
             }
 
             return string.Equals(VisualMatchKey, other.VisualMatchKey, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Stops any running face flip and snaps to the current face state.
+        /// </summary>
+        public void StopFaceFlipAnimation(bool snapToCurrentState = true)
+        {
+            if (faceFlipRoutine != null)
+            {
+                StopCoroutine(faceFlipRoutine);
+                faceFlipRoutine = null;
+            }
+
+            if (snapToCurrentState)
+            {
+                ApplyFaceVisualState(true);
+            }
         }
 
         /// <summary>
@@ -900,6 +957,8 @@ namespace MahjongOut3D.TileSystem
             {
                 outlinePresenter = visualController != null ? visualController.GetOutlinePresenter() : GetComponentInChildren<TileOutlinePresenter>(true);
             }
+
+            CacheFaceBaseLocalRotations();
         }
 
         /// <summary>
@@ -992,6 +1051,115 @@ namespace MahjongOut3D.TileSystem
             {
                 visualController.ApplyState(currentState, instant);
             }
+
+            ApplyFaceVisualState(instant);
+        }
+
+        private Coroutine FlipFaceState(bool faceDown, Action onCompleted, bool instant)
+        {
+            isFaceDown = faceDown;
+
+            if (instant || !isActiveAndEnabled)
+            {
+                StopFaceFlipAnimation(false);
+                ApplyFaceVisualState(true);
+                onCompleted?.Invoke();
+                return null;
+            }
+
+            StopFaceFlipAnimation(false);
+            faceFlipRoutine = StartCoroutine(FlipFaceStateRoutine(faceDown, onCompleted));
+            return faceFlipRoutine;
+        }
+
+        private IEnumerator FlipFaceStateRoutine(bool faceDown, Action onCompleted)
+        {
+            CacheFaceBaseLocalRotations();
+
+            Quaternion startPieceRotation = pieceRenderer != null ? pieceRenderer.transform.localRotation : Quaternion.identity;
+            Quaternion startFillRotation = fillRenderer != null ? fillRenderer.transform.localRotation : Quaternion.identity;
+            GetFaceTargetRotations(faceDown, out Quaternion targetPieceRotation, out Quaternion targetFillRotation);
+            float elapsed = 0f;
+
+            while (elapsed < FaceFlipDurationSeconds)
+            {
+                elapsed += Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / FaceFlipDurationSeconds);
+                float easedT = 1f - Mathf.Pow(1f - t, 3f);
+                if (pieceRenderer != null)
+                {
+                    pieceRenderer.transform.localRotation = Quaternion.SlerpUnclamped(startPieceRotation, targetPieceRotation, easedT);
+                }
+
+                if (fillRenderer != null)
+                {
+                    fillRenderer.transform.localRotation = Quaternion.SlerpUnclamped(startFillRotation, targetFillRotation, easedT);
+                }
+
+                yield return null;
+            }
+
+            faceFlipRoutine = null;
+            ApplyFaceRotations(faceDown);
+            onCompleted?.Invoke();
+        }
+
+        private void ApplyFaceVisualState(bool instant)
+        {
+            if (instant && faceFlipRoutine != null)
+            {
+                StopCoroutine(faceFlipRoutine);
+                faceFlipRoutine = null;
+            }
+
+            if (faceFlipRoutine == null)
+            {
+                CacheFaceBaseLocalRotations();
+                ApplyFaceRotations(isFaceDown);
+            }
+        }
+
+        private void CacheFaceBaseLocalRotations()
+        {
+            if (hasCachedFaceBaseLocalRotations)
+            {
+                return;
+            }
+
+            if (pieceRenderer != null)
+            {
+                pieceFaceBaseLocalRotation = pieceRenderer.transform.localRotation;
+            }
+
+            if (fillRenderer != null)
+            {
+                fillFaceBaseLocalRotation = fillRenderer.transform.localRotation;
+            }
+
+            hasCachedFaceBaseLocalRotations = pieceRenderer != null || fillRenderer != null;
+        }
+
+        private void ApplyFaceRotations(bool faceDown)
+        {
+            GetFaceTargetRotations(faceDown, out Quaternion pieceRotation, out Quaternion fillRotation);
+
+            if (pieceRenderer != null)
+            {
+                pieceRenderer.transform.localRotation = pieceRotation;
+            }
+
+            if (fillRenderer != null)
+            {
+                fillRenderer.transform.localRotation = fillRotation;
+            }
+        }
+
+        private void GetFaceTargetRotations(bool faceDown, out Quaternion pieceRotation, out Quaternion fillRotation)
+        {
+            CacheFaceBaseLocalRotations();
+            Quaternion deltaRotation = faceDown ? FaceFlipDeltaRotation : Quaternion.identity;
+            pieceRotation = pieceFaceBaseLocalRotation * deltaRotation;
+            fillRotation = fillFaceBaseLocalRotation * deltaRotation;
         }
 
         /// <summary>

@@ -17,11 +17,18 @@ namespace MahjongOut3D.Managers
     {
         private const float AnimationCompletionTimeoutSeconds = 5f;
         private const int SelectionTrayCapacity = 4;
+        private const float MemoryRevealTimeoutSeconds = 2f;
+
+        [Header("Memory Flip Difficulty")]
+        [SerializeField, Range(0f, 1f)] private float hardMemoryFaceDownRatio = 0.35f;
+        [SerializeField, Range(0f, 1f)] private float expertMemoryFaceDownRatio = 0.55f;
 
         [SerializeField] private PowerUpSettings powerUpSettings;
 
         private readonly List<MahjongTile> selectedTiles = new List<MahjongTile>(SelectionTrayCapacity);
         private readonly Stack<MoveHistoryRecord> history = new Stack<MoveHistoryRecord>();
+        private Coroutine memoryRevealTimeoutRoutine;
+        private bool isMemoryRevealLocked;
         private int totalTiles;
 
         /// <summary>
@@ -55,15 +62,17 @@ namespace MahjongOut3D.Managers
         {
             Context.EventBus.Unsubscribe<TileTappedEvent>(HandleTileTapped);
             Context.EventBus.Unsubscribe<LevelGeneratedEvent>(HandleLevelGenerated);
+            CancelMemoryRevealTimeout();
             selectedTiles.Clear();
             history.Clear();
             totalTiles = 0;
+            isMemoryRevealLocked = false;
             IsResolvingMatch = false;
         }
 
         private void LateUpdate()
         {
-            if (selectedTiles.Count == 0)
+            if (selectedTiles.Count == 0 || UsesMemoryFlipSelectionMode())
             {
                 return;
             }
@@ -264,7 +273,7 @@ namespace MahjongOut3D.Managers
             TileManager tileManager = GetTileManager();
             AnimationManager animationManager = GetAnimationManager();
             GameManager gameManager = GetGameManager();
-            if (gameManager == null || tileManager == null || gameManager.CurrentFlowState != GameFlowState.Gameplay || IsResolvingMatch || (animationManager != null && animationManager.IsAnimationLocked))
+            if (gameManager == null || tileManager == null || gameManager.CurrentFlowState != GameFlowState.Gameplay || IsResolvingMatch || isMemoryRevealLocked || (animationManager != null && animationManager.IsAnimationLocked))
             {
                 return;
             }
@@ -283,6 +292,12 @@ namespace MahjongOut3D.Managers
 
             if (selectedTiles.Contains(tappedTile))
             {
+                return;
+            }
+
+            if (UsesMemoryFlipSelectionMode())
+            {
+                StartCoroutine(HandleMemoryModeTileTapped(tappedTile));
                 return;
             }
 
@@ -308,15 +323,76 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private void HandleLevelGenerated(LevelGeneratedEvent eventData)
         {
+            CancelMemoryRevealTimeout();
             selectedTiles.Clear();
             history.Clear();
+            isMemoryRevealLocked = false;
             totalTiles = eventData.SpawnedTileCount;
+            ApplyDifficultyTileFaceState();
             if (GameplayManager.Instance != null)
             {
                 GameplayManager.Instance.SetState(EGamePlayState.Running);
             }
             GetGameManager()?.StartGameplay();
             PublishProgress();
+        }
+
+        private IEnumerator HandleMemoryModeTileTapped(MahjongTile tappedTile)
+        {
+            if (tappedTile == null)
+            {
+                yield break;
+            }
+
+            if (selectedTiles.Count >= 2)
+            {
+                yield break;
+            }
+
+            if (!tappedTile.TrySelect())
+            {
+                tappedTile.PlayBlockedTapFeedback();
+                yield break;
+            }
+
+            isMemoryRevealLocked = true;
+            CancelMemoryRevealTimeout();
+            selectedTiles.Add(tappedTile);
+            GetAudioManager()?.PlaySelect();
+
+            bool completed = false;
+            tappedTile.FlipFaceUp(() => completed = true);
+
+            float elapsed = 0f;
+            while (!completed && elapsed < AnimationCompletionTimeoutSeconds)
+            {
+                elapsed += GetResolutionDeltaTime();
+                yield return null;
+            }
+
+            isMemoryRevealLocked = false;
+
+            if (selectedTiles.Count <= 1)
+            {
+                ScheduleMemoryRevealTimeout();
+                yield break;
+            }
+
+            MahjongTile firstTile = selectedTiles[0];
+            MahjongTile secondTile = selectedTiles[1];
+            if (firstTile == null || secondTile == null)
+            {
+                HideMemorySelectedTilesInstant();
+                yield break;
+            }
+
+            if (firstTile.HasSameVisualIdentity(secondTile))
+            {
+                StartCoroutine(ResolveMatchedPair(firstTile, secondTile, true));
+                yield break;
+            }
+
+            StartCoroutine(ResolveMemoryMismatch(firstTile, secondTile));
         }
 
         /// <summary>
@@ -441,6 +517,59 @@ namespace MahjongOut3D.Managers
             }
             finally
             {
+                EndResolution();
+            }
+        }
+
+        private IEnumerator ResolveMemoryMismatch(MahjongTile firstTile, MahjongTile secondTile)
+        {
+            if (!TryBeginResolution())
+            {
+                yield break;
+            }
+
+            CancelMemoryRevealTimeout();
+            isMemoryRevealLocked = true;
+
+            try
+            {
+                GetAudioManager()?.PlayMismatch();
+
+                float elapsed = 0f;
+                while (elapsed < MemoryRevealTimeoutSeconds)
+                {
+                    elapsed += GetResolutionDeltaTime();
+                    yield return null;
+                }
+
+                bool firstCompleted = firstTile == null;
+                bool secondCompleted = secondTile == null;
+
+                if (firstTile != null)
+                {
+                    firstTile.Deselect();
+                    firstTile.FlipFaceDown(() => firstCompleted = true);
+                }
+
+                if (secondTile != null)
+                {
+                    secondTile.Deselect();
+                    secondTile.FlipFaceDown(() => secondCompleted = true);
+                }
+
+                elapsed = 0f;
+                while ((!firstCompleted || !secondCompleted) && elapsed < AnimationCompletionTimeoutSeconds)
+                {
+                    elapsed += GetResolutionDeltaTime();
+                    yield return null;
+                }
+
+                selectedTiles.Clear();
+                Context.EventBus.Publish(new MatchFailedEvent(firstTile, secondTile));
+            }
+            finally
+            {
+                isMemoryRevealLocked = false;
                 EndResolution();
             }
         }
@@ -573,6 +702,14 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private void DeselectAll()
         {
+            CancelMemoryRevealTimeout();
+
+            if (UsesMemoryFlipSelectionMode())
+            {
+                HideMemorySelectedTilesInstant();
+                return;
+            }
+
             LevelManager levelManager = GetLevelManager();
             for (int index = 0; index < selectedTiles.Count; index++)
             {
@@ -585,6 +722,156 @@ namespace MahjongOut3D.Managers
 
             selectedTiles.Clear();
             GetTileManager()?.RefreshTileExposure();
+        }
+
+        private void HideMemorySelectedTilesInstant()
+        {
+            for (int index = 0; index < selectedTiles.Count; index++)
+            {
+                MahjongTile tile = selectedTiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                tile.StopFaceFlipAnimation(false);
+                tile.Deselect();
+                tile.SetFaceDown(true, true);
+            }
+
+            selectedTiles.Clear();
+            isMemoryRevealLocked = false;
+        }
+
+        private void ScheduleMemoryRevealTimeout()
+        {
+            CancelMemoryRevealTimeout();
+            if (!UsesMemoryFlipSelectionMode() || selectedTiles.Count != 1)
+            {
+                return;
+            }
+
+            memoryRevealTimeoutRoutine = StartCoroutine(MemoryRevealTimeoutRoutine());
+        }
+
+        private IEnumerator MemoryRevealTimeoutRoutine()
+        {
+            float elapsed = 0f;
+            while (elapsed < MemoryRevealTimeoutSeconds)
+            {
+                if (!UsesMemoryFlipSelectionMode() || selectedTiles.Count != 1 || IsResolvingMatch || isMemoryRevealLocked)
+                {
+                    memoryRevealTimeoutRoutine = null;
+                    yield break;
+                }
+
+                elapsed += GetResolutionDeltaTime();
+                yield return null;
+            }
+
+            if (selectedTiles.Count == 1)
+            {
+                MahjongTile tile = selectedTiles[0];
+                bool completed = tile == null;
+                isMemoryRevealLocked = true;
+
+                if (tile != null)
+                {
+                    tile.Deselect();
+                    tile.FlipFaceDown(() => completed = true);
+                }
+
+                elapsed = 0f;
+                while (!completed && elapsed < AnimationCompletionTimeoutSeconds)
+                {
+                    elapsed += GetResolutionDeltaTime();
+                    yield return null;
+                }
+
+                selectedTiles.Clear();
+                isMemoryRevealLocked = false;
+            }
+
+            memoryRevealTimeoutRoutine = null;
+        }
+
+        private void CancelMemoryRevealTimeout()
+        {
+            if (memoryRevealTimeoutRoutine != null)
+            {
+                StopCoroutine(memoryRevealTimeoutRoutine);
+                memoryRevealTimeoutRoutine = null;
+            }
+        }
+
+        private void ApplyDifficultyTileFaceState()
+        {
+            TileManager tileManager = GetTileManager();
+            if (tileManager == null)
+            {
+                return;
+            }
+
+            List<MahjongTile> tiles = new List<MahjongTile>();
+            foreach (MahjongTile tile in tileManager.GetAllTiles())
+            {
+                if (tile == null || tile.IsRemoved || tile.IsMatched)
+                {
+                    continue;
+                }
+
+                tiles.Add(tile);
+            }
+
+            if (tiles.Count == 0)
+            {
+                return;
+            }
+
+            float faceDownRatio = GetMemoryFaceDownRatio();
+            int faceDownCount = Mathf.Clamp(Mathf.RoundToInt(tiles.Count * faceDownRatio), 0, tiles.Count);
+
+            for (int index = tiles.Count - 1; index > 0; index--)
+            {
+                int swapIndex = Random.Range(0, index + 1);
+                (tiles[index], tiles[swapIndex]) = (tiles[swapIndex], tiles[index]);
+            }
+
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                MahjongTile tile = tiles[index];
+                tile.StopFaceFlipAnimation(false);
+                tile.SetFaceDown(index < faceDownCount, true);
+            }
+        }
+
+        private float GetMemoryFaceDownRatio()
+        {
+            LevelManager levelManager = GetLevelManager();
+            if (levelManager?.ActiveLevelDefinition == null)
+            {
+                return 0f;
+            }
+
+            switch (levelManager.ActiveLevelDefinition.Difficulty)
+            {
+                case LevelDifficulty.Hard:
+                    return hardMemoryFaceDownRatio;
+                case LevelDifficulty.Expert:
+                    return expertMemoryFaceDownRatio;
+                default:
+                    return 0f;
+            }
+        }
+
+        private bool UsesMemoryFlipSelectionMode()
+        {
+            LevelManager levelManager = GetLevelManager();
+            LevelDifficulty? difficulty = levelManager != null && levelManager.ActiveLevelDefinition != null
+                ? levelManager.ActiveLevelDefinition.Difficulty
+                : null;
+
+            return difficulty == LevelDifficulty.Hard || difficulty == LevelDifficulty.Expert;
         }
 
         /// <summary>
@@ -635,10 +922,6 @@ namespace MahjongOut3D.Managers
             {
                 GetSaveManager()?.AddCoins(GetCoinsPerLevelWin());
                 IPlayerInfoController.Instance.WinLevel();
-                if (GetLevelManager() != null)
-                {
-                    GetLevelManager().SetCurrentLevel(Mathf.Max(0, IPlayerInfoController.Instance.CurrentLevel() - 1));
-                }
                 GetAudioManager()?.PlayWin();
                 gameManager.WinGameplay();
                 return;
@@ -753,6 +1036,7 @@ namespace MahjongOut3D.Managers
                     localEulerAngles = tile.BoardLocalEulerAngles,
                     state = tile.State,
                     isBufferedSelection = tile.IsBufferedSelection,
+                    isFaceDown = tile.IsFaceDown,
                     fillTexture = tile.FillTexture,
                 });
             }
@@ -763,7 +1047,7 @@ namespace MahjongOut3D.Managers
         /// <summary>
         /// Captures the pre-tray board state for a single tile selection.
         /// </summary>
-        private static MoveHistoryRecord CreateSelectionSnapshotRecord(MahjongTile tile)
+        private MoveHistoryRecord CreateSelectionSnapshotRecord(MahjongTile tile)
         {
             MoveHistoryRecord record = CreateSnapshotRecord("Select", new[] { tile });
             for (int index = 0; index < record.snapshots.Count; index++)
@@ -811,6 +1095,9 @@ namespace MahjongOut3D.Managers
                 tile.SetMatchId(snapshot.matchId);
                 tile.SetupFillTexture(snapshot.fillTexture);
                 tile.SetGridCoordinate(snapshot.gridCoordinate);
+                tile.StopFaceFlipAnimation(false);
+                bool restoreFaceDown = UsesMemoryFlipSelectionMode() && !snapshot.isBufferedSelection ? true : snapshot.isFaceDown;
+                tile.SetFaceDown(restoreFaceDown, true);
 
                 if (snapshot.isBufferedSelection)
                 {
@@ -835,7 +1122,7 @@ namespace MahjongOut3D.Managers
                 tile.RestoreBoardParent();
                 tile.SetLocalPose(snapshot.localPosition, snapshot.localEulerAngles);
                 tile.Restore(snapshot.state != TileState.Hidden);
-                if (snapshot.state == TileState.Selected)
+                if (!UsesMemoryFlipSelectionMode() && snapshot.state == TileState.Selected)
                 {
                     tile.TrySelect();
                 }
@@ -864,6 +1151,12 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
+            if (UsesMemoryFlipSelectionMode())
+            {
+                RestoreMemorySelectionRecord(record);
+                return;
+            }
+
             LevelManager levelManager = GetLevelManager();
             TileManager tileManager = GetTileManager();
             if (levelManager?.ActiveGrid == null || tileManager == null)
@@ -889,6 +1182,9 @@ namespace MahjongOut3D.Managers
                 tile.RestoreBoardParent();
                 tile.SetLocalPose(snapshot.localPosition, snapshot.localEulerAngles);
                 tile.Restore(snapshot.state != TileState.Hidden);
+                tile.StopFaceFlipAnimation(false);
+                bool restoreFaceDown = UsesMemoryFlipSelectionMode() ? true : snapshot.isFaceDown;
+                tile.SetFaceDown(restoreFaceDown, true);
                 tile.Deselect();
 
                 if (snapshot.state != TileState.Hidden && snapshot.state != TileState.Removed && snapshot.state != TileState.Matched)
@@ -903,6 +1199,37 @@ namespace MahjongOut3D.Managers
             }
 
             ReflowSelectionTray();
+        }
+
+        private void RestoreMemorySelectionRecord(MoveHistoryRecord record)
+        {
+            TileManager tileManager = GetTileManager();
+            if (tileManager == null)
+            {
+                return;
+            }
+
+            CancelMemoryRevealTimeout();
+
+            for (int index = 0; index < record.snapshots.Count; index++)
+            {
+                TileStateSnapshot snapshot = record.snapshots[index];
+                if (!tileManager.TryGetTile(snapshot.tileId, out MahjongTile tile) || tile == null)
+                {
+                    continue;
+                }
+
+                RemoveTrayTileReference(tile);
+                tile.StopFaceFlipAnimation(false);
+                bool restoreFaceDown = UsesMemoryFlipSelectionMode() ? true : snapshot.isFaceDown;
+                tile.SetFaceDown(restoreFaceDown, true);
+                tile.Restore(snapshot.state != TileState.Hidden);
+                tile.Deselect();
+            }
+
+            isMemoryRevealLocked = false;
+            selectedTiles.Clear();
+            GetTileManager()?.RefreshTileExposure();
         }
 
         /// <summary>

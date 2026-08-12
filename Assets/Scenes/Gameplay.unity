@@ -569,6 +569,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35f816d93cbbfed16ae572d78f1574e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.MatchManager
+  hardMemoryFaceDownRatio: 0.15
+  expertMemoryFaceDownRatio: 0.25
   powerUpSettings: {fileID: 11400000, guid: 3a9be00ff3d9492284bdf0d8e8784957, type: 2}
 --- !u!1 &176450031
 GameObject:

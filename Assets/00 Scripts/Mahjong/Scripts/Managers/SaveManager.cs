@@ -7,7 +7,7 @@ using UnityEngine;
 namespace MahjongOut3D.Managers
 {
     /// <summary>
-    /// Owns JSON persistence for player progress, currency, settings and unlock state.
+    /// Owns JSON persistence for Mahjong runtime data such as currency, settings and skin state.
     /// </summary>
     public sealed class SaveManager : ManagerBehaviour
     {
@@ -134,33 +134,6 @@ namespace MahjongOut3D.Managers
         {
             EnsureSaveData();
             CurrentSave.selectedSkin = string.IsNullOrWhiteSpace(skinId) ? "Default" : skinId;
-            SaveProfile();
-        }
-
-        /// <summary>
-        /// Updates the current level index and saves the change.
-        /// </summary>
-        /// <param name="levelIndex">Current level index.</param>
-        public void SetCurrentLevel(int levelIndex)
-        {
-            EnsureSaveData();
-            CurrentSave.currentLevel = Mathf.Max(0, levelIndex);
-            SaveProfile();
-        }
-
-        /// <summary>
-        /// Marks a level as completed and unlocks the next level.
-        /// </summary>
-        /// <param name="levelIndex">Completed level index.</param>
-        public void MarkLevelCompleted(int levelIndex)
-        {
-            EnsureSaveData();
-            if (!CurrentSave.completedLevels.Contains(levelIndex))
-            {
-                CurrentSave.completedLevels.Add(levelIndex);
-            }
-
-            CurrentSave.highestUnlockedLevel = Mathf.Max(CurrentSave.highestUnlockedLevel, levelIndex + 2);
             SaveProfile();
         }
 
