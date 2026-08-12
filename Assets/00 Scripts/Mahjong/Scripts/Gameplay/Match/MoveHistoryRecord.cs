@@ -10,6 +10,7 @@ namespace MahjongOut3D.Gameplay
     public sealed class MoveHistoryRecord
     {
         public string actionName;
+        public bool isMemoryRevealSelection;
         public List<TileStateSnapshot> snapshots = new List<TileStateSnapshot>();
     }
 }

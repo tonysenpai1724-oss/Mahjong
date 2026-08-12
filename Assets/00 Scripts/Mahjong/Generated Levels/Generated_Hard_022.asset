@@ -22,7 +22,10 @@ MonoBehaviour:
   <UseSurfaceTilePlacement>k__BackingField: 1
   <LayerCount>k__BackingField: 2
   <Difficulty>k__BackingField: 2
-  <FillCategoryNames>k__BackingField: []
+  <FillCategoryNames>k__BackingField:
+  - Number
+  - Rectangle
+  - Flower
   <Tiles>k__BackingField:
   - matchId: 0
     gridCoordinate: {x: 0, y: 0, z: 0}

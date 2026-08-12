@@ -1563,16 +1563,18 @@ namespace MahjongOut3D.LevelSystem
                         + (distance * 6f);
 
                 case LevelDifficulty.Hard:
-                    return (sameShell ? -220f : 260f + (shellSpread * 140f))
-                        + (sameFacing ? -70f : 150f)
-                        + (oppositeFacing ? 60f : 0f)
+                    return (sameShell ? -420f : 340f + (shellSpread * 220f))
+                        + (sameFacing ? -140f : 190f)
+                        + (oppositeFacing ? 120f : 0f)
+                        + (shellDelta >= 2 ? 180f : 0f)
                         + (distance * 14f);
 
                 case LevelDifficulty.Expert:
                 default:
-                    return (sameShell ? -420f : 380f + (shellSpread * 220f))
-                        + (sameFacing ? -120f : 220f)
-                        + (oppositeFacing ? 100f : 0f)
+                    return (sameShell ? -780f : 520f + (shellSpread * 320f))
+                        + (sameFacing ? -220f : 280f)
+                        + (oppositeFacing ? 180f : 0f)
+                        + (shellDelta >= 2 ? 320f : 0f)
                         + (distance * 22f);
             }
         }
@@ -2093,6 +2095,33 @@ namespace MahjongOut3D.LevelSystem
             }
         }
 
+        /// <summary>
+        /// Resolves the number of shell layers represented by the generated tiles.
+        /// </summary>
+        private static int GetLayerCount(IReadOnlyList<LevelTileDefinition> tiles)
+        {
+            if (tiles == null || tiles.Count == 0)
+            {
+                return 0;
+            }
+
+            int maxShellIndex = 0;
+            bool hasTile = false;
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                LevelTileDefinition tile = tiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                hasTile = true;
+                maxShellIndex = Mathf.Max(maxShellIndex, tile.SurfaceShellIndex);
+            }
+
+            return hasTile ? maxShellIndex + 1 : 0;
+        }
+
 #if UNITY_EDITOR
         /// <summary>
         /// Writes a generated payload into a concrete level asset instance.
@@ -2139,33 +2168,6 @@ namespace MahjongOut3D.LevelSystem
 
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
-        }
-
-        /// <summary>
-        /// Resolves the number of shell layers represented by the generated tiles.
-        /// </summary>
-        private static int GetLayerCount(IReadOnlyList<LevelTileDefinition> tiles)
-        {
-            if (tiles == null || tiles.Count == 0)
-            {
-                return 0;
-            }
-
-            int maxShellIndex = 0;
-            bool hasTile = false;
-            for (int index = 0; index < tiles.Count; index++)
-            {
-                LevelTileDefinition tile = tiles[index];
-                if (tile == null)
-                {
-                    continue;
-                }
-
-                hasTile = true;
-                maxShellIndex = Mathf.Max(maxShellIndex, tile.SurfaceShellIndex);
-            }
-
-            return hasTile ? maxShellIndex + 1 : 0;
         }
 
         /// <summary>
