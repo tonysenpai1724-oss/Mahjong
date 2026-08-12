@@ -976,12 +976,8 @@ namespace MahjongOut3D.LevelSystem
 
             cameraManager.SetRotationTarget(rotationRoot);
 
-            Bounds worldBounds;
-            if (!TryBuildSpawnedTileBounds(out worldBounds))
-            {
-                Bounds localBounds = grid.GetLocalBounds();
-                worldBounds = TransformBounds(rotationRoot, localBounds);
-            }
+            Bounds localBounds = grid.GetLocalBounds();
+            Bounds worldBounds = TransformBounds(rotationRoot, localBounds);
 
             cameraManager.FrameBounds(worldBounds, cameraFramePaddingOnLoad, true, true);
             zoomSlider?.SyncWithCamera();

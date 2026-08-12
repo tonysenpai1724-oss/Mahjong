@@ -117,7 +117,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            tile.transform.SetParent(null, true);
+            tile.transform.SetParent(GetTrayParentTransform(), true);
             tile.transform.SetPositionAndRotation(position, rotation);
             return true;
         }
@@ -315,7 +315,7 @@ namespace MahjongOut3D.Managers
                 yield return null;
             }
 
-            tile.transform.SetParent(null, true);
+            tile.transform.SetParent(GetTrayParentTransform(), true);
             tile.transform.SetPositionAndRotation(targetPosition, targetRotation);
             onCompleted?.Invoke();
             SetAnimationLock(false);
@@ -378,6 +378,16 @@ namespace MahjongOut3D.Managers
 
             traySlotAnchorProvider = FindFirstObjectByType<TraySlotAnchorProvider>(FindObjectsInactive.Include);
             return traySlotAnchorProvider;
+        }
+
+        private Transform GetTrayParentTransform()
+        {
+            if (Context.Services.TryGet(out CameraManager cameraManager) && cameraManager.ActiveCamera != null)
+            {
+                return cameraManager.ActiveCamera.transform;
+            }
+
+            return null;
         }
 
         /// <summary>
