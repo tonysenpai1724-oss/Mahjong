@@ -1,57 +1,89 @@
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace MahjongOut3D.TileSystem
 {
     /// <summary>
-    /// Toggles one or more outline-related objects or behaviours for a tile.
-    /// Spawns an inverted-hull clone that renders with the outline material.
+    /// Drives per-object outline state for the fullscreen outline pipeline.
+    /// Legacy inverted-hull helpers are disabled so the screen-space outline remains the only source of outlines.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TileOutlinePresenter : MonoBehaviour
     {
-        private const string GeneratedOutlineName = "InvertedHullOutlineRuntime";
-        private static readonly int OutlineScalePropertyId = Shader.PropertyToID("_outline_scale");
-        private static readonly int OutlineColorPropertyId = Shader.PropertyToID("_outlineColor");
-        private static readonly int BaseColorPropertyId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
+        private const string MatchIndicatorObjectName = "Quad";
+        private const string GeneratedOutlineObjectName = "InvertedHullOutlineRuntime";
+        private static readonly int OutlineStateColorPropertyId = Shader.PropertyToID("_OutlineStateColor");
+        private static readonly int OutlineStateEnabledPropertyId = Shader.PropertyToID("_OutlineStateEnabled");
 
         [SerializeField] private Behaviour[] outlineBehaviours;
         [SerializeField] private GameObject[] outlineObjects;
         [SerializeField] private Material outlineMaterial;
         [SerializeField] private float outlineScale = 1.1f;
         [SerializeField] private bool showOutlineOnCreate = true;
+        [Header("Outline Colors")]
+        [SerializeField] private Color defaultOutlineColor = Color.white;
         [SerializeField] private Color hintOutlineColor = new Color(1f, 0.85f, 0.1f, 1f);
         [SerializeField] private Color blockedOutlineColor = new Color(1f, 0.2f, 0.2f, 1f);
+        [Header("Hint Blink")]
         [SerializeField] private float hintBlinkSpeed = 2.5f;
         [SerializeField, Range(0f, 1f)] private float hintBlinkStrength = 0.3f;
+        [SerializeField] private MeshRenderer[] targetRenderers;
 
         /// <summary>
-        /// Gets the scale multiplier used by the inverted hull outline shader.
+        /// Gets the authored outline scale multiplier kept for backward compatibility.
         /// </summary>
         public float OutlineScale => outlineScale;
 
-        private GameObject generatedOutlineObject;
-        private Material generatedOutlineRuntimeMaterial;
-        private Color defaultOutlineColor = Color.black;
+        /// <summary>
+        /// Gets or sets the default outline color used when no temporary state is active.
+        /// </summary>
+        public Color DefaultOutlineColor
+        {
+            get => defaultOutlineColor;
+            set
+            {
+                defaultOutlineColor = value;
+                ApplyOutlineAppearance();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the hint outline color.
+        /// </summary>
+        public Color HintOutlineColor
+        {
+            get => hintOutlineColor;
+            set
+            {
+                hintOutlineColor = value;
+                ApplyOutlineAppearance();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the blocked outline color.
+        /// </summary>
+        public Color BlockedOutlineColor
+        {
+            get => blockedOutlineColor;
+            set
+            {
+                blockedOutlineColor = value;
+                ApplyOutlineAppearance();
+            }
+        }
+
+        private readonly List<MeshRenderer> rendererCache = new List<MeshRenderer>(8);
+        private MaterialPropertyBlock propertyBlock;
         private bool isHintHighlighted;
         private bool isBlockedHighlighted;
         private bool isOutlineVisible = true;
 
         private void Awake()
         {
-            EnsureGeneratedOutline();
-            ApplyOutlineAppearance();
+            EnsureInitialized();
             isOutlineVisible = showOutlineOnCreate;
-            SetGeneratedOutlineVisible(showOutlineOnCreate);
-        }
-
-        private void OnDestroy()
-        {
-            if (generatedOutlineRuntimeMaterial != null)
-            {
-                Destroy(generatedOutlineRuntimeMaterial);
-            }
+            ApplyOutlineAppearance();
         }
 
         private void Update()
@@ -59,15 +91,76 @@ namespace MahjongOut3D.TileSystem
             ApplyOutlineAppearance();
         }
 
+        private void OnValidate()
+        {
+            EnsureInitialized();
+            ApplyOutlineAppearance();
+        }
+
         /// <summary>
-        /// Shows or hides every configured outline target.
+        /// Shows or hides the screen-space outline state written by this tile.
         /// </summary>
-        /// <param name="isVisible">True to show outlines; otherwise false.</param>
         public void SetOutlineVisible(bool isVisible)
         {
-            EnsureGeneratedOutline();
             isOutlineVisible = isVisible;
+            ApplyOutlineAppearance();
+        }
 
+        /// <summary>
+        /// Enables or disables hint-specific outline feedback.
+        /// </summary>
+        public void SetHintHighlighted(bool isHighlighted)
+        {
+            isHintHighlighted = isHighlighted;
+            ApplyOutlineAppearance();
+        }
+
+        /// <summary>
+        /// Enables or disables blocked-tap outline feedback.
+        /// </summary>
+        public void SetBlockedHighlighted(bool isHighlighted)
+        {
+            isBlockedHighlighted = isHighlighted;
+            ApplyOutlineAppearance();
+        }
+
+        /// <summary>
+        /// Overrides the default outline color at runtime.
+        /// </summary>
+        public void SetDefaultOutlineColor(Color color)
+        {
+            DefaultOutlineColor = color;
+        }
+
+        /// <summary>
+        /// Overrides the hint outline color at runtime.
+        /// </summary>
+        public void SetHintOutlineColor(Color color)
+        {
+            HintOutlineColor = color;
+        }
+
+        /// <summary>
+        /// Overrides the blocked outline color at runtime.
+        /// </summary>
+        public void SetBlockedOutlineColor(Color color)
+        {
+            BlockedOutlineColor = color;
+        }
+
+        private void EnsureInitialized()
+        {
+            if (propertyBlock == null)
+            {
+                propertyBlock = new MaterialPropertyBlock();
+            }
+
+            DisableLegacyOutlineTargets();
+            RefreshTargetRenderers();
+        }
+
+        private void DisableLegacyOutlineTargets()
+        {
             if (outlineBehaviours != null)
             {
                 for (int index = 0; index < outlineBehaviours.Length; index++)
@@ -75,7 +168,7 @@ namespace MahjongOut3D.TileSystem
                     Behaviour behaviour = outlineBehaviours[index];
                     if (behaviour != null)
                     {
-                        behaviour.enabled = isVisible;
+                        behaviour.enabled = false;
                     }
                 }
             }
@@ -87,190 +180,108 @@ namespace MahjongOut3D.TileSystem
                     GameObject outlineObject = outlineObjects[index];
                     if (outlineObject != null)
                     {
-                        outlineObject.SetActive(isVisible);
+                        outlineObject.SetActive(false);
                     }
                 }
             }
-
-            SetGeneratedOutlineVisible(isVisible && (!isHintHighlighted || IsHintBlinkVisible()));
         }
 
-        /// <summary>
-        /// Enables or disables hint-specific outline feedback.
-        /// </summary>
-        /// <param name="isHighlighted">True to blink the outline yellow; otherwise false.</param>
-        public void SetHintHighlighted(bool isHighlighted)
+        private void RefreshTargetRenderers()
         {
-            isHintHighlighted = isHighlighted;
-            ApplyOutlineAppearance();
-        }
-
-        /// <summary>
-        /// Enables or disables blocked-tap outline feedback.
-        /// </summary>
-        /// <param name="isHighlighted">True to show the blocked outline; otherwise false.</param>
-        public void SetBlockedHighlighted(bool isHighlighted)
-        {
-            isBlockedHighlighted = isHighlighted;
-            ApplyOutlineAppearance();
-        }
-
-        private void EnsureGeneratedOutline()
-        {
-            if (generatedOutlineObject != null || outlineMaterial == null)
-            {
-                return;
-            }
-
-            Transform existingTransform = transform.Find(GeneratedOutlineName);
-            if (existingTransform != null)
-            {
-                generatedOutlineObject = existingTransform.gameObject;
-
-                MeshRenderer existingRenderer = generatedOutlineObject.GetComponent<MeshRenderer>();
-                if (existingRenderer != null && existingRenderer.sharedMaterial != null)
-                {
-                    generatedOutlineRuntimeMaterial = existingRenderer.sharedMaterial;
-                    defaultOutlineColor = ResolveOutlineColor(generatedOutlineRuntimeMaterial);
-                }
-
-                return;
-            }
-
-            MeshFilter sourceMeshFilter = GetComponent<MeshFilter>();
-            MeshRenderer sourceMeshRenderer = GetComponent<MeshRenderer>();
-            if (sourceMeshFilter == null || sourceMeshFilter.sharedMesh == null || sourceMeshRenderer == null)
-            {
-                return;
-            }
-
-            generatedOutlineObject = new GameObject(GeneratedOutlineName);
-            generatedOutlineObject.hideFlags = HideFlags.DontSave;
-            generatedOutlineObject.transform.SetParent(transform, false);
-            generatedOutlineObject.transform.localPosition = Vector3.zero;
-            generatedOutlineObject.transform.localRotation = Quaternion.identity;
-            generatedOutlineObject.transform.localScale = Vector3.one;
-            generatedOutlineObject.layer = gameObject.layer;
-
-            MeshFilter outlineMeshFilter = generatedOutlineObject.AddComponent<MeshFilter>();
-            outlineMeshFilter.sharedMesh = sourceMeshFilter.sharedMesh;
-
-            MeshRenderer outlineMeshRenderer = generatedOutlineObject.AddComponent<MeshRenderer>();
-            generatedOutlineRuntimeMaterial = new Material(outlineMaterial)
-            {
-                name = outlineMaterial.name + " Runtime"
-            };
-            defaultOutlineColor = ResolveOutlineColor(generatedOutlineRuntimeMaterial);
-            ApplyOutlineScale(generatedOutlineRuntimeMaterial);
-            ApplyOutlineColor(generatedOutlineRuntimeMaterial, defaultOutlineColor);
-
-            int subMeshCount = Mathf.Max(1, sourceMeshFilter.sharedMesh.subMeshCount);
-            Material[] outlineMaterials = new Material[subMeshCount];
-            for (int index = 0; index < subMeshCount; index++)
-            {
-                outlineMaterials[index] = generatedOutlineRuntimeMaterial;
-            }
-
-            outlineMeshRenderer.sharedMaterials = outlineMaterials;
-            outlineMeshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            outlineMeshRenderer.receiveShadows = false;
-            outlineMeshRenderer.lightProbeUsage = LightProbeUsage.Off;
-            outlineMeshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-            outlineMeshRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
-            outlineMeshRenderer.allowOcclusionWhenDynamic = false;
-            outlineMeshRenderer.sortingLayerID = sourceMeshRenderer.sortingLayerID;
-            outlineMeshRenderer.sortingOrder = sourceMeshRenderer.sortingOrder - 1;
-        }
-
-        private void SetGeneratedOutlineVisible(bool isVisible)
-        {
-            if (generatedOutlineObject != null)
-            {
-                generatedOutlineObject.SetActive(isVisible);
-            }
+            rendererCache.Clear();
+            AddRenderers(rendererCache, targetRenderers);
+            AddRenderers(rendererCache, GetComponentsInChildren<MeshRenderer>(true));
+            targetRenderers = rendererCache.ToArray();
         }
 
         private void ApplyOutlineAppearance()
         {
-            if (generatedOutlineRuntimeMaterial == null)
+            if (propertyBlock == null)
             {
-                return;
+                propertyBlock = new MaterialPropertyBlock();
             }
 
-            ApplyOutlineScale(generatedOutlineRuntimeMaterial);
+            if (targetRenderers == null || targetRenderers.Length == 0)
+            {
+                RefreshTargetRenderers();
+            }
 
+            Color stateColor = ResolveOutlineColor();
+            float stateEnabled = ResolveOutlineEnabled() ? 1f : 0f;
+
+            for (int index = 0; index < targetRenderers.Length; index++)
+            {
+                MeshRenderer renderer = targetRenderers[index];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                renderer.GetPropertyBlock(propertyBlock);
+                propertyBlock.SetColor(OutlineStateColorPropertyId, stateColor);
+                propertyBlock.SetFloat(OutlineStateEnabledPropertyId, stateEnabled);
+                renderer.SetPropertyBlock(propertyBlock);
+            }
+        }
+
+        private Color ResolveOutlineColor()
+        {
             if (isBlockedHighlighted)
             {
-                ApplyOutlineColor(generatedOutlineRuntimeMaterial, blockedOutlineColor);
-                SetGeneratedOutlineVisible(isOutlineVisible);
-                return;
+                return blockedOutlineColor;
+            }
+
+            if (isHintHighlighted)
+            {
+                return hintOutlineColor;
+            }
+
+            return defaultOutlineColor;
+        }
+
+        private bool ResolveOutlineEnabled()
+        {
+            if (!isOutlineVisible)
+            {
+                return false;
             }
 
             if (!isHintHighlighted)
             {
-                ApplyOutlineColor(generatedOutlineRuntimeMaterial, defaultOutlineColor);
-                SetGeneratedOutlineVisible(isOutlineVisible);
-                return;
+                return true;
             }
 
-            ApplyOutlineColor(generatedOutlineRuntimeMaterial, hintOutlineColor);
-            SetGeneratedOutlineVisible(isOutlineVisible && IsHintBlinkVisible());
+            return IsHintBlinkVisible();
         }
 
         private bool IsHintBlinkVisible()
         {
-            float blinkT = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * hintBlinkSpeed * Mathf.PI * 2f);
+            float blinkT = 0.5f + (0.5f * Mathf.Sin(Time.unscaledTime * hintBlinkSpeed * Mathf.PI * 2f));
             return blinkT >= Mathf.Clamp01(hintBlinkStrength);
         }
 
-        private void ApplyOutlineScale(Material targetMaterial)
+        private static void AddRenderers(List<MeshRenderer> destination, MeshRenderer[] source)
         {
-            if (targetMaterial != null && targetMaterial.HasProperty(OutlineScalePropertyId))
-            {
-                targetMaterial.SetFloat(OutlineScalePropertyId, outlineScale);
-            }
-        }
-
-        private Color ResolveOutlineColor(Material targetMaterial)
-        {
-            if (targetMaterial != null && targetMaterial.HasProperty(OutlineColorPropertyId))
-            {
-                return targetMaterial.GetColor(OutlineColorPropertyId);
-            }
-
-            if (targetMaterial != null && targetMaterial.HasProperty(BaseColorPropertyId))
-            {
-                return targetMaterial.GetColor(BaseColorPropertyId);
-            }
-
-            if (targetMaterial != null && targetMaterial.HasProperty(ColorPropertyId))
-            {
-                return targetMaterial.GetColor(ColorPropertyId);
-            }
-
-            return Color.black;
-        }
-
-        private void ApplyOutlineColor(Material targetMaterial, Color color)
-        {
-            if (targetMaterial == null)
+            if (source == null)
             {
                 return;
             }
 
-            if (targetMaterial.HasProperty(OutlineColorPropertyId))
+            for (int index = 0; index < source.Length; index++)
             {
-                targetMaterial.SetColor(OutlineColorPropertyId, color);
-            }
+                MeshRenderer renderer = source[index];
+                if (renderer == null || destination.Contains(renderer))
+                {
+                    continue;
+                }
 
-            if (targetMaterial.HasProperty(BaseColorPropertyId))
-            {
-                targetMaterial.SetColor(BaseColorPropertyId, color);
-            }
+                string rendererObjectName = renderer.gameObject.name;
+                if (rendererObjectName == MatchIndicatorObjectName || rendererObjectName == GeneratedOutlineObjectName)
+                {
+                    continue;
+                }
 
-            if (targetMaterial.HasProperty(ColorPropertyId))
-            {
-                targetMaterial.SetColor(ColorPropertyId, color);
+                destination.Add(renderer);
             }
         }
     }
