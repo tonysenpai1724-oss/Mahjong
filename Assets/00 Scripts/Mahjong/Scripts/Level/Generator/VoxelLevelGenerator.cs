@@ -69,6 +69,10 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private bool applyTileBaseColor = true;
         [SerializeField] private Color tileBaseColor = Color.white;
         [SerializeField] private Vector3 tileSpacingOffset;
+        [SerializeField] private Vector3 surfaceTileSpacingOffset;
+        [SerializeField] private Vector3 leftRightSurfaceSpacingOffset;
+        [SerializeField] private Vector3 upDownSurfaceSpacingOffset;
+        [SerializeField] private Vector3 frontBackSurfaceSpacingOffset;
         [SerializeField, Range(0.5f, 1f)] private float surfaceShellSeparationScale = 0.8f;
 
         [Header("Generation")]
@@ -629,7 +633,38 @@ namespace MahjongOut3D.LevelSystem
                 CompactSurfaceShellLayers(runtimeTiles, layoutOverride);
             }
 
+            ApplySurfaceTileSpacing(runtimeTiles);
+
             return runtimeTiles;
+        }
+
+        /// <summary>
+        /// Applies face-aware in-plane spacing to authored surface tiles without pushing them outward from the block.
+        /// </summary>
+        private void ApplySurfaceTileSpacing(IList<LevelTileDefinition> runtimeTiles)
+        {
+            if (runtimeTiles == null || runtimeTiles.Count == 0)
+            {
+                return;
+            }
+
+            for (int index = 0; index < runtimeTiles.Count; index++)
+            {
+                LevelTileDefinition tile = runtimeTiles[index];
+                if (tile == null || !tile.UseCustomLocalPosition)
+                {
+                    continue;
+                }
+
+                VoxelGridDirection facingDirection = ResolveFacingDirection(tile.LocalEulerAngles);
+                Vector3 spacingOffset = GetSurfaceTileSpacingOffset(facingDirection);
+                if (spacingOffset == Vector3.zero)
+                {
+                    continue;
+                }
+
+                tile.LocalPosition = ApplySurfaceTileSpacingOffset(tile.LocalPosition, facingDirection, spacingOffset);
+            }
         }
 
         /// <summary>
@@ -762,6 +797,62 @@ namespace MahjongOut3D.LevelSystem
                 case VoxelGridDirection.Forward:
                 default:
                     localPosition.z = Mathf.Sign(localPosition.z == 0f ? (facingDirection == VoxelGridDirection.Forward ? 1f : -1f) : localPosition.z) * correctedMagnitude;
+                    return localPosition;
+            }
+        }
+
+        /// <summary>
+        /// Resolves the additive in-plane spacing offset for the supplied face pair.
+        /// </summary>
+        private Vector3 GetSurfaceTileSpacingOffset(VoxelGridDirection facingDirection)
+        {
+            Vector3 baseOffset = surfaceTileSpacingOffset;
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return baseOffset + leftRightSurfaceSpacingOffset;
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return baseOffset + upDownSurfaceSpacingOffset;
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return baseOffset + frontBackSurfaceSpacingOffset;
+            }
+        }
+
+        /// <summary>
+        /// Applies per-axis spacing only on the axes that lie on the current face plane.
+        /// </summary>
+        private static Vector3 ApplySurfaceTileSpacingOffset(Vector3 localPosition, VoxelGridDirection facingDirection, Vector3 spacingOffset)
+        {
+            Vector3 spacingScale = new Vector3(
+                Mathf.Max(0f, 1f + spacingOffset.x),
+                Mathf.Max(0f, 1f + spacingOffset.y),
+                Mathf.Max(0f, 1f + spacingOffset.z));
+
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    localPosition.y *= spacingScale.y;
+                    localPosition.z *= spacingScale.z;
+                    return localPosition;
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    localPosition.x *= spacingScale.x;
+                    localPosition.z *= spacingScale.z;
+                    return localPosition;
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    localPosition.x *= spacingScale.x;
+                    localPosition.y *= spacingScale.y;
                     return localPosition;
             }
         }

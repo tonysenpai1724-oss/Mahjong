@@ -15,10 +15,14 @@ MonoBehaviour:
   targetCatalog: {fileID: 11400000, guid: f8b473ff57de4323baabdd6333f902f1, type: 2}
   layoutOverride: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
   tilePrefab: {fileID: -5892857342694290962, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+  surfaceTileGap: 1
+  leftRightSurfaceGapOffset: 0
+  upDownSurfaceGapOffset: 0
+  frontBackSurfaceGapOffset: 0
   outputFolder: Assets/00 Scripts/Mahjong/Generated Levels
   levelNamePrefix: Generated
   seed: 20260730
-  generationWriteMode: 0
+  generationWriteMode: 1
   easySettings:
     label: Easy
     levelCount: 10

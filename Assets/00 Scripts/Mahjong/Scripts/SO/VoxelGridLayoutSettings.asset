@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78c3f622712ab8c7ebb04c759c2c6f0f, type: 3}
   m_Name: VoxelGridLayoutSettings
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.VoxelGridLayoutSettings
-  <CellSize>k__BackingField: {x: 0.95, y: 0.45, z: 0.7}
+  <CellSize>k__BackingField: {x: 1, y: 1, z: 1}
   <CellSpacing>k__BackingField: {x: 0, y: 0, z: 0}
   <PivotMode>k__BackingField: 1
   <OriginOffset>k__BackingField: {x: 0, y: 0, z: 0}

@@ -30,6 +30,11 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private LevelCatalog targetCatalog;
         [SerializeField] private VoxelGridLayoutSettings layoutOverride;
         [SerializeField] private MahjongTile tilePrefab;
+        [Header("Surface Tile Spacing")]
+        [SerializeField, Min(0f)] private float surfaceTileGap = 0.03f;
+        [SerializeField, Min(0f)] private float leftRightSurfaceGapOffset = 0f;
+        [SerializeField, Min(0f)] private float upDownSurfaceGapOffset = 0f;
+        [SerializeField, Min(0f)] private float frontBackSurfaceGapOffset = 0f;
         [SerializeField] private string outputFolder = "Assets/00 Scripts/Mahjong/Generated Levels";
         [SerializeField] private string levelNamePrefix = "Generated";
         [SerializeField] private int seed = 20260730;
@@ -915,6 +920,7 @@ namespace MahjongOut3D.LevelSystem
 
         /// <summary>
         /// Tries to resolve the physical tile bounds directly from the assigned prefab.
+        /// Uses only the authored placement/body footprint so runtime outline presentation never affects generation spacing.
         /// </summary>
         private bool TryGetTilePrefabBounds(out Bounds prefabBounds)
         {
@@ -926,39 +932,22 @@ namespace MahjongOut3D.LevelSystem
 
             if (TryGetTilePrefabPlacementBounds(out prefabBounds))
             {
-                prefabBounds = ApplyTileOutlineScale(prefabBounds);
                 return true;
             }
 
             Collider[] colliders = tilePrefab.GetComponentsInChildren<Collider>(true);
             if (TryEncapsulateBounds(colliders, out prefabBounds))
             {
-                prefabBounds = ApplyTileOutlineScale(prefabBounds);
                 return true;
             }
 
             Renderer[] renderers = tilePrefab.GetComponentsInChildren<Renderer>(true);
             if (TryEncapsulateBounds(renderers, out prefabBounds))
             {
-                prefabBounds = ApplyTileOutlineScale(prefabBounds);
                 return true;
             }
 
             return false;
-        }
-
-        private Bounds ApplyTileOutlineScale(Bounds bounds)
-        {
-            float outlineScale = tilePrefab != null && tilePrefab.Outline != null
-                ? tilePrefab.Outline.OutlineScale
-                : 1f;
-
-            if (outlineScale <= 0f || Mathf.Approximately(outlineScale, 1f))
-            {
-                return bounds;
-            }
-
-            return new Bounds(bounds.center, bounds.size * outlineScale);
         }
 
         /// <summary>
@@ -1946,7 +1935,7 @@ namespace MahjongOut3D.LevelSystem
             Vector3 cellSpacing = layoutOverride != null ? layoutOverride.CellSpacing : Vector3.zero;
             Vector3 originOffset = layoutOverride != null ? layoutOverride.OriginOffset : Vector3.zero;
             VoxelGridPivotMode pivotMode = layoutOverride != null ? layoutOverride.PivotMode : VoxelGridPivotMode.Center;
-            Vector3 step = cellSize + cellSpacing;
+            Vector3 step = GetSurfaceTileStep(placement.FacingDirection, cellSize + cellSpacing);
             Vector3 voxelCenter = GetStaticLocalPosition(placement.Coordinate, shapeGridSize, step, originOffset, pivotMode);
 
             Vector3 faceNormal = ((Vector3)VoxelGridDirections.GetOffset(placement.FacingDirection)).normalized;
@@ -1961,6 +1950,57 @@ namespace MahjongOut3D.LevelSystem
             Vector3 tangent = GetSurfaceTangent(placement.FacingDirection);
             Vector3 slotOffset = tangent * GetSurfaceSlotDistance(placement.FacingDirection, step) * (placement.SurfaceSlotIndex == 0 ? -1f : 1f);
             return voxelCenter + halfFaceOffset + paddingOffset + slotOffset;
+        }
+
+        /// <summary>
+        /// Adds a face-local in-plane gap so generated surface tiles separate visually without pushing the whole shell toward or away from the camera.
+        /// </summary>
+        private Vector3 GetSurfaceTileStep(VoxelGridDirection facingDirection, Vector3 baseStep)
+        {
+            float gap = GetSurfaceTileGap(facingDirection);
+            if (gap <= Mathf.Epsilon)
+            {
+                return baseStep;
+            }
+
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return new Vector3(baseStep.x, baseStep.y + gap, baseStep.z + gap);
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return new Vector3(baseStep.x + gap, baseStep.y, baseStep.z + gap);
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return new Vector3(baseStep.x + gap, baseStep.y + gap, baseStep.z);
+            }
+        }
+
+        /// <summary>
+        /// Resolves the face-specific in-plane gap used for tiles on the supplied face.
+        /// </summary>
+        private float GetSurfaceTileGap(VoxelGridDirection facingDirection)
+        {
+            float baseGap = Mathf.Max(0f, surfaceTileGap);
+            switch (facingDirection)
+            {
+                case VoxelGridDirection.Left:
+                case VoxelGridDirection.Right:
+                    return baseGap + Mathf.Max(0f, leftRightSurfaceGapOffset);
+
+                case VoxelGridDirection.Down:
+                case VoxelGridDirection.Up:
+                    return baseGap + Mathf.Max(0f, upDownSurfaceGapOffset);
+
+                case VoxelGridDirection.Back:
+                case VoxelGridDirection.Forward:
+                default:
+                    return baseGap + Mathf.Max(0f, frontBackSurfaceGapOffset);
+            }
         }
 
         /// <summary>

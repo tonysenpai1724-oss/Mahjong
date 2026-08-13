@@ -670,7 +670,11 @@ MonoBehaviour:
   fallbackTileVisualSettings: {fileID: 11400000, guid: 07ad9084b37f4ca59ad76a9b1efa812f, type: 2}
   applyTileBaseColor: 0
   tileBaseColor: {r: 0.8867924, g: 0.7942281, b: 0.7905838, a: 1}
-  tileSpacingOffset: {x: 0, y: 0, z: 0}
+  tileSpacingOffset: {x: 0, y: 0, z: 0.1}
+  surfaceTileSpacingOffset: {x: 0, y: 0, z: 0}
+  leftRightSurfaceSpacingOffset: {x: 0, y: 0, z: 0}
+  upDownSurfaceSpacingOffset: {x: 0, y: 0, z: 0}
+  frontBackSurfaceSpacingOffset: {x: 0, y: 0.1, z: 0}
   surfaceShellSeparationScale: 0.6
   generateOnStart: 1
   clearExistingChildrenOnGenerate: 1
