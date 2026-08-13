@@ -1,6 +1,7 @@
 using MahjongOut3D.Core;
 using MahjongOut3D.Data;
 using MahjongOut3D.Gameplay;
+using TigerForge;
 using UnityEngine;
 
 namespace MahjongOut3D.Managers
@@ -42,12 +43,13 @@ namespace MahjongOut3D.Managers
                 sfxSource.playOnAwake = false;
             }
 
-            if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
-            {
-                musicSource.mute = !saveManager.CurrentSave.musicEnabled;
-                sfxSource.mute = !saveManager.CurrentSave.soundEnabled;
-                IsMuted = sfxSource.mute && musicSource.mute;
-            }
+            EventManager.StartListening(Constant.EVENT_ON_GAME_SETTING_CHANGE, HandleSettingsChanged);
+            ApplyLegacyAudioSettings();
+        }
+
+        protected override void OnShutdown()
+        {
+            EventManager.StopListening(Constant.EVENT_ON_GAME_SETTING_CHANGE, HandleSettingsChanged);
         }
 
         /// <summary>
@@ -66,6 +68,29 @@ namespace MahjongOut3D.Managers
             {
                 sfxSource.mute = isMuted;
             }
+        }
+
+        private void HandleSettingsChanged()
+        {
+            ApplyLegacyAudioSettings();
+        }
+
+        private void ApplyLegacyAudioSettings()
+        {
+            bool musicEnabled = IGameSettingController.Instance == null || IGameSettingController.Instance.GetSetting(EGameSetting.Music);
+            bool soundEnabled = IGameSettingController.Instance == null || IGameSettingController.Instance.GetSetting(EGameSetting.Sound);
+
+            if (musicSource != null)
+            {
+                musicSource.mute = !musicEnabled;
+            }
+
+            if (sfxSource != null)
+            {
+                sfxSource.mute = !soundEnabled;
+            }
+
+            IsMuted = !musicEnabled && !soundEnabled;
         }
 
         /// <summary>

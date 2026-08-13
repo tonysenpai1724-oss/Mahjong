@@ -1,17 +1,16 @@
 using MahjongOut3D.Core;
 using MahjongOut3D.Data;
 using MahjongOut3D.Utilities;
-using System.IO;
 using UnityEngine;
 
 namespace MahjongOut3D.Managers
 {
     /// <summary>
-    /// Owns JSON persistence for Mahjong runtime data such as currency, settings and skin state.
+    /// Bridges Mahjong runtime save calls into the project's legacy persistence systems.
     /// </summary>
     public sealed class SaveManager : ManagerBehaviour
     {
-        private string saveFilePath;
+        private const string SelectedSkinKey = "mahjong_selected_skin";
 
         /// <summary>
         /// Gets a value indicating whether the player profile has been loaded.
@@ -33,7 +32,6 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnInitialize()
         {
-            saveFilePath = Path.Combine(Application.persistentDataPath, "mahjong_out_3d_save.json");
             LoadProfile();
         }
 
@@ -50,20 +48,8 @@ namespace MahjongOut3D.Managers
         /// </summary>
         public void LoadProfile()
         {
-            if (File.Exists(saveFilePath))
-            {
-                string json = File.ReadAllText(saveFilePath);
-                CurrentSave = JsonUtility.FromJson<PlayerSaveData>(json);
-            }
-
-            if (CurrentSave == null)
-            {
-                CurrentSave = new PlayerSaveData();
-                SaveProfile();
-            }
-
+            RefreshSnapshot();
             HasLoadedProfile = true;
-            Context?.EventBus.Publish(new SaveDataLoadedEvent(CurrentSave));
         }
 
         /// <summary>
@@ -71,20 +57,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         public void SaveProfile()
         {
-            if (CurrentSave == null)
-            {
-                CurrentSave = new PlayerSaveData();
-            }
-
-            string directory = Path.GetDirectoryName(saveFilePath);
-            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            string json = JsonUtility.ToJson(CurrentSave, true);
-            File.WriteAllText(saveFilePath, json);
-            Context?.EventBus.Publish(new SaveDataLoadedEvent(CurrentSave));
+            RefreshSnapshot();
         }
 
         /// <summary>
@@ -98,8 +71,17 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            EnsureSaveData();
-            CurrentSave.coins += amount;
+            if (IPlayerResource.Instance == null)
+            {
+                MahjongRuntimeLogger.LogWarning("Unable to add coins because legacy player resource is unavailable.");
+                return;
+            }
+
+            IPlayerResource.Instance.AddResource(new System.Collections.Generic.List<GameResource>
+            {
+                new CommonResource(ECommonResource.Coin, amount)
+            }, EResourceFrom.GameDrop);
+
             SaveProfile();
         }
 
@@ -110,18 +92,28 @@ namespace MahjongOut3D.Managers
         /// <returns>True when the coins were spent; otherwise false.</returns>
         public bool TrySpendCoins(int amount)
         {
-            EnsureSaveData();
             if (amount <= 0)
             {
                 return true;
             }
 
-            if (CurrentSave.coins < amount)
+            if (IPlayerResource.Instance == null)
+            {
+                MahjongRuntimeLogger.LogWarning("Unable to spend coins because legacy player resource is unavailable.");
+                return false;
+            }
+
+            var cost = new System.Collections.Generic.List<GameResource>
+            {
+                new CommonResource(ECommonResource.Coin, -amount)
+            };
+
+            if (!IPlayerResource.Instance.CheckListResource(cost))
             {
                 return false;
             }
 
-            CurrentSave.coins -= amount;
+            IPlayerResource.Instance.AddResource(cost, EResourceFrom.SpendIngame);
             SaveProfile();
             return true;
         }
@@ -134,6 +126,12 @@ namespace MahjongOut3D.Managers
         {
             EnsureSaveData();
             CurrentSave.selectedSkin = string.IsNullOrWhiteSpace(skinId) ? "Default" : skinId;
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SaveLocalData(SelectedSkinKey, CurrentSave.selectedSkin);
+            }
+
             SaveProfile();
         }
 
@@ -147,6 +145,13 @@ namespace MahjongOut3D.Managers
             EnsureSaveData();
             CurrentSave.musicEnabled = musicEnabled;
             CurrentSave.soundEnabled = soundEnabled;
+
+            if (IGameSettingController.Instance != null)
+            {
+                ApplyLegacySetting(EGameSetting.Music, musicEnabled);
+                ApplyLegacySetting(EGameSetting.Sound, soundEnabled);
+            }
+
             SaveProfile();
         }
 
@@ -155,14 +160,8 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnShutdown()
         {
-            if (HasLoadedProfile)
-            {
-                SaveProfile();
-            }
-
             HasLoadedProfile = false;
             CurrentSave = null;
-            saveFilePath = null;
         }
 
         /// <summary>
@@ -172,8 +171,49 @@ namespace MahjongOut3D.Managers
         {
             if (CurrentSave == null)
             {
-                MahjongRuntimeLogger.LogWarning("SaveManager recreated an empty save profile because none was loaded.");
+                RefreshSnapshot();
+            }
+        }
+
+        private void RefreshSnapshot()
+        {
+            if (CurrentSave == null)
+            {
                 CurrentSave = new PlayerSaveData();
+            }
+
+            long coins = IPlayerResource.Instance != null
+                ? IPlayerResource.Instance.GetCommonResource(ECommonResource.Coin)
+                : 0;
+
+            long clampedCoins = coins < 0L ? 0L : coins;
+            CurrentSave.coins = clampedCoins > int.MaxValue ? int.MaxValue : (int)clampedCoins;
+            CurrentSave.musicEnabled = IGameSettingController.Instance == null || IGameSettingController.Instance.GetSetting(EGameSetting.Music);
+            CurrentSave.soundEnabled = IGameSettingController.Instance == null || IGameSettingController.Instance.GetSetting(EGameSetting.Sound);
+            CurrentSave.selectedSkin = ReadSelectedSkin();
+        }
+
+        private static string ReadSelectedSkin()
+        {
+            if (GameManager.Instance == null)
+            {
+                return "Default";
+            }
+
+            string skinId = GameManager.Instance.GetLocalData(SelectedSkinKey);
+            return string.IsNullOrWhiteSpace(skinId) ? "Default" : skinId;
+        }
+
+        private static void ApplyLegacySetting(EGameSetting setting, bool enabled)
+        {
+            if (IGameSettingController.Instance == null)
+            {
+                return;
+            }
+
+            if (IGameSettingController.Instance.GetSetting(setting) != enabled)
+            {
+                IGameSettingController.Instance.ToggleSetting(setting);
             }
         }
     }

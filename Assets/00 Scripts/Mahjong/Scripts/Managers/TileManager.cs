@@ -336,13 +336,33 @@ namespace MahjongOut3D.Managers
         /// <returns>True when the tap should select the tile; otherwise false.</returns>
         public bool IsTileTapSelectable(MahjongTile tile, RaycastHit hitInfo)
         {
-            if (!IsTileSelectable(tile))
+            if (tile == null || !tile.IsInteractable)
+            {
+                return false;
+            }
+
+            if (tile.IsBufferedSelection)
             {
                 return false;
             }
 
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
-            return !useSurfaceRules || IsTapOnSurfaceFace(tile, hitInfo);
+            if (useSurfaceRules)
+            {
+                return IsTileExposed(tile) && IsTapOnSurfaceFace(tile, hitInfo);
+            }
+
+            if (exposureSettings != null && exposureSettings.RequireSurfaceExposure && !IsTileExposed(tile))
+            {
+                return false;
+            }
+
+            if (exposureSettings != null && exposureSettings.RequireDirectCameraVisibility && !IsTileFullyVisibleFromCamera(tile))
+            {
+                return false;
+            }
+
+            return IsTapOnSurfaceFace(tile, hitInfo);
         }
 
         /// <summary>

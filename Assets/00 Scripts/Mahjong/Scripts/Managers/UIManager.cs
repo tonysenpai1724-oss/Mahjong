@@ -1,5 +1,4 @@
 using MahjongOut3D.Core;
-using MahjongOut3D.Data;
 using MahjongOut3D.Gameplay;
 using MahjongOut3D.LevelSystem;
 using MahjongOut3D.UI;
@@ -43,15 +42,8 @@ namespace MahjongOut3D.Managers
             CacheScreenReferences();
             BindViews();
 
-            Context.EventBus.Subscribe<SaveDataLoadedEvent>(HandleSaveDataLoaded);
             Context.EventBus.Subscribe<GameplayProgressChangedEvent>(HandleProgressChanged);
             Context.EventBus.Subscribe<LevelGeneratedEvent>(HandleLevelGenerated);
-
-            if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
-            {
-                UpdateCoinDisplays(saveManager.CurrentSave.coins);
-                UpdateLevelSelectInfo();
-            }
 
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null)
@@ -60,7 +52,10 @@ namespace MahjongOut3D.Managers
             }
 
             EventManager.StartListening(Constant.ON_GAME_STATE_CHANGE, HandleGameplayStateChanged);
+            EventManager.StartListening(Constant.ON_PLAYER_RESOURCE_UPDATE, HandlePlayerResourceChanged);
             RefreshScreenState();
+            RefreshCoinDisplays();
+            UpdateLevelSelectInfo();
         }
 
         /// <summary>
@@ -68,7 +63,6 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnShutdown()
         {
-            Context.EventBus.Unsubscribe<SaveDataLoadedEvent>(HandleSaveDataLoaded);
             Context.EventBus.Unsubscribe<GameplayProgressChangedEvent>(HandleProgressChanged);
             Context.EventBus.Unsubscribe<LevelGeneratedEvent>(HandleLevelGenerated);
 
@@ -79,6 +73,7 @@ namespace MahjongOut3D.Managers
             }
 
             EventManager.StopListening(Constant.ON_GAME_STATE_CHANGE, HandleGameplayStateChanged);
+            EventManager.StopListening(Constant.ON_PLAYER_RESOURCE_UPDATE, HandlePlayerResourceChanged);
         }
 
         /// <summary>
@@ -240,6 +235,16 @@ namespace MahjongOut3D.Managers
             gameplayHudView?.SetCoins(coins);
         }
 
+        private void RefreshCoinDisplays()
+        {
+            long coins = IPlayerResource.Instance != null
+                ? IPlayerResource.Instance.GetCommonResource(ECommonResource.Coin)
+                : 0;
+
+            long clampedCoins = coins < 0L ? 0L : coins;
+            UpdateCoinDisplays(clampedCoins > int.MaxValue ? int.MaxValue : (int)clampedCoins);
+        }
+
         private void UpdateGameplayHudInfo()
         {
             if (gameplayHudView == null || !Context.Services.TryGet(out LevelManager levelManager))
@@ -272,26 +277,16 @@ namespace MahjongOut3D.Managers
 
         private void HandleGameplayStateChanged() => RefreshScreenState();
 
-        private void HandleSaveDataLoaded(SaveDataLoadedEvent eventData)
+        private void HandlePlayerResourceChanged()
         {
-            if (eventData.SaveData == null)
-            {
-                return;
-            }
-
-            UpdateCoinDisplays(eventData.SaveData.coins);
-            UpdateLevelSelectInfo();
+            RefreshCoinDisplays();
         }
 
         private void HandleProgressChanged(GameplayProgressChangedEvent eventData)
         {
             gameplayHudView?.SetProgress(eventData.RemainingTiles, eventData.TotalTiles, eventData.CompletionRatio);
             UpdateGameplayHudInfo();
-
-            if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
-            {
-                UpdateCoinDisplays(saveManager.CurrentSave.coins);
-            }
+            RefreshCoinDisplays();
         }
 
         private void HandleLevelGenerated(LevelGeneratedEvent eventData)

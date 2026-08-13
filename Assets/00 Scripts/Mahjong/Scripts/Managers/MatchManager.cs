@@ -1,5 +1,4 @@
 using MahjongOut3D.Core;
-using MahjongOut3D.Data;
 using MahjongOut3D.Gameplay;
 using MahjongOut3D.LevelSystem;
 using MahjongOut3D.TileSystem;
@@ -468,10 +467,6 @@ namespace MahjongOut3D.Managers
                 GetTileManager()?.RefreshTileExposure();
                 Context.EventBus.Publish(new MatchSucceededEvent(firstTile, secondTile));
                 PublishProgress();
-                if (Context.Services.TryGet(out SaveManager saveManager) && saveManager.CurrentSave != null)
-                {
-                    Context.EventBus.Publish(new SaveDataLoadedEvent(saveManager.CurrentSave));
-                }
             }
             finally
             {
@@ -1655,13 +1650,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private bool TryUsePowerUp(PowerUpType powerUpType, int cost)
         {
-            SaveManager saveManager = GetSaveManager();
-            if (saveManager == null)
-            {
-                return false;
-            }
-
-            return saveManager.TrySpendCoins(cost);
+            return GetSaveManager()?.TrySpendCoins(cost) ?? false;
         }
 
         private int GetCoinsPerMatch() => powerUpSettings != null ? powerUpSettings.CoinsPerMatch : 2;
