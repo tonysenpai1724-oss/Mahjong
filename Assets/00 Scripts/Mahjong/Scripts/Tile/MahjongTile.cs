@@ -26,6 +26,7 @@ namespace MahjongOut3D.TileSystem
         [SerializeField] private MeshRenderer pieceRenderer;
         [SerializeField] private MeshRenderer fillRenderer;
         [SerializeField] private MeshRenderer matchIndicatorRenderer;
+        [SerializeField] private GameObject comboIndicatorObject;
         [SerializeField] private Collider tileCollider;
         [SerializeField] private Animator animator;
         [SerializeField] private TileOutlinePresenter outlinePresenter;
@@ -34,6 +35,7 @@ namespace MahjongOut3D.TileSystem
         [Header("Runtime")]
         [SerializeField] private TileState state = TileState.Hidden;
         [SerializeField] private bool isFaceDown;
+        [SerializeField] private bool isComboTile;
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -205,6 +207,11 @@ namespace MahjongOut3D.TileSystem
         public bool IsFaceDown => isFaceDown;
 
         /// <summary>
+        /// Gets a value indicating whether this tile is marked as a combo tile.
+        /// </summary>
+        public bool IsComboTile => isComboTile;
+
+        /// <summary>
         /// Applies serialized defaults once the component awakens.
         /// </summary>
         private void Awake()
@@ -295,10 +302,12 @@ namespace MahjongOut3D.TileSystem
             boardLocalEulerAngles = runtimeData.LocalEulerAngles;
             isBufferedSelection = false;
             isFaceDown = false;
+            isComboTile = false;
             boardParent = transform.parent;
             transform.localPosition = runtimeData.LocalPosition;
             transform.localRotation = Quaternion.Euler(runtimeData.LocalEulerAngles);
             gameObject.name = $"MahjongTile_{tileId}_{matchId}";
+            ApplyComboIndicatorVisibility();
         }
 
         /// <summary>
@@ -421,6 +430,16 @@ namespace MahjongOut3D.TileSystem
         {
             isBufferedSelection = false;
             SetState(isVisible ? TileState.Visible : TileState.Hidden, true);
+        }
+
+        /// <summary>
+        /// Sets whether this tile should behave as a combo tile.
+        /// </summary>
+        /// <param name="comboTile">True to enable combo behavior; otherwise false.</param>
+        public void SetComboTile(bool comboTile)
+        {
+            isComboTile = comboTile;
+            ApplyComboIndicatorVisibility();
         }
 
         /// <summary>
@@ -914,7 +933,7 @@ namespace MahjongOut3D.TileSystem
                 meshRenderer = visualController != null ? visualController.GetPrimaryRenderer() : GetComponentInChildren<MeshRenderer>(true);
             }
 
-            if (pieceRenderer == null || fillRenderer == null || matchIndicatorRenderer == null)
+            if (pieceRenderer == null || fillRenderer == null || matchIndicatorRenderer == null || comboIndicatorObject == null)
             {
                 MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>(true);
                 for (int index = 0; index < renderers.Length; index++)
@@ -941,6 +960,25 @@ namespace MahjongOut3D.TileSystem
                         matchIndicatorRenderer = renderer;
                     }
                 }
+
+                if (comboIndicatorObject == null)
+                {
+                    Transform[] childTransforms = GetComponentsInChildren<Transform>(true);
+                    for (int index = 0; index < childTransforms.Length; index++)
+                    {
+                        Transform childTransform = childTransforms[index];
+                        if (childTransform == null || childTransform == transform)
+                        {
+                            continue;
+                        }
+
+                        if (childTransform.name.Equals("combo", StringComparison.OrdinalIgnoreCase))
+                        {
+                            comboIndicatorObject = childTransform.gameObject;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (tileCollider == null)
@@ -959,6 +997,20 @@ namespace MahjongOut3D.TileSystem
             }
 
             CacheFaceBaseLocalRotations();
+        }
+
+        private void ApplyComboIndicatorVisibility()
+        {
+            if (comboIndicatorObject == null)
+            {
+                return;
+            }
+
+            bool shouldShow = isComboTile && state != TileState.Hidden && state != TileState.Removed;
+            if (comboIndicatorObject.activeSelf != shouldShow)
+            {
+                comboIndicatorObject.SetActive(shouldShow);
+            }
         }
 
         /// <summary>
@@ -1047,6 +1099,8 @@ namespace MahjongOut3D.TileSystem
                 matchIndicatorRenderer.enabled = currentState != TileState.Hidden && currentState != TileState.Removed;
             }
 
+            ApplyComboIndicatorVisibility();
+
             if (visualController != null)
             {
                 visualController.ApplyState(currentState, instant);
@@ -1058,6 +1112,11 @@ namespace MahjongOut3D.TileSystem
         private Coroutine FlipFaceState(bool faceDown, Action onCompleted, bool instant)
         {
             isFaceDown = faceDown;
+
+            if (!faceDown && fillRenderer != null)
+            {
+                fillRenderer.enabled = state != TileState.Hidden && state != TileState.Removed;
+            }
 
             if (instant || !isActiveAndEnabled)
             {
@@ -1075,6 +1134,11 @@ namespace MahjongOut3D.TileSystem
         private IEnumerator FlipFaceStateRoutine(bool faceDown, Action onCompleted)
         {
             CacheFaceBaseLocalRotations();
+
+            if (!faceDown && fillRenderer != null)
+            {
+                fillRenderer.enabled = state != TileState.Hidden && state != TileState.Removed;
+            }
 
             Quaternion startPieceRotation = pieceRenderer != null ? pieceRenderer.transform.localRotation : Quaternion.identity;
             Quaternion startFillRotation = fillRenderer != null ? fillRenderer.transform.localRotation : Quaternion.identity;
@@ -1101,6 +1165,7 @@ namespace MahjongOut3D.TileSystem
 
             faceFlipRoutine = null;
             ApplyFaceRotations(faceDown);
+            ApplyFaceRendererVisibility(faceDown);
             onCompleted?.Invoke();
         }
 
@@ -1116,6 +1181,7 @@ namespace MahjongOut3D.TileSystem
             {
                 CacheFaceBaseLocalRotations();
                 ApplyFaceRotations(isFaceDown);
+                ApplyFaceRendererVisibility(isFaceDown);
             }
         }
 
@@ -1160,6 +1226,21 @@ namespace MahjongOut3D.TileSystem
             Quaternion deltaRotation = faceDown ? FaceFlipDeltaRotation : Quaternion.identity;
             pieceRotation = pieceFaceBaseLocalRotation * deltaRotation;
             fillRotation = fillFaceBaseLocalRotation * deltaRotation;
+        }
+
+        private void ApplyFaceRendererVisibility(bool faceDown)
+        {
+            if (fillRenderer == null)
+            {
+                return;
+            }
+
+            bool tileVisible = state != TileState.Hidden && state != TileState.Removed;
+            bool shouldShowFill = tileVisible && !faceDown;
+            if (fillRenderer.enabled != shouldShowFill)
+            {
+                fillRenderer.enabled = shouldShowFill;
+            }
         }
 
         /// <summary>

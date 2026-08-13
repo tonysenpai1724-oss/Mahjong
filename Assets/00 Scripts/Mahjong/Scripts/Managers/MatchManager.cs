@@ -17,10 +17,15 @@ namespace MahjongOut3D.Managers
         private const float AnimationCompletionTimeoutSeconds = 5f;
         private const int SelectionTrayCapacity = 4;
         private const float MemoryRevealTimeoutSeconds = 2f;
+        private const int ComboExtraMatchPairCount = 3;
 
         [Header("Memory Flip Difficulty")]
         [SerializeField, Range(0f, 1f)] private float hardMemoryFaceDownRatio = 0.35f;
         [SerializeField, Range(0f, 1f)] private float expertMemoryFaceDownRatio = 0.55f;
+
+        [Header("Combo Tile Difficulty")]
+        [SerializeField, Range(0f, 1f)] private float hardComboTileRatio = 0.05f;
+        [SerializeField, Range(0f, 1f)] private float expertComboTileRatio = 0.1f;
 
         [SerializeField] private PowerUpSettings powerUpSettings;
 
@@ -30,6 +35,7 @@ namespace MahjongOut3D.Managers
         private readonly Queue<PendingMatchResolution> pendingMatchQueue = new Queue<PendingMatchResolution>();
         private readonly HashSet<MahjongTile> pendingMatchedTiles = new HashSet<MahjongTile>();
         private readonly Dictionary<MahjongTile, bool> memorySelectionOriginalFaceStates = new Dictionary<MahjongTile, bool>();
+        private readonly List<MahjongTile> comboSourceTiles = new List<MahjongTile>(2);
         private Coroutine memoryRevealTimeoutRoutine;
         private bool isMemoryRevealLocked;
         private int totalTiles;
@@ -72,6 +78,7 @@ namespace MahjongOut3D.Managers
             pendingMatchQueue.Clear();
             pendingMatchedTiles.Clear();
             memorySelectionOriginalFaceStates.Clear();
+            comboSourceTiles.Clear();
             totalTiles = 0;
             isMemoryRevealLocked = false;
             IsResolvingMatch = false;
@@ -330,9 +337,11 @@ namespace MahjongOut3D.Managers
             pendingMatchQueue.Clear();
             pendingMatchedTiles.Clear();
             memorySelectionOriginalFaceStates.Clear();
+            comboSourceTiles.Clear();
             isMemoryRevealLocked = false;
             totalTiles = eventData.SpawnedTileCount;
             ApplyDifficultyTileFaceState();
+            AssignDifficultyComboTiles();
             if (GameplayManager.Instance != null)
             {
                 GameplayManager.Instance.SetState(EGamePlayState.Running);
@@ -414,6 +423,7 @@ namespace MahjongOut3D.Managers
 
             try
             {
+                bool triggersCombo = IsComboTriggerPair(firstTile, secondTile);
                 firstTile.SetBufferedSelection(false);
                 secondTile.SetBufferedSelection(false);
                 firstTile.Deselect();
@@ -467,6 +477,11 @@ namespace MahjongOut3D.Managers
                 GetTileManager()?.RefreshTileExposure();
                 Context.EventBus.Publish(new MatchSucceededEvent(firstTile, secondTile));
                 PublishProgress();
+
+                if (triggersCombo)
+                {
+                    TriggerComboAutoMatches(firstTile, secondTile);
+                }
             }
             finally
             {
@@ -897,6 +912,212 @@ namespace MahjongOut3D.Managers
                 : null;
 
             return difficulty == LevelDifficulty.Hard || difficulty == LevelDifficulty.Expert;
+        }
+
+        private void AssignDifficultyComboTiles()
+        {
+            TileManager tileManager = GetTileManager();
+            if (tileManager == null)
+            {
+                return;
+            }
+
+            Dictionary<string, List<MahjongTile>> candidateGroups = new Dictionary<string, List<MahjongTile>>();
+            foreach (MahjongTile tile in tileManager.GetRemainingTiles())
+            {
+                if (tile == null || tile.IsRemoved)
+                {
+                    continue;
+                }
+
+                tile.SetComboTile(false);
+                if (tile.IsBufferedSelection)
+                {
+                    continue;
+                }
+
+                string visualKey = tile.VisualMatchKey;
+                if (!candidateGroups.TryGetValue(visualKey, out List<MahjongTile> group))
+                {
+                    group = new List<MahjongTile>();
+                    candidateGroups.Add(visualKey, group);
+                }
+
+                group.Add(tile);
+            }
+
+            List<List<MahjongTile>> candidatePairs = new List<List<MahjongTile>>(candidateGroups.Values);
+            int comboTileCount = GetDifficultyComboTileCount(candidatePairs.Count);
+            if (comboTileCount <= 0 || candidatePairs.Count <= 0)
+            {
+                return;
+            }
+
+            for (int index = candidatePairs.Count - 1; index > 0; index--)
+            {
+                int swapIndex = Random.Range(0, index + 1);
+                (candidatePairs[index], candidatePairs[swapIndex]) = (candidatePairs[swapIndex], candidatePairs[index]);
+            }
+
+            int assignedCount = Mathf.Min(comboTileCount, candidatePairs.Count);
+            for (int index = 0; index < assignedCount; index++)
+            {
+                List<MahjongTile> pairTiles = candidatePairs[index];
+                if (pairTiles == null || pairTiles.Count <= 0)
+                {
+                    continue;
+                }
+
+                MahjongTile comboTile = pairTiles[Random.Range(0, pairTiles.Count)];
+                if (comboTile != null)
+                {
+                    comboTile.SetComboTile(true);
+                }
+            }
+        }
+
+        private int GetDifficultyComboTileCount(int availablePairCount)
+        {
+            if (availablePairCount <= 0)
+            {
+                return 0;
+            }
+
+            LevelManager levelManager = GetLevelManager();
+            if (levelManager?.ActiveLevelDefinition == null)
+            {
+                return 0;
+            }
+
+            float comboRatio;
+            switch (levelManager.ActiveLevelDefinition.Difficulty)
+            {
+                case LevelDifficulty.Hard:
+                    comboRatio = hardComboTileRatio;
+                    break;
+                case LevelDifficulty.Expert:
+                    comboRatio = expertComboTileRatio;
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (comboRatio <= 0f)
+            {
+                return 0;
+            }
+
+            int comboTileCount = Mathf.RoundToInt(availablePairCount * comboRatio);
+            if (comboTileCount <= 0)
+            {
+                comboTileCount = 1;
+            }
+
+            return Mathf.Clamp(comboTileCount, 0, availablePairCount);
+        }
+
+        private bool IsComboTriggerPair(MahjongTile firstTile, MahjongTile secondTile)
+        {
+            bool firstIsCombo = firstTile != null && firstTile.IsComboTile;
+            bool secondIsCombo = secondTile != null && secondTile.IsComboTile;
+            return firstIsCombo || secondIsCombo;
+        }
+
+        private void TriggerComboAutoMatches(MahjongTile firstTile, MahjongTile secondTile)
+        {
+            comboSourceTiles.Clear();
+            if (firstTile != null && firstTile.IsComboTile)
+            {
+                firstTile.SetComboTile(false);
+                comboSourceTiles.Add(firstTile);
+            }
+
+            if (secondTile != null && secondTile.IsComboTile)
+            {
+                secondTile.SetComboTile(false);
+                comboSourceTiles.Add(secondTile);
+            }
+
+            for (int index = 0; index < ComboExtraMatchPairCount; index++)
+            {
+                if (!TryFindRandomBoardPair(out MahjongTile comboFirstTile, out MahjongTile comboSecondTile))
+                {
+                    break;
+                }
+
+                QueueMatchedPairForResolution(comboFirstTile, comboSecondTile, false);
+            }
+
+            comboSourceTiles.Clear();
+        }
+
+        private bool TryFindRandomBoardPair(out MahjongTile firstTile, out MahjongTile secondTile)
+        {
+            firstTile = null;
+            secondTile = null;
+
+            TileManager tileManager = GetTileManager();
+            if (tileManager == null)
+            {
+                return false;
+            }
+
+            Dictionary<string, List<MahjongTile>> pairsByVisualKey = new Dictionary<string, List<MahjongTile>>();
+            foreach (MahjongTile tile in tileManager.GetRemainingTiles())
+            {
+                if (!IsEligibleComboTarget(tileManager, tile))
+                {
+                    continue;
+                }
+
+                string visualKey = tile.VisualMatchKey;
+                if (!pairsByVisualKey.TryGetValue(visualKey, out List<MahjongTile> matchingTiles))
+                {
+                    matchingTiles = new List<MahjongTile>();
+                    pairsByVisualKey.Add(visualKey, matchingTiles);
+                }
+
+                matchingTiles.Add(tile);
+            }
+
+            List<List<MahjongTile>> pairGroups = new List<List<MahjongTile>>();
+            foreach (List<MahjongTile> pairGroup in pairsByVisualKey.Values)
+            {
+                if (pairGroup != null && pairGroup.Count >= 2)
+                {
+                    pairGroups.Add(pairGroup);
+                }
+            }
+
+            if (pairGroups.Count <= 0)
+            {
+                return false;
+            }
+
+            List<MahjongTile> selectedGroup = pairGroups[Random.Range(0, pairGroups.Count)];
+            int firstIndex = Random.Range(0, selectedGroup.Count);
+            firstTile = selectedGroup[firstIndex];
+            selectedGroup.RemoveAt(firstIndex);
+            secondTile = selectedGroup[Random.Range(0, selectedGroup.Count)];
+            return firstTile != null && secondTile != null;
+        }
+
+        private bool IsEligibleComboTarget(TileManager tileManager, MahjongTile tile)
+        {
+            if (tile == null || tile.IsRemoved || tile.IsBufferedSelection || pendingMatchedTiles.Contains(tile))
+            {
+                return false;
+            }
+
+            for (int index = 0; index < comboSourceTiles.Count; index++)
+            {
+                if (tile == comboSourceTiles[index])
+                {
+                    return false;
+                }
+            }
+
+            return IsTileAvailableForBoardPair(tileManager, tile);
         }
 
         /// <summary>

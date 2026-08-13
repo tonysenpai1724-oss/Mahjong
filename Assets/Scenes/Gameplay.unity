@@ -571,6 +571,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Managers.MatchManager
   hardMemoryFaceDownRatio: 0.15
   expertMemoryFaceDownRatio: 0.25
+  hardComboTileRatio: 0.05
+  expertComboTileRatio: 0.1
   powerUpSettings: {fileID: 11400000, guid: 3a9be00ff3d9492284bdf0d8e8784957, type: 2}
 --- !u!1 &176450031
 GameObject:

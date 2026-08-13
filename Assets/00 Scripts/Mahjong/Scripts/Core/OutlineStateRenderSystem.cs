@@ -124,7 +124,7 @@ namespace MahjongOut3D.Core
             Shader shader = Shader.Find(OutlineWriterShaderName);
             if (shader == null)
             {
-                Debug.LogWarning("OutlineStateRenderSystem could not find Hidden/Mahjong/OutlineStateWriter shader.");
+                Debug.LogWarning("OutlineStateRenderSystem could not find Hidden/Mahjong/OutlineStateWriter shader. Ensure it is included in Graphics Settings for player builds.");
                 return false;
             }
 
