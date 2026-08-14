@@ -337,6 +337,11 @@ namespace MahjongOut3D.LevelSystem
             public LevelDifficulty Difficulty { get; set; }
 
             /// <summary>
+            /// Gets or sets whether the level should be treated as a surface-placement layout at runtime.
+            /// </summary>
+            public bool UseSurfaceTilePlacement { get; set; }
+
+            /// <summary>
             /// Gets or sets the generated tile list.
             /// </summary>
             public List<LevelTileDefinition> Tiles { get; set; } = new List<LevelTileDefinition>();
@@ -581,7 +586,7 @@ namespace MahjongOut3D.LevelSystem
                     List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
                     logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
-                    if (TryBuildTileDefinitions(occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions))
+                    if (TryBuildTileDefinitions(candidate.Shape, occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions))
                     {
                         solved = true;
                         break;
@@ -593,15 +598,17 @@ namespace MahjongOut3D.LevelSystem
                     throw new InvalidOperationException($"Failed to generate a solvable level for difficulty '{settings.Label}' after {MaxSolvableGenerationAttemptsPerLevel} attempts.");
                 }
 
+                int layerCount = GetLayerCount(tileDefinitions);
                 results.Add(new GeneratedLevelData
                 {
                     LevelName = $"{levelNamePrefix}_{settings.Label}_{sequence:000}",
-                    GridSize = logicalGridSize,
+                    GridSize = ResolveSerializedGridSize(tileDefinitions, logicalGridSize),
                     LayoutOverride = layoutOverride,
                     Shape = candidate.Shape,
                     Difficulty = settings.Difficulty,
+                    UseSurfaceTilePlacement = ShouldUseSurfaceTilePlacement(candidate.Shape, layerCount),
                     Tiles = tileDefinitions,
-                    LayerCount = GetLayerCount(tileDefinitions),
+                    LayerCount = layerCount,
                 });
             }
         }
@@ -1363,7 +1370,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds tile definitions and assigns match ids in pairs.
         /// </summary>
-        private bool TryBuildTileDefinitions(List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, DifficultyBatchDefinition settings, System.Random random, out List<LevelTileDefinition> tileDefinitions)
+        private bool TryBuildTileDefinitions(LevelShapeType shape, List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, DifficultyBatchDefinition settings, System.Random random, out List<LevelTileDefinition> tileDefinitions)
         {
             tileDefinitions = new List<LevelTileDefinition>(occupiedCoordinates != null ? occupiedCoordinates.Count : 0);
             if (occupiedCoordinates == null || occupiedCoordinates.Count == 0)
@@ -1386,8 +1393,8 @@ namespace MahjongOut3D.LevelSystem
             for (int pairIndex = 0; pairIndex < orderedPairs.Count; pairIndex++)
             {
                 TilePlacementPair pair = orderedPairs[pairIndex];
-                tileDefinitions.Add(CreateTileDefinition(pairIndex, tileIndex++, pair.First, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
-                tileDefinitions.Add(CreateTileDefinition(pairIndex, tileIndex++, pair.Second, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+                tileDefinitions.Add(CreateTileDefinition(shape, pairIndex, tileIndex++, pair.First, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+                tileDefinitions.Add(CreateTileDefinition(shape, pairIndex, tileIndex++, pair.Second, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
             }
 
             return true;
@@ -1796,18 +1803,28 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Creates a single tile definition with an optional 180-degree Y flip.
         /// </summary>
-        private LevelTileDefinition CreateTileDefinition(int matchId, int tileIndex, TilePlacementData placement, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, float flippedTileChance, System.Random random)
+        private LevelTileDefinition CreateTileDefinition(LevelShapeType shape, int matchId, int tileIndex, TilePlacementData placement, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, float flippedTileChance, System.Random random)
         {
             bool flipTile = ShouldFlipGeneratedTile(placement, flippedTileChance, random);
             return new LevelTileDefinition
             {
                 MatchId = matchId,
-                GridCoordinate = GetLogicalGridCoordinate(tileIndex, logicalGridSize),
+                GridCoordinate = ResolveGeneratedGridCoordinate(shape, placement, tileIndex, logicalGridSize),
                 SurfaceShellIndex = placement.ShellIndex,
                 UseCustomLocalPosition = true,
                 LocalPosition = GetCompactedSurfaceTileLocalPosition(placement, shapeGridSize),
                 LocalEulerAngles = GetPlacementRotationEuler(placement, flipTile),
             };
+        }
+
+        private static Vector3Int ResolveGeneratedGridCoordinate(LevelShapeType shape, TilePlacementData placement, int tileIndex, VoxelGridSize logicalGridSize)
+        {
+            if (shape == LevelShapeType.Cylinder && placement != null)
+            {
+                return placement.Coordinate;
+            }
+
+            return GetLogicalGridCoordinate(tileIndex, logicalGridSize);
         }
 
         private static bool ShouldFlipGeneratedTile(TilePlacementData placement, float flippedTileChance, System.Random random)
@@ -2110,6 +2127,45 @@ namespace MahjongOut3D.LevelSystem
             return new VoxelGridSize(side, side, side);
         }
 
+        private static VoxelGridSize ResolveSerializedGridSize(IReadOnlyList<LevelTileDefinition> tiles, VoxelGridSize fallbackGridSize)
+        {
+            if (tiles == null || tiles.Count == 0)
+            {
+                return fallbackGridSize;
+            }
+
+            int width = 0;
+            int height = 0;
+            int depth = 0;
+            bool hasTile = false;
+
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                LevelTileDefinition tile = tiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                hasTile = true;
+                width = Mathf.Max(width, tile.GridCoordinate.x + 1);
+                height = Mathf.Max(height, tile.GridCoordinate.y + 1);
+                depth = Mathf.Max(depth, tile.GridCoordinate.z + 1);
+            }
+
+            return hasTile ? new VoxelGridSize(width, height, depth) : fallbackGridSize;
+        }
+
+        private static bool ShouldUseSurfaceTilePlacement(LevelShapeType shape, int layerCount)
+        {
+            if (shape == LevelShapeType.Cylinder && layerCount <= 1)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// Calculates the custom local-space position of a tile slot wrapped on an exposed face.
         /// </summary>
@@ -2362,7 +2418,7 @@ namespace MahjongOut3D.LevelSystem
 
             serializedObject.FindProperty("<LayoutOverride>k__BackingField").objectReferenceValue = data.LayoutOverride;
             serializedObject.FindProperty("<Shape>k__BackingField").intValue = (int)data.Shape;
-            serializedObject.FindProperty("<UseSurfaceTilePlacement>k__BackingField").boolValue = true;
+            serializedObject.FindProperty("<UseSurfaceTilePlacement>k__BackingField").boolValue = data.UseSurfaceTilePlacement;
             serializedObject.FindProperty("<LayerCount>k__BackingField").intValue = Mathf.Max(0, data.LayerCount);
             serializedObject.FindProperty("<Difficulty>k__BackingField").enumValueIndex = (int)data.Difficulty;
 

@@ -68,10 +68,18 @@ namespace MahjongOut3D.LevelSystem
         [Header("Tile Tuning")]
         [SerializeField] private bool applyTileBaseColor = true;
         [SerializeField] private Color tileBaseColor = Color.white;
+        [Header("Cube Grid Spacing")]
+        [Tooltip("Cube-only spacing scale applied to regular voxel-grid tile positions.")]
         [SerializeField] private Vector3 tileSpacingOffset;
+
+        [Header("Cube Surface Spacing")]
+        [Tooltip("Cube-only base spacing offset for surface-placement levels.")]
         [SerializeField] private Vector3 surfaceTileSpacingOffset;
+        [Tooltip("Cube-only extra spacing for Left/Right faces on surface-placement levels.")]
         [SerializeField] private Vector3 leftRightSurfaceSpacingOffset;
+        [Tooltip("Cube-only extra spacing for Up/Down faces on surface-placement levels.")]
         [SerializeField] private Vector3 upDownSurfaceSpacingOffset;
+        [Tooltip("Cube-only extra spacing for Front/Back faces on surface-placement levels.")]
         [SerializeField] private Vector3 frontBackSurfaceSpacingOffset;
         [SerializeField, Range(0.5f, 1f)] private float surfaceShellSeparationScale = 0.8f;
 

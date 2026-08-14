@@ -4,15 +4,17 @@ using UnityEngine;
 namespace MahjongOut3D.LevelSystem
 {
     /// <summary>
-    /// Builds concentric hollow cylinder shells that match the authored preview layout.
-    /// The smallest possible core is the preview cylinder: 16 segments and 6 vertical rows.
+    /// Builds concentric hollow cylinder shells that match the authored preview layouts.
+    /// The reference previews use 16 outer segments, 8 middle segments, and 4 inner segments across 6 rows.
     /// </summary>
     internal sealed class CylinderShellLayoutBuilder
     {
         private const int CoreSegmentCount = 16;
+        private const int MinimumSegmentCount = 4;
         private const int CoreRowCount = 6;
-        private const int SegmentStepPerOuterShell = 4;
-        private const int MaximumShellCount = 6;
+        private const int MaximumShellCount = 3;
+        private const float PreviewOuterCenterDistance = 1.2223f;
+        private const float PreviewVerticalStep = 0.72f;
 
         private readonly ProceduralLevelBatchGenerator.CubeTileMetrics tileMetrics;
         private readonly float inPlaneGap;
@@ -25,71 +27,32 @@ namespace MahjongOut3D.LevelSystem
 
         public List<List<ProceduralLevelBatchGenerator.TilePlacementData>> Build(int targetLayerCount, int minTileCount, int maxTileCount, System.Random random)
         {
-            int safeMinTileCount = Mathf.Max(2, minTileCount);
-            int safeMaxTileCount = Mathf.Max(safeMinTileCount, maxTileCount);
             int desiredShellCount = Mathf.Clamp(targetLayerCount, 1, MaximumShellCount);
-            int targetTileCount = Mathf.Clamp(((safeMinTileCount + safeMaxTileCount) / 2) & ~1, safeMinTileCount, safeMaxTileCount);
-
-            List<CylinderBlueprint> candidates = BuildCandidates(desiredShellCount, safeMinTileCount, safeMaxTileCount, targetTileCount);
-            if (candidates.Count == 0)
-            {
-                candidates = BuildCandidates(1, 2, Mathf.Max(2, safeMaxTileCount), targetTileCount);
-            }
-
-            CylinderBlueprint selected = SelectBlueprint(candidates, random);
-            return BuildShells(selected);
-        }
-
-        private List<CylinderBlueprint> BuildCandidates(int desiredShellCount, int minTileCount, int maxTileCount, int targetTileCount)
-        {
-            List<CylinderBlueprint> candidates = new List<CylinderBlueprint>();
-            int safeDesiredShellCount = Mathf.Clamp(desiredShellCount, 1, MaximumShellCount);
-
-            for (int shellCount = safeDesiredShellCount; shellCount >= 1; shellCount--)
-            {
-                List<int> segmentCounts = BuildSegmentCounts(shellCount);
-                int totalTileCount = CoreRowCount * Sum(segmentCounts);
-                if (totalTileCount > maxTileCount)
-                {
-                    continue;
-                }
-
-                float balanceDifference = GetBalanceDifference(segmentCounts[segmentCounts.Count - 1], CoreRowCount);
-                bool meetsMinimum = totalTileCount >= minTileCount;
-                candidates.Add(new CylinderBlueprint(segmentCounts, CoreRowCount, totalTileCount, Mathf.Abs(totalTileCount - targetTileCount), balanceDifference, meetsMinimum));
-            }
-
-            if (candidates.Count > 0)
-            {
-                return candidates;
-            }
-
-            List<int> fallbackSegmentCounts = BuildSegmentCounts(1);
-            int fallbackTileCount = CoreRowCount * Sum(fallbackSegmentCounts);
-            candidates.Add(new CylinderBlueprint(fallbackSegmentCounts, CoreRowCount, fallbackTileCount, Mathf.Abs(fallbackTileCount - targetTileCount), GetBalanceDifference(fallbackSegmentCounts[0], CoreRowCount), fallbackTileCount >= minTileCount));
-            return candidates;
+            List<int> segmentCounts = BuildSegmentCounts(desiredShellCount);
+            int totalTileCount = CoreRowCount * Sum(segmentCounts);
+            CylinderBlueprint blueprint = new CylinderBlueprint(segmentCounts, CoreRowCount, totalTileCount, 0, GetBalanceDifference(segmentCounts[segmentCounts.Count - 1], CoreRowCount), totalTileCount >= Mathf.Max(2, minTileCount));
+            return BuildShells(blueprint);
         }
 
         private List<List<ProceduralLevelBatchGenerator.TilePlacementData>> BuildShells(CylinderBlueprint blueprint)
         {
             List<List<ProceduralLevelBatchGenerator.TilePlacementData>> shells = new List<List<ProceduralLevelBatchGenerator.TilePlacementData>>(blueprint.SegmentCounts.Count);
-            float tangentStep = GetTangentStep();
-            float verticalStep = GetVerticalStep();
+            float verticalStep = PreviewVerticalStep;
+            float outerCenterDistance = PreviewOuterCenterDistance;
 
             for (int shellIndex = 0; shellIndex < blueprint.SegmentCounts.Count; shellIndex++)
             {
                 int segmentCount = blueprint.SegmentCounts[shellIndex];
-                float radius = GetRingRadius(segmentCount, tangentStep);
-                shells.Add(BuildShell(segmentCount, blueprint.RowCount, radius, verticalStep));
+                float centerDistance = outerCenterDistance / Mathf.Pow(2f, shellIndex);
+                shells.Add(BuildShell(segmentCount, blueprint.RowCount, centerDistance, verticalStep, shellIndex, blueprint.SegmentCounts.Count));
             }
 
             return shells;
         }
 
-        private List<ProceduralLevelBatchGenerator.TilePlacementData> BuildShell(int segmentCount, int rowCount, float radius, float verticalStep)
+        private List<ProceduralLevelBatchGenerator.TilePlacementData> BuildShell(int segmentCount, int rowCount, float centerDistance, float verticalStep, int shellIndex, int totalShellCount)
         {
             List<ProceduralLevelBatchGenerator.TilePlacementData> shell = new List<ProceduralLevelBatchGenerator.TilePlacementData>(segmentCount * rowCount);
-            float outwardPadding = 0.02f;
 
             for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
             {
@@ -100,13 +63,14 @@ namespace MahjongOut3D.LevelSystem
                     float angleRadians = ((float)segmentIndex / segmentCount) * Mathf.PI * 2f;
                     Vector3 outwardNormal = new Vector3(Mathf.Sin(angleRadians), 0f, Mathf.Cos(angleRadians)).normalized;
                     float yawDegrees = Mathf.Atan2(outwardNormal.x, outwardNormal.z) * Mathf.Rad2Deg;
+                    Vector3Int authoredGridCoordinate = GetAuthoredGridCoordinate(totalShellCount, shellIndex, rowIndex, segmentIndex);
 
                     shell.Add(new ProceduralLevelBatchGenerator.TilePlacementData
                     {
-                        Coordinate = Vector3Int.zero,
+                        Coordinate = authoredGridCoordinate,
                         FacingDirection = ToFacingDirection(outwardNormal),
                         SurfaceSlotIndex = -1,
-                        CustomLocalPosition = (outwardNormal * (radius + outwardPadding)) + (Vector3.up * localY),
+                        CustomLocalPosition = (outwardNormal * centerDistance) + (Vector3.up * localY),
                         CustomLocalEulerAngles = new Vector3(0f, yawDegrees + 90f, 90f),
                         UseCustomLocalPosition = true,
                         UseCustomLocalEulerAngles = true,
@@ -121,95 +85,123 @@ namespace MahjongOut3D.LevelSystem
         private static List<int> BuildSegmentCounts(int shellCount)
         {
             List<int> segmentCounts = new List<int>(shellCount);
-            for (int shellIndex = Mathf.Max(1, shellCount) - 1; shellIndex >= 0; shellIndex--)
+            int safeShellCount = Mathf.Clamp(shellCount, 1, MaximumShellCount);
+            int segmentCount = CoreSegmentCount;
+            for (int shellIndex = 0; shellIndex < safeShellCount; shellIndex++)
             {
-                segmentCounts.Add(CoreSegmentCount + (shellIndex * SegmentStepPerOuterShell));
+                segmentCounts.Add(segmentCount);
+                if (segmentCount <= MinimumSegmentCount)
+                {
+                    break;
+                }
+
+                segmentCount = Mathf.Max(MinimumSegmentCount, segmentCount / 2);
             }
 
             return segmentCounts;
         }
 
-        private static CylinderBlueprint SelectBlueprint(List<CylinderBlueprint> candidates, System.Random random)
+        private static Vector3Int GetAuthoredGridCoordinate(int totalShellCount, int shellIndex, int rowIndex, int segmentIndex)
         {
-            if (candidates == null || candidates.Count == 0)
-            {
-                return new CylinderBlueprint(new List<int> { CoreSegmentCount }, CoreRowCount, CoreSegmentCount * CoreRowCount, 0, 0f, true);
-            }
+            int safeRowIndex = Mathf.Max(0, rowIndex);
 
-            candidates.Sort(CompareBlueprints);
-            int topCount = Mathf.Min(3, candidates.Count);
-            if (random == null || topCount <= 1)
+            if (totalShellCount <= 1)
             {
-                return candidates[0];
-            }
-
-            int totalWeight = 0;
-            for (int index = 0; index < topCount; index++)
-            {
-                totalWeight += topCount - index;
-            }
-
-            int roll = random.Next(0, totalWeight);
-            for (int index = 0; index < topCount; index++)
-            {
-                int weight = topCount - index;
-                if (roll < weight)
+                Vector2Int[] perimeterCoordinates =
                 {
-                    return candidates[index];
-                }
+                    new Vector2Int(0, 0),
+                    new Vector2Int(1, 0),
+                    new Vector2Int(2, 0),
+                    new Vector2Int(3, 0),
+                    new Vector2Int(4, 0),
+                    new Vector2Int(4, 1),
+                    new Vector2Int(4, 2),
+                    new Vector2Int(4, 3),
+                    new Vector2Int(4, 4),
+                    new Vector2Int(3, 4),
+                    new Vector2Int(2, 4),
+                    new Vector2Int(1, 4),
+                    new Vector2Int(0, 4),
+                    new Vector2Int(0, 3),
+                    new Vector2Int(0, 2),
+                    new Vector2Int(0, 1),
+                };
 
-                roll -= weight;
+                Vector2Int coordinate = perimeterCoordinates[Mathf.Clamp(segmentIndex, 0, perimeterCoordinates.Length - 1)];
+                return new Vector3Int(coordinate.x, safeRowIndex, coordinate.y);
             }
 
-            return candidates[0];
+            Vector2Int[][] shellCoordinates =
+            {
+                new[]
+                {
+                    new Vector2Int(0, 0),
+                    new Vector2Int(1, 0),
+                    new Vector2Int(2, 0),
+                    new Vector2Int(3, 0),
+                    new Vector2Int(4, 0),
+                    new Vector2Int(5, 0),
+                    new Vector2Int(0, 1),
+                    new Vector2Int(1, 1),
+                    new Vector2Int(2, 1),
+                    new Vector2Int(3, 1),
+                    new Vector2Int(4, 1),
+                    new Vector2Int(5, 1),
+                    new Vector2Int(0, 2),
+                    new Vector2Int(1, 2),
+                    new Vector2Int(2, 2),
+                    new Vector2Int(3, 2),
+                },
+                new[]
+                {
+                    new Vector2Int(0, 3),
+                    new Vector2Int(1, 3),
+                    new Vector2Int(2, 3),
+                    new Vector2Int(3, 3),
+                    new Vector2Int(4, 3),
+                    new Vector2Int(5, 3),
+                    new Vector2Int(0, 4),
+                    new Vector2Int(1, 4),
+                },
+                new[]
+                {
+                    new Vector2Int(0, 5),
+                    new Vector2Int(1, 5),
+                    new Vector2Int(2, 5),
+                    new Vector2Int(3, 5),
+                },
+            };
+
+            int safeShellIndex = Mathf.Clamp(shellIndex, 0, shellCoordinates.Length - 1);
+            Vector2Int[] coordinates = shellCoordinates[safeShellIndex];
+            Vector2Int authoredCoordinate = coordinates[Mathf.Clamp(segmentIndex, 0, coordinates.Length - 1)];
+            return new Vector3Int(authoredCoordinate.x, safeRowIndex, authoredCoordinate.y);
         }
 
-        private static int CompareBlueprints(CylinderBlueprint left, CylinderBlueprint right)
-        {
-            if (left.MeetsMinimumTileCount != right.MeetsMinimumTileCount)
-            {
-                return right.MeetsMinimumTileCount.CompareTo(left.MeetsMinimumTileCount);
-            }
-
-            int differenceComparison = left.Difference.CompareTo(right.Difference);
-            if (differenceComparison != 0)
-            {
-                return differenceComparison;
-            }
-
-            int shellCountComparison = right.SegmentCounts.Count.CompareTo(left.SegmentCounts.Count);
-            if (shellCountComparison != 0)
-            {
-                return shellCountComparison;
-            }
-
-            int balanceComparison = left.BalanceDifference.CompareTo(right.BalanceDifference);
-            if (balanceComparison != 0)
-            {
-                return balanceComparison;
-            }
-
-            return right.TotalTileCount.CompareTo(left.TotalTileCount);
-        }
 
         private float GetTangentStep()
         {
-            return Mathf.Max(0.01f, tileMetrics.FaceWidth + inPlaneGap);
+            return PreviewOuterCenterDistance * Mathf.Sin(Mathf.PI / CoreSegmentCount) * 2f;
         }
 
         private float GetVerticalStep()
         {
-            return Mathf.Max(0.01f, tileMetrics.FaceHeight + inPlaneGap);
+            return PreviewVerticalStep;
         }
 
         private float GetBalanceDifference(int segmentCount, int rowCount)
         {
-            float tangentStep = GetTangentStep();
             float verticalStep = GetVerticalStep();
-            float radius = GetRingRadius(segmentCount, tangentStep);
+            float radius = GetPreviewCenterDistance(segmentCount);
             float totalHeight = rowCount * verticalStep;
             float outerDiameter = (radius * 2f) + tileMetrics.Thickness;
             return Mathf.Abs(totalHeight - outerDiameter) / Mathf.Max(0.01f, Mathf.Max(totalHeight, outerDiameter));
+        }
+
+        private static float GetPreviewCenterDistance(int segmentCount)
+        {
+            float normalizedSegmentRatio = Mathf.Max(1f, segmentCount) / CoreSegmentCount;
+            return PreviewOuterCenterDistance * normalizedSegmentRatio;
         }
 
         private static float GetRingRadius(int segmentCount, float tangentStep)

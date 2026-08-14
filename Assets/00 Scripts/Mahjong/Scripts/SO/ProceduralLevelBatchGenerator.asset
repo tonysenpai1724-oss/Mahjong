@@ -15,7 +15,7 @@ MonoBehaviour:
   targetCatalog: {fileID: 11400000, guid: f8b473ff57de4323baabdd6333f902f1, type: 2}
   layoutOverride: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
   tilePrefab: {fileID: -5892857342694290962, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
-  surfaceTileGap: 0.03
+  surfaceTileGap: 0
   leftRightSurfaceGapOffset: 0
   upDownSurfaceGapOffset: 0
   frontBackSurfaceGapOffset: 0
@@ -36,9 +36,9 @@ MonoBehaviour:
     difficulty: 0
   normalSettings:
     label: Normal
-    levelCount: 5
-    minLayerCount: 1
-    maxLayerCount: 3
+    levelCount: 1
+    minLayerCount: 2
+    maxLayerCount: 2
     minPairCount: 45
     maxPairCount: 70
     flippedTileChance: 0.45
