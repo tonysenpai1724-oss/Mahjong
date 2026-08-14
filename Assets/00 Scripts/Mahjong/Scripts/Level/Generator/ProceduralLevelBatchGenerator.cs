@@ -153,18 +153,18 @@ namespace MahjongOut3D.LevelSystem
                     return;
                 }
 
-                bool hasSupportedShape = false;
+                HashSet<LevelShapeType> seenShapes = new HashSet<LevelShapeType>();
                 for (int index = allowedShapes.Count - 1; index >= 0; index--)
                 {
                     LevelShapeType normalizedShape = NormalizeSupportedShapeType(allowedShapes[index]);
-                    if (normalizedShape != LevelShapeType.Cube || hasSupportedShape)
+                    if (seenShapes.Contains(normalizedShape))
                     {
                         allowedShapes.RemoveAt(index);
                         continue;
                     }
 
                     allowedShapes[index] = normalizedShape;
-                    hasSupportedShape = true;
+                    seenShapes.Add(normalizedShape);
                 }
             }
 
@@ -251,7 +251,16 @@ namespace MahjongOut3D.LevelSystem
 
         private static LevelShapeType NormalizeSupportedShapeType(LevelShapeType shape)
         {
-            return LevelShapeType.Cube;
+            switch (shape)
+            {
+                case LevelShapeType.Cube:
+                case LevelShapeType.Heart:
+                case LevelShapeType.Cylinder:
+                    return shape;
+
+                default:
+                    return LevelShapeType.Cube;
+            }
         }
 
         /// <summary>
@@ -369,9 +378,19 @@ namespace MahjongOut3D.LevelSystem
             public Vector3 CustomLocalPosition { get; set; }
 
             /// <summary>
+            /// Gets or sets a custom local rotation override used by direct shell generators.
+            /// </summary>
+            public Vector3 CustomLocalEulerAngles { get; set; }
+
+            /// <summary>
             /// Gets or sets a value indicating whether the custom local position override should be used.
             /// </summary>
             public bool UseCustomLocalPosition { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether the custom local rotation override should be used.
+            /// </summary>
+            public bool UseCustomLocalEulerAngles { get; set; }
 
             /// <summary>
             /// Gets or sets a value indicating whether nested shell compaction should still be applied to the custom local position.
@@ -558,7 +577,7 @@ namespace MahjongOut3D.LevelSystem
                 for (int attempt = 0; attempt < MaxSolvableGenerationAttemptsPerLevel; attempt++)
                 {
                     candidate = CreateShapeCandidate(settings, random);
-                    int tileCount = GetTargetTileCount(settings, candidate.Shells, candidate.TargetLayerCount);
+                    int tileCount = GetTargetTileCount(settings, candidate);
                     List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
                     logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
@@ -614,17 +633,29 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Chooses a compact tile count that preserves full outer layers whenever possible.
         /// </summary>
-        private static int GetTargetTileCount(DifficultyBatchDefinition settings, List<List<TilePlacementData>> shells, int targetLayerCount)
+        private static int GetTargetTileCount(DifficultyBatchDefinition settings, ShapeCandidate candidate)
         {
+            if (candidate == null)
+            {
+                return 0;
+            }
+
+            List<List<TilePlacementData>> shells = candidate.Shells;
             if (shells == null || shells.Count == 0)
             {
                 return 0;
             }
 
+            if (candidate.Shape == LevelShapeType.Heart || candidate.Shape == LevelShapeType.Cylinder)
+            {
+                int total = GetShellTileCapacity(shells);
+                return total % 2 == 0 ? total : Mathf.Max(2, total - 1);
+            }
+
             int maxTileCount = Mathf.Max(2, settings.MaxPairCount * 2);
             int minTileCount = Mathf.Max(2, settings.MinPairCount * 2);
 
-            return GetPreferredCubeTileCount(shells, targetLayerCount, minTileCount, maxTileCount);
+            return GetPreferredCubeTileCount(shells, candidate.TargetLayerCount, minTileCount, maxTileCount);
 
         }
 
@@ -690,7 +721,7 @@ namespace MahjongOut3D.LevelSystem
                 LevelShapeType selectedShape = settings.GetRandomShape(random);
                 int targetLayerCount = GetRandomLayerCount(settings, random);
                 VoxelGridSize gridSize = BuildGridSizeForShape(targetLayerCount, selectedShape);
-                List<List<TilePlacementData>> shells = BuildShapeShells(gridSize, selectedShape, targetLayerCount, settings);
+                List<List<TilePlacementData>> shells = BuildShapeShells(gridSize, selectedShape, targetLayerCount, settings, random);
                 if (GetShellTileCapacity(shells) < 2)
                 {
                     continue;
@@ -727,7 +758,7 @@ namespace MahjongOut3D.LevelSystem
                 GridSize = fallbackGridSize,
                 Shape = LevelShapeType.Cube,
                 TargetLayerCount = fallbackLayerCount,
-                Shells = BuildShapeShells(fallbackGridSize, LevelShapeType.Cube, fallbackLayerCount, settings),
+                Shells = BuildShapeShells(fallbackGridSize, LevelShapeType.Cube, fallbackLayerCount, settings, random),
             };
         }
 
@@ -773,7 +804,9 @@ namespace MahjongOut3D.LevelSystem
                 ShellIndex = Mathf.Max(0, shellIndex),
                 SurfaceSlotIndex = placement.SurfaceSlotIndex,
                 CustomLocalPosition = placement.CustomLocalPosition,
+                CustomLocalEulerAngles = placement.CustomLocalEulerAngles,
                 UseCustomLocalPosition = placement.UseCustomLocalPosition,
+                UseCustomLocalEulerAngles = placement.UseCustomLocalEulerAngles,
                 ApplyShellCompaction = placement.ApplyShellCompaction,
             };
         }
@@ -781,12 +814,30 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the shell list for the requested shape.
         /// </summary>
-        private List<List<TilePlacementData>> BuildShapeShells(VoxelGridSize gridSize, LevelShapeType shape, int targetLayerCount, DifficultyBatchDefinition settings)
+        private List<List<TilePlacementData>> BuildShapeShells(VoxelGridSize gridSize, LevelShapeType shape, int targetLayerCount, DifficultyBatchDefinition settings, System.Random random)
         {
             switch (shape)
             {
                 case LevelShapeType.Cube:
                     return BuildNestedCubeShells(targetLayerCount, settings);
+
+                case LevelShapeType.Heart:
+                {
+                    CubeTileMetrics metrics = ResolveCubeTileMetrics();
+                    HeartShellLayoutBuilder builder = new HeartShellLayoutBuilder(metrics, Mathf.Max(0f, surfaceTileGap));
+                    int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+                    int maxTileCount = settings != null ? Mathf.Max(minTileCount, settings.MaxPairCount * 2) : minTileCount;
+                    return builder.Build(targetLayerCount, minTileCount, maxTileCount, random);
+                }
+
+                case LevelShapeType.Cylinder:
+                {
+                    CubeTileMetrics metrics = ResolveCubeTileMetrics();
+                    CylinderShellLayoutBuilder builder = new CylinderShellLayoutBuilder(metrics, Mathf.Max(0f, surfaceTileGap));
+                    int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+                    int maxTileCount = settings != null ? Mathf.Max(minTileCount, settings.MaxPairCount * 2) : minTileCount;
+                    return builder.Build(targetLayerCount, minTileCount, maxTileCount, random);
+                }
 
             }
 
@@ -1271,6 +1322,18 @@ namespace MahjongOut3D.LevelSystem
                     break;
                 }
 
+                case LevelShapeType.Heart:
+                    width = Mathf.Clamp(7 + ((safeLayerCount - 1) * 2), 7, 17);
+                    height = Mathf.Max(5, width - 2);
+                    depth = width >= 9 ? 5 : 3;
+                    break;
+
+                case LevelShapeType.Cylinder:
+                    width = Mathf.Clamp(4 + (safeLayerCount * 2), 6, 18);
+                    height = Mathf.Clamp(2 + safeLayerCount, 3, 8);
+                    depth = width;
+                    break;
+
               
             }
 
@@ -1419,14 +1482,26 @@ namespace MahjongOut3D.LevelSystem
                 return false;
             }
 
-            Vector3 outwardNormal = ((Vector3)VoxelGridDirections.GetOffset(placement.FacingDirection)).normalized;
+            Vector3 outwardNormal = GetPlacementOutwardNormal(placement);
             float depthEpsilon = Mathf.Max(0.01f, GetSurfaceShellThickness() * 0.25f);
-            Vector2 columnTolerance = GetSurfaceColumnTolerance(placement.FacingDirection);
+            Vector2 columnTolerance = GetSurfaceColumnTolerance(placement);
+            bool placementUsesCustomFacing = UsesCustomFacing(placement);
 
             for (int index = 0; index < remainingPlacements.Count; index++)
             {
                 TilePlacementData blocker = remainingPlacements[index];
-                if (blocker == null || blocker == placement || blocker.FacingDirection != placement.FacingDirection || !localPositionsByPlacement.TryGetValue(blocker, out Vector3 blockerPosition))
+                if (blocker == null || blocker == placement || !localPositionsByPlacement.TryGetValue(blocker, out Vector3 blockerPosition))
+                {
+                    continue;
+                }
+
+                if (!placementUsesCustomFacing && !UsesCustomFacing(blocker) && blocker.FacingDirection != placement.FacingDirection)
+                {
+                    continue;
+                }
+
+                if ((placementUsesCustomFacing || UsesCustomFacing(blocker))
+                    && Vector3.Dot(outwardNormal, GetPlacementOutwardNormal(blocker)) < 0.95f)
                 {
                     continue;
                 }
@@ -1436,7 +1511,7 @@ namespace MahjongOut3D.LevelSystem
                     continue;
                 }
 
-                if (SharesSurfaceColumn(placement.FacingDirection, placementPosition, blockerPosition, columnTolerance))
+                if (SharesSurfaceColumn(placement, placementPosition, blocker, blockerPosition, columnTolerance))
                 {
                     return false;
                 }
@@ -1476,8 +1551,8 @@ namespace MahjongOut3D.LevelSystem
                 return left.FacingDirection.CompareTo(right.FacingDirection);
             }
 
-            float leftDepth = Vector3.Dot(leftPosition, ((Vector3)VoxelGridDirections.GetOffset(left.FacingDirection)).normalized);
-            float rightDepth = Vector3.Dot(rightPosition, ((Vector3)VoxelGridDirections.GetOffset(right.FacingDirection)).normalized);
+            float leftDepth = Vector3.Dot(leftPosition, GetPlacementOutwardNormal(left));
+            float rightDepth = Vector3.Dot(rightPosition, GetPlacementOutwardNormal(right));
             int depthComparison = rightDepth.CompareTo(leftDepth);
             if (depthComparison != 0)
             {
@@ -1534,8 +1609,8 @@ namespace MahjongOut3D.LevelSystem
         {
             int shellDelta = Mathf.Abs(candidate.ShellIndex - first.ShellIndex);
             bool sameShell = shellDelta == 0;
-            bool sameFacing = candidate.FacingDirection == first.FacingDirection;
-            bool oppositeFacing = IsOppositeFacingDirection(first.FacingDirection, candidate.FacingDirection);
+            bool sameFacing = ArePlacementsFacingSimilar(first, candidate);
+            bool oppositeFacing = ArePlacementsFacingOpposite(first, candidate);
             float shellSpread = Mathf.Min(3, shellDelta);
 
             switch (difficulty)
@@ -1584,6 +1659,16 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Determines whether two placements occupy the same face column across nested shells.
         /// </summary>
+        private static bool SharesSurfaceColumn(TilePlacementData first, Vector3 firstPosition, TilePlacementData second, Vector3 secondPosition, Vector2 columnTolerance)
+        {
+            if (UsesCustomFacing(first) || UsesCustomFacing(second))
+            {
+                return SharesCustomSurfaceColumn(GetPlacementOutwardNormal(first), firstPosition, secondPosition, columnTolerance);
+            }
+
+            return SharesSurfaceColumn(first.FacingDirection, firstPosition, secondPosition, columnTolerance);
+        }
+
         private static bool SharesSurfaceColumn(VoxelGridDirection facingDirection, Vector3 firstPosition, Vector3 secondPosition, Vector2 columnTolerance)
         {
             switch (facingDirection)
@@ -1606,9 +1691,37 @@ namespace MahjongOut3D.LevelSystem
             }
         }
 
+        private static bool SharesCustomSurfaceColumn(Vector3 outwardNormal, Vector3 firstPosition, Vector3 secondPosition, Vector2 columnTolerance)
+        {
+            Vector3 horizontalAxis = Vector3.Cross(Vector3.up, outwardNormal);
+            if (horizontalAxis.sqrMagnitude <= 0.0001f)
+            {
+                horizontalAxis = Vector3.Cross(Vector3.right, outwardNormal);
+            }
+
+            horizontalAxis.Normalize();
+            Vector3 delta = secondPosition - firstPosition;
+            float horizontalDelta = Mathf.Abs(Vector3.Dot(delta, horizontalAxis));
+            float verticalDelta = Mathf.Abs(Vector3.Dot(delta, Vector3.up));
+            return horizontalDelta <= columnTolerance.x && verticalDelta <= columnTolerance.y;
+        }
+
         /// <summary>
         /// Resolves the tolerance used to decide whether two shells overlap on the same face column.
         /// </summary>
+        private Vector2 GetSurfaceColumnTolerance(TilePlacementData placement)
+        {
+            if (UsesCustomFacing(placement))
+            {
+                CubeTileMetrics metrics = ResolveCubeTileMetrics();
+                return new Vector2(
+                    Mathf.Max(0.05f, metrics.FaceWidth * 0.35f),
+                    Mathf.Max(0.05f, metrics.FaceHeight * 0.35f));
+            }
+
+            return GetSurfaceColumnTolerance(placement != null ? placement.FacingDirection : VoxelGridDirection.Forward);
+        }
+
         private Vector2 GetSurfaceColumnTolerance(VoxelGridDirection facingDirection)
         {
             Vector3 step = layoutOverride != null ? layoutOverride.CellStep : Vector3.one;
@@ -1627,6 +1740,41 @@ namespace MahjongOut3D.LevelSystem
                 default:
                     return new Vector2(Mathf.Max(0.05f, step.x * 0.35f), Mathf.Max(0.05f, step.y * 0.35f));
             }
+        }
+
+        private static bool UsesCustomFacing(TilePlacementData placement)
+        {
+            return placement != null && placement.UseCustomLocalEulerAngles;
+        }
+
+        private static bool ArePlacementsFacingSimilar(TilePlacementData first, TilePlacementData second)
+        {
+            if (first == null || second == null)
+            {
+                return false;
+            }
+
+            if (!UsesCustomFacing(first) && !UsesCustomFacing(second))
+            {
+                return first.FacingDirection == second.FacingDirection;
+            }
+
+            return Vector3.Dot(GetPlacementOutwardNormal(first), GetPlacementOutwardNormal(second)) >= 0.9f;
+        }
+
+        private static bool ArePlacementsFacingOpposite(TilePlacementData first, TilePlacementData second)
+        {
+            if (first == null || second == null)
+            {
+                return false;
+            }
+
+            if (!UsesCustomFacing(first) && !UsesCustomFacing(second))
+            {
+                return IsOppositeFacingDirection(first.FacingDirection, second.FacingDirection);
+            }
+
+            return Vector3.Dot(GetPlacementOutwardNormal(first), GetPlacementOutwardNormal(second)) <= -0.9f;
         }
 
         /// <summary>
@@ -1658,7 +1806,7 @@ namespace MahjongOut3D.LevelSystem
                 SurfaceShellIndex = placement.ShellIndex,
                 UseCustomLocalPosition = true,
                 LocalPosition = GetCompactedSurfaceTileLocalPosition(placement, shapeGridSize),
-                LocalEulerAngles = GetFacingRotationEuler(placement.FacingDirection, flipTile),
+                LocalEulerAngles = GetPlacementRotationEuler(placement, flipTile),
             };
         }
 
@@ -1865,6 +2013,42 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return outwardRotation.eulerAngles;
+        }
+
+        private static Vector3 GetPlacementRotationEuler(TilePlacementData placement, bool flipTile)
+        {
+            if (placement == null)
+            {
+                return Vector3.zero;
+            }
+
+            if (!placement.UseCustomLocalEulerAngles)
+            {
+                return GetFacingRotationEuler(placement.FacingDirection, flipTile);
+            }
+
+            Quaternion outwardRotation = Quaternion.Euler(placement.CustomLocalEulerAngles);
+            if (flipTile)
+            {
+                outwardRotation = Quaternion.AngleAxis(180f, GetPlacementOutwardNormal(placement)) * outwardRotation;
+            }
+
+            return outwardRotation.eulerAngles;
+        }
+
+        private static Vector3 GetPlacementOutwardNormal(TilePlacementData placement)
+        {
+            if (placement == null)
+            {
+                return Vector3.forward;
+            }
+
+            if (placement.UseCustomLocalEulerAngles)
+            {
+                return (Quaternion.Euler(placement.CustomLocalEulerAngles) * Vector3.up).normalized;
+            }
+
+            return ((Vector3)VoxelGridDirections.GetOffset(placement.FacingDirection)).normalized;
         }
 
         /// <summary>

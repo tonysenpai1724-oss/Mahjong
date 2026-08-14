@@ -633,7 +633,10 @@ namespace MahjongOut3D.LevelSystem
                 CompactSurfaceShellLayers(runtimeTiles, layoutOverride);
             }
 
-            ApplySurfaceTileSpacing(runtimeTiles);
+            if (shape == LevelShapeType.Cube)
+            {
+                ApplySurfaceTileSpacing(runtimeTiles);
+            }
 
             return runtimeTiles;
         }

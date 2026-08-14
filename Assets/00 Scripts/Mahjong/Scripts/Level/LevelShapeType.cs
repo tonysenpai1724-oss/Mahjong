@@ -6,6 +6,8 @@ namespace MahjongOut3D.LevelSystem
     public enum LevelShapeType
     {
         Cube = 0,
+        Heart = 1,
+        Cylinder = 2,
 
         Custom = 8,
     }
