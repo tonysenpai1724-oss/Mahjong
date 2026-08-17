@@ -19,14 +19,6 @@ namespace MahjongOut3D.Managers
         private const float MemoryRevealTimeoutSeconds = 2f;
         private const int ComboExtraMatchPairCount = 3;
 
-        [Header("Memory Flip Difficulty")]
-        [SerializeField, Range(0f, 1f)] private float hardMemoryFaceDownRatio = 0.35f;
-        [SerializeField, Range(0f, 1f)] private float expertMemoryFaceDownRatio = 0.55f;
-
-        [Header("Combo Tile Difficulty")]
-        [SerializeField, Range(0f, 1f)] private float hardComboTileRatio = 0.05f;
-        [SerializeField, Range(0f, 1f)] private float expertComboTileRatio = 0.1f;
-
         [SerializeField] private PowerUpSettings powerUpSettings;
 
         private readonly List<MahjongTile> selectedTiles = new List<MahjongTile>(SelectionTrayCapacity);
@@ -893,25 +885,12 @@ namespace MahjongOut3D.Managers
                 return 0f;
             }
 
-            switch (levelManager.ActiveLevelDefinition.Difficulty)
-            {
-                case LevelDifficulty.Hard:
-                    return hardMemoryFaceDownRatio;
-                case LevelDifficulty.Expert:
-                    return expertMemoryFaceDownRatio;
-                default:
-                    return 0f;
-            }
+            return levelManager.ActiveLevelDefinition.GetResolvedFaceDownTileRatio();
         }
 
         private bool UsesMemoryFlipSelectionMode()
         {
-            LevelManager levelManager = GetLevelManager();
-            LevelDifficulty? difficulty = levelManager != null && levelManager.ActiveLevelDefinition != null
-                ? levelManager.ActiveLevelDefinition.Difficulty
-                : null;
-
-            return difficulty == LevelDifficulty.Hard || difficulty == LevelDifficulty.Expert;
+            return GetMemoryFaceDownRatio() > 0f;
         }
 
         private void AssignDifficultyComboTiles()
@@ -989,18 +968,7 @@ namespace MahjongOut3D.Managers
                 return 0;
             }
 
-            float comboRatio;
-            switch (levelManager.ActiveLevelDefinition.Difficulty)
-            {
-                case LevelDifficulty.Hard:
-                    comboRatio = hardComboTileRatio;
-                    break;
-                case LevelDifficulty.Expert:
-                    comboRatio = expertComboTileRatio;
-                    break;
-                default:
-                    return 0;
-            }
+            float comboRatio = levelManager.ActiveLevelDefinition.GetResolvedComboTileRatio();
 
             if (comboRatio <= 0f)
             {
@@ -1529,6 +1497,13 @@ namespace MahjongOut3D.Managers
             if (matchingTrayTile != null)
             {
                 QueueMatchedPairForResolution(matchingTrayTile, tappedTile, true);
+                yield break;
+            }
+
+            if (selectedTiles.Count >= SelectionTrayCapacity)
+            {
+                GetAudioManager()?.PlayLose();
+                GetGameManager()?.LoseGameplay();
             }
         }
 
@@ -1771,6 +1746,16 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
+            int nextMatchId = 0;
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                MahjongTile tile = tiles[index];
+                if (tile != null)
+                {
+                    nextMatchId = Mathf.Max(nextMatchId, tile.MatchId + 1);
+                }
+            }
+
             Dictionary<string, List<MahjongTile>> tilesByVisualKey = new Dictionary<string, List<MahjongTile>>();
             for (int index = 0; index < tiles.Count; index++)
             {
@@ -1833,9 +1818,11 @@ namespace MahjongOut3D.Managers
                         continue;
                     }
 
-                    tile.SetMatchId(sourceGroup.MatchId);
+                    tile.SetMatchId(nextMatchId + (tileIndex / 2));
                     tile.SetupFillTexture(sourceGroup.FillTexture);
                 }
+
+                nextMatchId += Mathf.Max(1, (targetGroup.Tiles.Count + 1) / 2);
             }
         }
 

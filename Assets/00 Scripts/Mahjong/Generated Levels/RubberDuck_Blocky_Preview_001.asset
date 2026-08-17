@@ -22,6 +22,8 @@ MonoBehaviour:
   <UseSurfaceTilePlacement>k__BackingField: 1
   <LayerCount>k__BackingField: 1
   <Difficulty>k__BackingField: 2
+  <FaceDownTileRatio>k__BackingField: 0.2
+  <ComboTileRatio>k__BackingField: 0.08
   <FillCategoryNames>k__BackingField:
   - Chinese
   - Flower

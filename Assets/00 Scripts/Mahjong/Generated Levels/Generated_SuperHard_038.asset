@@ -22,6 +22,8 @@ MonoBehaviour:
   <UseSurfaceTilePlacement>k__BackingField: 1
   <LayerCount>k__BackingField: 3
   <Difficulty>k__BackingField: 3
+  <FaceDownTileRatio>k__BackingField: 0.15
+  <ComboTileRatio>k__BackingField: 0.1
   <FillCategoryNames>k__BackingField: []
   <Tiles>k__BackingField:
   - matchId: 0

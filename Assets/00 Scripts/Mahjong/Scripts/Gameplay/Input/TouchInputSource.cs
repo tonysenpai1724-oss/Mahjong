@@ -235,7 +235,7 @@ namespace MahjongOut3D.GameplayInput
                 return;
             }
 
-            OrbitDragged?.Invoke(new OrbitDragInputEvent(frameDelta));
+            OrbitDragged?.Invoke(new OrbitDragInputEvent(frameDelta, screenPosition));
         }
 
         /// <summary>

@@ -19,6 +19,7 @@ namespace MahjongOut3D.LevelSystem
         private sealed class MatchFillGroup
         {
             private readonly HashSet<int> shellIndices = new HashSet<int>();
+            private readonly HashSet<int> runtimeMatchIds = new HashSet<int>();
 
             public MatchFillGroup(int matchId)
             {
@@ -35,12 +36,19 @@ namespace MahjongOut3D.LevelSystem
 
             public IEnumerable<int> ShellIndices => shellIndices;
 
+            public IEnumerable<int> RuntimeMatchIds => runtimeMatchIds;
+
             public void RegisterShell(int shellIndex)
             {
                 int normalizedShellIndex = Mathf.Max(0, shellIndex);
                 shellIndices.Add(normalizedShellIndex);
                 OuterShellIndex = Mathf.Min(OuterShellIndex, normalizedShellIndex);
                 InnerShellIndex = Mathf.Max(InnerShellIndex, normalizedShellIndex);
+            }
+
+            public void RegisterRuntimeMatchId(int runtimeMatchId)
+            {
+                runtimeMatchIds.Add(runtimeMatchId);
             }
         }
 
@@ -90,6 +98,7 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField, Min(1f)] private float cameraFramePaddingOnLoad = 1.7f;
 
         private readonly List<MahjongTile> spawnedTiles = new List<MahjongTile>();
+        private readonly List<Transform> runtimeBlockRoots = new List<Transform>();
         private readonly Dictionary<int, Texture2D> fillTexturesByMatchId = new Dictionary<int, Texture2D>();
         private readonly List<Texture2D> activeLevelFillTextures = new List<Texture2D>();
         private ComponentPool<MahjongTile> tilePool;
@@ -162,12 +171,17 @@ namespace MahjongOut3D.LevelSystem
             levelManager?.SetActiveLevelDefinition(definition, definition.UseSurfaceTilePlacement);
             ConfigureFillTexturePool(definition.FillCategoryNames);
 
-            IList<LevelTileDefinition> runtimeTiles = BuildRuntimeTileDefinitions(
+            VoxelGridSize singleBlockGridSize = definition.GetSingleBlockRuntimeGridSize();
+
+            IList<LevelTileDefinition> singleBlockRuntimeTiles = BuildRuntimeTileDefinitions(
                 definition.UseSurfaceTilePlacement,
                 definition.Shape,
                 definition.LayoutOverride,
                 definition.Tiles);
-            return Generate(definition.LevelName, definition.GetRuntimeGridSize(), definition.LayoutOverride, runtimeTiles);
+
+            float blockStrideLocalX = ResolveBlockStrideLocalX(singleBlockGridSize, definition.LayoutOverride, singleBlockRuntimeTiles, definition.BlockSpacingCells);
+            IList<LevelTileDefinition> runtimeTiles = ExpandRuntimeTileDefinitions(definition, singleBlockGridSize, definition.LayoutOverride, singleBlockRuntimeTiles);
+            return Generate(definition.LevelName, definition.GetRuntimeGridSize(), definition.LayoutOverride, runtimeTiles, definition.BlockCount, blockStrideLocalX);
         }
 
         /// <summary>
@@ -192,7 +206,7 @@ namespace MahjongOut3D.LevelSystem
                 jsonData.shape,
                 null,
                 LevelJsonSerializer.ToTileDefinitions(jsonData));
-            return Generate(jsonData.levelName, gridSize, null, runtimeTiles);
+            return Generate(jsonData.levelName, gridSize, null, runtimeTiles, 1, 0f);
         }
         /// <summary>
         /// Returns a random piece texture from the configured MahjongMaterialSO.
@@ -274,7 +288,7 @@ namespace MahjongOut3D.LevelSystem
 
             levelManager?.SetActiveLevelDefinition(null, false);
             ConfigureFillTexturePool(null);
-            return Generate("ArrayGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles);
+            return Generate("ArrayGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles, 1, 0f);
         }
 
         /// <summary>
@@ -325,7 +339,7 @@ namespace MahjongOut3D.LevelSystem
 
             levelManager?.SetActiveLevelDefinition(null, false);
             ConfigureFillTexturePool(null);
-            return Generate("MaskGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles);
+            return Generate("MaskGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles, 1, 0f);
         }
 
         /// <summary>
@@ -353,6 +367,7 @@ namespace MahjongOut3D.LevelSystem
             }
 
             spawnedTiles.Clear();
+            ClearRuntimeBlockRoots();
             fillTexturesByMatchId.Clear();
             activeLevelFillTextures.Clear();
             nextTileId = 0;
@@ -374,7 +389,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the runtime grid, spawns tiles and focuses the orbit camera.
         /// </summary>
-        private IReadOnlyList<MahjongTile> Generate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions)
+        private IReadOnlyList<MahjongTile> Generate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX)
         {
             if (context == null)
             {
@@ -385,6 +400,7 @@ namespace MahjongOut3D.LevelSystem
             EnsureTileTemplate();
 
             ClearGeneratedLevel();
+            PrepareRuntimeBlockRoots(runtimeBlockCount, blockStrideLocalX);
 
             VoxelGridData grid = levelManager.CreateGrid(gridSize, layoutOverride);
             levelManager.SetActiveGrid(grid);
@@ -463,13 +479,15 @@ namespace MahjongOut3D.LevelSystem
                     continue;
                 }
 
-                if (!groupsByMatchId.TryGetValue(definition.MatchId, out MatchFillGroup group))
+                int sourceMatchId = ResolveSourceMatchId(definition);
+                if (!groupsByMatchId.TryGetValue(sourceMatchId, out MatchFillGroup group))
                 {
-                    group = new MatchFillGroup(definition.MatchId);
-                    groupsByMatchId.Add(definition.MatchId, group);
+                    group = new MatchFillGroup(sourceMatchId);
+                    groupsByMatchId.Add(sourceMatchId, group);
                 }
 
                 group.RegisterShell(definition.SurfaceShellIndex);
+                group.RegisterRuntimeMatchId(definition.MatchId);
             }
 
             List<MatchFillGroup> groups = new List<MatchFillGroup>(groupsByMatchId.Values);
@@ -502,7 +520,11 @@ namespace MahjongOut3D.LevelSystem
                     continue;
                 }
 
-                fillTexturesByMatchId[group.MatchId] = selectedTexture;
+                foreach (int runtimeMatchId in group.RuntimeMatchIds)
+                {
+                    fillTexturesByMatchId[runtimeMatchId] = selectedTexture;
+                }
+
                 if (!usageCounts.ContainsKey(selectedTexture))
                 {
                     usageCounts[selectedTexture] = 0;
@@ -603,6 +625,7 @@ namespace MahjongOut3D.LevelSystem
                 }
 
                 runtimeTiles.Add(clone);
+                clone.RuntimeSourceMatchId = clone.RuntimeSourceMatchId >= 0 ? clone.RuntimeSourceMatchId : clone.MatchId;
                 hasAuthoredNestedShellIndices |= clone.SurfaceShellIndex > 0;
                 if (!useSurfaceTilePlacement)
                 {
@@ -741,7 +764,104 @@ namespace MahjongOut3D.LevelSystem
                 UseCustomLocalPosition = source.UseCustomLocalPosition,
                 LocalPosition = source.LocalPosition,
                 LocalEulerAngles = source.LocalEulerAngles,
+                RuntimeBlockIndex = source.RuntimeBlockIndex,
+                RuntimeSourceMatchId = source.RuntimeSourceMatchId,
             };
+        }
+
+        /// <summary>
+        /// Duplicates the authored block into multiple runtime blocks while keeping each block on its own rotation root.
+        /// </summary>
+        private IList<LevelTileDefinition> ExpandRuntimeTileDefinitions(LevelDefinition definition, VoxelGridSize singleBlockGridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> singleBlockRuntimeTiles)
+        {
+            if (singleBlockRuntimeTiles == null)
+            {
+                return singleBlockRuntimeTiles;
+            }
+
+            int resolvedBlockCount = definition != null ? Mathf.Max(1, definition.BlockCount) : 1;
+            if (resolvedBlockCount <= 1)
+            {
+                for (int index = 0; index < singleBlockRuntimeTiles.Count; index++)
+                {
+                    LevelTileDefinition tile = singleBlockRuntimeTiles[index];
+                    if (tile == null)
+                    {
+                        continue;
+                    }
+
+                    tile.RuntimeBlockIndex = 0;
+                    tile.RuntimeSourceMatchId = ResolveSourceMatchId(tile);
+                }
+
+                return singleBlockRuntimeTiles;
+            }
+
+            List<LevelTileDefinition> expandedTiles = new List<LevelTileDefinition>(singleBlockRuntimeTiles.Count * resolvedBlockCount);
+            VoxelGridData singleBlockGrid = levelManager.CreateGrid(singleBlockGridSize, layoutOverride);
+            int blockStrideWidth = definition.GetBlockStrideWidth(singleBlockGridSize);
+            int runtimeMatchIdStride = GetRuntimeMatchIdStride(singleBlockRuntimeTiles);
+
+            for (int blockIndex = 0; blockIndex < resolvedBlockCount; blockIndex++)
+            {
+                int gridOffsetX = blockIndex * blockStrideWidth;
+                for (int tileIndex = 0; tileIndex < singleBlockRuntimeTiles.Count; tileIndex++)
+                {
+                    LevelTileDefinition source = singleBlockRuntimeTiles[tileIndex];
+                    if (source == null)
+                    {
+                        continue;
+                    }
+
+                    LevelTileDefinition clone = CloneTileDefinition(source);
+                    int sourceMatchId = ResolveSourceMatchId(source);
+                    clone.MatchId = sourceMatchId + (blockIndex * runtimeMatchIdStride);
+                    clone.GridCoordinate = new Vector3Int(source.GridCoordinate.x + gridOffsetX, source.GridCoordinate.y, source.GridCoordinate.z);
+                    clone.LocalPosition = source.UseCustomLocalPosition ? source.LocalPosition : singleBlockGrid.GetLocalPosition(source.GridCoordinate);
+                    clone.UseCustomLocalPosition = true;
+                    clone.RuntimeBlockIndex = blockIndex;
+                    clone.RuntimeSourceMatchId = sourceMatchId;
+                    expandedTiles.Add(clone);
+                }
+            }
+
+            return expandedTiles;
+        }
+
+        /// <summary>
+        /// Resolves the authored source match id used to preserve pair visuals across duplicated runtime blocks.
+        /// </summary>
+        private static int ResolveSourceMatchId(LevelTileDefinition definition)
+        {
+            if (definition == null)
+            {
+                return 0;
+            }
+
+            return definition.RuntimeSourceMatchId >= 0 ? definition.RuntimeSourceMatchId : definition.MatchId;
+        }
+
+        /// <summary>
+        /// Computes a safe per-block match-id stride so duplicated blocks never share the same runtime match id.
+        /// </summary>
+        private static int GetRuntimeMatchIdStride(IList<LevelTileDefinition> tileDefinitions)
+        {
+            int maxMatchId = 0;
+            if (tileDefinitions != null)
+            {
+                for (int index = 0; index < tileDefinitions.Count; index++)
+                {
+                    LevelTileDefinition definition = tileDefinitions[index];
+                    if (definition == null)
+                    {
+                        continue;
+                    }
+
+                    maxMatchId = Mathf.Max(maxMatchId, ResolveSourceMatchId(definition));
+                }
+            }
+
+            return maxMatchId + 1;
         }
 
         /// <summary>
@@ -988,7 +1108,7 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         private void SpawnTile(VoxelGridData grid, LevelTileDefinition definition)
         {
-            Transform parent = tileRoot == null ? transform : tileRoot;
+            Transform parent = GetRuntimeBlockRoot(definition != null ? definition.RuntimeBlockIndex : 0);
             MahjongTile template = tilePrefab != null ? tilePrefab : runtimeFallbackTilePrefab;
             MahjongTile tile = usePooling && tilePool != null ? tilePool.Get(parent) : Instantiate(template, parent);
             Quaternion spawnRotation = Quaternion.Euler(definition.LocalEulerAngles);
@@ -1070,19 +1190,155 @@ namespace MahjongOut3D.LevelSystem
                 return;
             }
 
-            Transform rotationRoot = tileRoot != null ? tileRoot : transform;
-            if (rotationRoot != null)
+            Transform tileRootTransform = tileRoot != null ? tileRoot : transform;
+            if (tileRootTransform != null)
             {
-                rotationRoot.localRotation = defaultTileRootLocalRotation;
+                tileRootTransform.localRotation = defaultTileRootLocalRotation;
             }
 
+            for (int index = 0; index < runtimeBlockRoots.Count; index++)
+            {
+                Transform runtimeBlockRoot = runtimeBlockRoots[index];
+                if (runtimeBlockRoot != null)
+                {
+                    runtimeBlockRoot.localRotation = Quaternion.identity;
+                }
+            }
+
+            Transform rotationRoot = runtimeBlockRoots.Count > 0 && runtimeBlockRoots[0] != null
+                ? runtimeBlockRoots[0]
+                : tileRootTransform;
             cameraManager.SetRotationTarget(rotationRoot);
 
-            Bounds localBounds = grid.GetLocalBounds();
-            Bounds worldBounds = TransformBounds(rotationRoot, localBounds);
+            Bounds worldBounds = default;
+            bool useRuntimeTileBounds = runtimeBlockRoots.Count > 1;
+            if (useRuntimeTileBounds)
+            {
+                useRuntimeTileBounds = TryBuildSpawnedTileBounds(out worldBounds);
+            }
+
+            if (useRuntimeTileBounds)
+            {
+                worldBounds.Expand(worldBounds.size * 0.18f);
+            }
+            else
+            {
+                Bounds localBounds = grid.GetLocalBounds();
+                worldBounds = TransformBounds(tileRootTransform, localBounds);
+            }
 
             cameraManager.FrameBounds(worldBounds, cameraFramePaddingOnLoad, true, true);
             zoomSlider?.SyncWithCamera();
+        }
+
+        /// <summary>
+        /// Creates one runtime transform root per duplicated block.
+        /// </summary>
+        private void PrepareRuntimeBlockRoots(int blockCount, float blockStrideLocalX)
+        {
+            ClearRuntimeBlockRoots();
+
+            Transform rootParent = tileRoot == null ? transform : tileRoot;
+            int resolvedBlockCount = Mathf.Max(1, blockCount);
+            float centeredStartOffset = -0.5f * (resolvedBlockCount - 1) * blockStrideLocalX;
+            for (int blockIndex = 0; blockIndex < resolvedBlockCount; blockIndex++)
+            {
+                GameObject blockRootObject = new GameObject(resolvedBlockCount > 1 ? $"Runtime Block {blockIndex + 1}" : "Runtime Block");
+                Transform blockRoot = blockRootObject.transform;
+                blockRoot.SetParent(rootParent, false);
+                blockRoot.localPosition = new Vector3(centeredStartOffset + (blockStrideLocalX * blockIndex), 0f, 0f);
+                blockRoot.localRotation = Quaternion.identity;
+                blockRoot.localScale = Vector3.one;
+                runtimeBlockRoots.Add(blockRoot);
+            }
+        }
+
+        /// <summary>
+        /// Removes any runtime block roots created during the previous generation pass.
+        /// </summary>
+        private void ClearRuntimeBlockRoots()
+        {
+            for (int index = 0; index < runtimeBlockRoots.Count; index++)
+            {
+                Transform runtimeBlockRoot = runtimeBlockRoots[index];
+                if (runtimeBlockRoot != null)
+                {
+                    Destroy(runtimeBlockRoot.gameObject);
+                }
+            }
+
+            runtimeBlockRoots.Clear();
+        }
+
+        /// <summary>
+        /// Resolves the parent transform used when spawning a tile for the requested runtime block.
+        /// </summary>
+        private Transform GetRuntimeBlockRoot(int blockIndex)
+        {
+            if (blockIndex >= 0 && blockIndex < runtimeBlockRoots.Count && runtimeBlockRoots[blockIndex] != null)
+            {
+                return runtimeBlockRoots[blockIndex];
+            }
+
+            return tileRoot == null ? transform : tileRoot;
+        }
+
+        /// <summary>
+        /// Computes the horizontal local-space distance between duplicated block roots.
+        /// </summary>
+        private float ResolveBlockStrideLocalX(VoxelGridSize singleBlockGridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> singleBlockRuntimeTiles, int blockSpacingCells)
+        {
+            VoxelGridLayoutSettings resolvedLayout = layoutOverride != null ? layoutOverride : levelManager != null ? levelManager.DefaultGridLayout : null;
+            Vector3 cellSize = resolvedLayout != null ? resolvedLayout.CellSize : new Vector3(0.95f, 0.45f, 0.7f);
+
+            Bounds blockBounds = BuildLocalTileBounds(singleBlockGridSize, layoutOverride, singleBlockRuntimeTiles);
+            float baseWidth = blockBounds.size.x;
+            if (baseWidth <= Mathf.Epsilon)
+            {
+                baseWidth = Mathf.Max(cellSize.x, singleBlockGridSize.Width * cellSize.x);
+            }
+
+            return baseWidth + (Mathf.Max(0, blockSpacingCells) * Mathf.Max(0.01f, cellSize.x));
+        }
+
+        /// <summary>
+        /// Builds local-space bounds around the tile centers of one authored block.
+        /// </summary>
+        private Bounds BuildLocalTileBounds(VoxelGridSize singleBlockGridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions)
+        {
+            VoxelGridData singleBlockGrid = levelManager.CreateGrid(singleBlockGridSize, layoutOverride);
+            bool hasBounds = false;
+            Bounds bounds = default;
+
+            if (tileDefinitions != null)
+            {
+                for (int index = 0; index < tileDefinitions.Count; index++)
+                {
+                    LevelTileDefinition definition = tileDefinitions[index];
+                    if (definition == null)
+                    {
+                        continue;
+                    }
+
+                    Vector3 localPosition = ApplyTileSpacing(definition.UseCustomLocalPosition ? definition.LocalPosition : singleBlockGrid.GetLocalPosition(definition.GridCoordinate));
+                    if (!hasBounds)
+                    {
+                        bounds = new Bounds(localPosition, Vector3.zero);
+                        hasBounds = true;
+                    }
+                    else
+                    {
+                        bounds.Encapsulate(localPosition);
+                    }
+                }
+            }
+
+            if (hasBounds)
+            {
+                return bounds;
+            }
+
+            return singleBlockGrid.GetLocalBounds();
         }
 
         /// <summary>

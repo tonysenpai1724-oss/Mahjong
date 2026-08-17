@@ -1,6 +1,7 @@
 using MahjongOut3D.Core;
 using MahjongOut3D.CameraSystem;
 using MahjongOut3D.GameplayInput;
+using MahjongOut3D.TileSystem;
 using MahjongOut3D.Utilities;
 using UnityEngine;
 
@@ -222,6 +223,8 @@ namespace MahjongOut3D.Managers
         /// <param name="eventData">Drag input payload.</param>
         private void HandleOrbitDragged(OrbitDragInputEvent eventData)
         {
+            UpdateRotationTarget(eventData.ScreenPosition);
+
             if (blockRotationController != null && blockRotationController.RotationTarget != null)
             {
                 blockRotationController.Rotate(eventData.ScreenDelta);
@@ -238,6 +241,28 @@ namespace MahjongOut3D.Managers
         private void HandleZoomChanged(ZoomInputEvent eventData)
         {
             orbitCameraController?.Zoom(eventData.Delta);
+        }
+
+        /// <summary>
+        /// Switches the active rotation target to the block currently under the pointer.
+        /// </summary>
+        /// <param name="screenPosition">Current pointer position in screen pixels.</param>
+        private void UpdateRotationTarget(Vector2 screenPosition)
+        {
+            if (blockRotationController == null
+                || Context == null
+                || !Context.Services.TryGet(out TileManager tileManager)
+                || !tileManager.TryRaycastTile(screenPosition, out MahjongTile tile, out _)
+                || tile == null)
+            {
+                return;
+            }
+
+            Transform rotationTarget = tile.transform.parent != null ? tile.transform.parent : tile.transform;
+            if (rotationTarget != null && rotationTarget != blockRotationController.RotationTarget)
+            {
+                blockRotationController.SetRotationTarget(rotationTarget);
+            }
         }
     }
 }

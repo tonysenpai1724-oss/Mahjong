@@ -69,5 +69,16 @@ namespace MahjongOut3D.LevelSystem
             get => Mathf.Max(0, surfaceShellIndex);
             set => surfaceShellIndex = Mathf.Max(0, value);
         }
+
+        /// <summary>
+        /// Gets or sets the runtime-only duplicated block index that owns this tile.
+        /// </summary>
+        public int RuntimeBlockIndex { get; set; }
+
+        /// <summary>
+        /// Gets or sets the runtime-only source match group copied from the authored level.
+        /// Duplicated blocks may use distinct runtime match ids while still sharing this source group.
+        /// </summary>
+        public int RuntimeSourceMatchId { get; set; } = -1;
     }
 }

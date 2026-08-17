@@ -10,15 +10,27 @@ public class PopupEndgame : UIBase
     public CommonButton btnPlay;
     public UiResourceItem resourceItem;
     public Transform itemParent;
+
     public override void Show()
     {
         base.Show();
         ClearRewardItems();
+        if (resourceItem != null)
+        {
+            resourceItem.gameObject.SetActive(false);
+        }
+
         if (GameplayManager.Instance.PackReward != null)
         {
             foreach (var item in GameplayManager.Instance.PackReward.lstResource)
             {
+                if (resourceItem == null || itemParent == null)
+                {
+                    continue;
+                }
+
                 UiResourceItem uiItem = Instantiate(resourceItem, itemParent);
+                uiItem.gameObject.SetActive(true);
                 uiItem.InitResouce(item, true);
             }
         }
@@ -35,7 +47,13 @@ public class PopupEndgame : UIBase
 
         for (int i = itemParent.childCount - 1; i >= 0; i--)
         {
-            Destroy(itemParent.GetChild(i).gameObject);
+            Transform child = itemParent.GetChild(i);
+            if (resourceItem != null && child == resourceItem.transform)
+            {
+                continue;
+            }
+
+            Destroy(child.gameObject);
         }
     }
 
