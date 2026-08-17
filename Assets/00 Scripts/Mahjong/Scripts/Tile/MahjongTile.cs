@@ -50,9 +50,12 @@ namespace MahjongOut3D.TileSystem
         private Coroutine blockedTapFeedbackRoutine;
         private Coroutine faceFlipRoutine;
         private Vector3 blockedTapBaseLocalPosition;
+        private Vector3 pieceFaceBaseLocalPosition;
+        private Vector3 fillFaceBaseLocalPosition;
         private Quaternion pieceFaceBaseLocalRotation;
         private Quaternion fillFaceBaseLocalRotation;
         private bool hasCachedFaceBaseLocalRotations;
+        private Vector3 faceDownVisualLocalOffset;
         private bool hasDebugBaseColor;
         private Color debugBaseColor = Color.white;
         private Texture2D pieceTexture;
@@ -1140,9 +1143,16 @@ namespace MahjongOut3D.TileSystem
                 fillRenderer.enabled = state != TileState.Hidden && state != TileState.Removed;
             }
 
+            Vector3 startPiecePosition = pieceRenderer != null ? pieceRenderer.transform.localPosition : Vector3.zero;
             Quaternion startPieceRotation = pieceRenderer != null ? pieceRenderer.transform.localRotation : Quaternion.identity;
+            Vector3 startFillPosition = fillRenderer != null ? fillRenderer.transform.localPosition : Vector3.zero;
             Quaternion startFillRotation = fillRenderer != null ? fillRenderer.transform.localRotation : Quaternion.identity;
-            GetFaceTargetRotations(faceDown, out Quaternion targetPieceRotation, out Quaternion targetFillRotation);
+            GetFaceTargetPose(
+                faceDown,
+                out Vector3 targetPiecePosition,
+                out Quaternion targetPieceRotation,
+                out Vector3 targetFillPosition,
+                out Quaternion targetFillRotation);
             float elapsed = 0f;
 
             while (elapsed < FaceFlipDurationSeconds)
@@ -1152,11 +1162,13 @@ namespace MahjongOut3D.TileSystem
                 float easedT = 1f - Mathf.Pow(1f - t, 3f);
                 if (pieceRenderer != null)
                 {
+                    pieceRenderer.transform.localPosition = Vector3.LerpUnclamped(startPiecePosition, targetPiecePosition, easedT);
                     pieceRenderer.transform.localRotation = Quaternion.SlerpUnclamped(startPieceRotation, targetPieceRotation, easedT);
                 }
 
                 if (fillRenderer != null)
                 {
+                    fillRenderer.transform.localPosition = Vector3.LerpUnclamped(startFillPosition, targetFillPosition, easedT);
                     fillRenderer.transform.localRotation = Quaternion.SlerpUnclamped(startFillRotation, targetFillRotation, easedT);
                 }
 
@@ -1194,28 +1206,39 @@ namespace MahjongOut3D.TileSystem
 
             if (pieceRenderer != null)
             {
+                pieceFaceBaseLocalPosition = pieceRenderer.transform.localPosition;
                 pieceFaceBaseLocalRotation = pieceRenderer.transform.localRotation;
             }
 
             if (fillRenderer != null)
             {
+                fillFaceBaseLocalPosition = fillRenderer.transform.localPosition;
                 fillFaceBaseLocalRotation = fillRenderer.transform.localRotation;
             }
+
+            faceDownVisualLocalOffset = ResolveFaceDownVisualLocalOffset();
 
             hasCachedFaceBaseLocalRotations = pieceRenderer != null || fillRenderer != null;
         }
 
         private void ApplyFaceRotations(bool faceDown)
         {
-            GetFaceTargetRotations(faceDown, out Quaternion pieceRotation, out Quaternion fillRotation);
+            GetFaceTargetPose(
+                faceDown,
+                out Vector3 piecePosition,
+                out Quaternion pieceRotation,
+                out Vector3 fillPosition,
+                out Quaternion fillRotation);
 
             if (pieceRenderer != null)
             {
+                pieceRenderer.transform.localPosition = piecePosition;
                 pieceRenderer.transform.localRotation = pieceRotation;
             }
 
             if (fillRenderer != null)
             {
+                fillRenderer.transform.localPosition = fillPosition;
                 fillRenderer.transform.localRotation = fillRotation;
             }
         }
@@ -1226,6 +1249,102 @@ namespace MahjongOut3D.TileSystem
             Quaternion deltaRotation = faceDown ? FaceFlipDeltaRotation : Quaternion.identity;
             pieceRotation = pieceFaceBaseLocalRotation * deltaRotation;
             fillRotation = fillFaceBaseLocalRotation * deltaRotation;
+        }
+
+        private void GetFaceTargetPose(
+            bool faceDown,
+            out Vector3 piecePosition,
+            out Quaternion pieceRotation,
+            out Vector3 fillPosition,
+            out Quaternion fillRotation)
+        {
+            GetFaceTargetRotations(faceDown, out pieceRotation, out fillRotation);
+
+            Vector3 localOffset = faceDown ? faceDownVisualLocalOffset : Vector3.zero;
+            piecePosition = pieceFaceBaseLocalPosition + localOffset;
+            fillPosition = fillFaceBaseLocalPosition + localOffset;
+        }
+
+        private Vector3 ResolveFaceDownVisualLocalOffset()
+        {
+            if (pieceRenderer == null)
+            {
+                return Vector3.zero;
+            }
+
+            Quaternion faceDownRotation = pieceFaceBaseLocalRotation * FaceFlipDeltaRotation;
+            if (!TryGetRendererLocalBounds(pieceRenderer, pieceFaceBaseLocalPosition, pieceFaceBaseLocalRotation, out Bounds faceUpBounds) ||
+                !TryGetRendererLocalBounds(pieceRenderer, pieceFaceBaseLocalPosition, faceDownRotation, out Bounds faceDownBounds))
+            {
+                return Vector3.zero;
+            }
+
+            Vector3 faceUpAnchor = GetFaceAlignmentAnchor(faceUpBounds);
+            Vector3 faceDownAnchor = GetFaceAlignmentAnchor(faceDownBounds);
+            return faceUpAnchor - faceDownAnchor;
+        }
+
+        private static Vector3 GetFaceAlignmentAnchor(Bounds bounds)
+        {
+            return new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+        }
+
+        private bool TryGetRendererLocalBounds(MeshRenderer renderer, Vector3 localPosition, Quaternion localRotation, out Bounds transformedBounds)
+        {
+            transformedBounds = default;
+            if (renderer == null)
+            {
+                return false;
+            }
+
+            MeshFilter meshFilter = renderer.GetComponent<MeshFilter>();
+            if (meshFilter == null || meshFilter.sharedMesh == null)
+            {
+                return false;
+            }
+
+            Transform rendererTransform = renderer.transform;
+            Transform parentTransform = rendererTransform.parent;
+            Matrix4x4 localToWorldMatrix = parentTransform != null
+                ? parentTransform.localToWorldMatrix * Matrix4x4.TRS(localPosition, localRotation, rendererTransform.localScale)
+                : Matrix4x4.TRS(localPosition, localRotation, rendererTransform.localScale);
+
+            Matrix4x4 toRootMatrix = transform.worldToLocalMatrix * localToWorldMatrix;
+            return TryTransformLocalBounds(toRootMatrix, meshFilter.sharedMesh.bounds, out transformedBounds);
+        }
+
+        private bool TryTransformLocalBounds(Matrix4x4 toRootMatrix, Bounds sourceBounds, out Bounds transformedBounds)
+        {
+            transformedBounds = default;
+            if (sourceBounds.size.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return false;
+            }
+
+            Vector3 sourceCenter = sourceBounds.center;
+            Vector3 sourceExtents = sourceBounds.extents;
+
+            Vector3[] corners = new Vector3[8];
+            int cornerIndex = 0;
+            for (int x = -1; x <= 1; x += 2)
+            {
+                for (int y = -1; y <= 1; y += 2)
+                {
+                    for (int z = -1; z <= 1; z += 2)
+                    {
+                        Vector3 corner = sourceCenter + Vector3.Scale(sourceExtents, new Vector3(x, y, z));
+                        corners[cornerIndex++] = toRootMatrix.MultiplyPoint3x4(corner);
+                    }
+                }
+            }
+
+            transformedBounds = new Bounds(corners[0], Vector3.zero);
+            for (int index = 1; index < corners.Length; index++)
+            {
+                transformedBounds.Encapsulate(corners[index]);
+            }
+
+            return transformedBounds.size.sqrMagnitude > Mathf.Epsilon;
         }
 
         private void ApplyFaceRendererVisibility(bool faceDown)
