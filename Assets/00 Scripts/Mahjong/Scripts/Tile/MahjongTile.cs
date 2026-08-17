@@ -588,6 +588,13 @@ namespace MahjongOut3D.TileSystem
             }
 
             pieceRenderer.GetPropertyBlock(piecePropertyBlock);
+            piecePropertyBlock.Clear();
+
+            if (texture == null)
+            {
+                pieceRenderer.SetPropertyBlock(piecePropertyBlock);
+                return;
+            }
 
             bool applied = false;
             if (sharedMaterial.HasProperty(BaseMapId))
@@ -642,6 +649,13 @@ namespace MahjongOut3D.TileSystem
             }
 
             fillRenderer.GetPropertyBlock(fillPropertyBlock);
+            fillPropertyBlock.Clear();
+
+            if (texture == null)
+            {
+                fillRenderer.SetPropertyBlock(fillPropertyBlock);
+                return;
+            }
 
             bool applied = false;
             if (sharedMaterial.HasProperty(BaseMapId))

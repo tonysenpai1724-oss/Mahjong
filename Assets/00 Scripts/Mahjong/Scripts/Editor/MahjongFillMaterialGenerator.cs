@@ -23,11 +23,31 @@ namespace MahjongOut3D.Editor
         [SerializeField] private Material fillBaseMaterial;
         [SerializeField] private List<SourceCategory> categories = new List<SourceCategory>();
 
-        private static readonly (string CategoryName, string TextureFolderPath)[] DefaultCategorySources =
+        private const string DefaultCategoryRootFolderPath = "Assets/00 Scripts/Mahjong/Tex/Object Fill";
+
+        private static readonly (string CategoryName, string TextureFolderPath)[] LegacyCategorySources =
         {
             ("Number", "Assets/00 Scripts/Mahjong/Tex/Number"),
             ("Flower", "Assets/00 Scripts/Mahjong/Tex/Flower"),
         };
+
+        /// <summary>
+        /// Reloads the serialized source-category list from the default root folder.
+        /// </summary>
+        public int ReloadCategories()
+        {
+            categories.Clear();
+
+            foreach (SourceCategory discoveredCategory in DiscoverDefaultSourceCategories())
+            {
+                categories.Add(discoveredCategory);
+            }
+
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return categories.Count;
+        }
 
         /// <summary>
         /// Syncs categorized fill textures into the target material library.
@@ -122,9 +142,15 @@ namespace MahjongOut3D.Editor
                 return resolvedCategories;
             }
 
-            for (int defaultIndex = 0; defaultIndex < DefaultCategorySources.Length; defaultIndex++)
+            resolvedCategories.AddRange(DiscoverDefaultSourceCategories());
+            if (resolvedCategories.Count > 0)
             {
-                (string categoryName, string textureFolderPath) = DefaultCategorySources[defaultIndex];
+                return resolvedCategories;
+            }
+
+            for (int legacyIndex = 0; legacyIndex < LegacyCategorySources.Length; legacyIndex++)
+            {
+                (string categoryName, string textureFolderPath) = LegacyCategorySources[legacyIndex];
                 DefaultAsset folderAsset = AssetDatabase.LoadAssetAtPath<DefaultAsset>(textureFolderPath);
                 if (folderAsset == null)
                 {
@@ -139,6 +165,54 @@ namespace MahjongOut3D.Editor
             }
 
             return resolvedCategories;
+        }
+
+        private static List<SourceCategory> DiscoverDefaultSourceCategories()
+        {
+            List<SourceCategory> discoveredCategories = new List<SourceCategory>();
+            DefaultAsset rootFolder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(DefaultCategoryRootFolderPath);
+            if (rootFolder == null)
+            {
+                return discoveredCategories;
+            }
+
+            string rootPath = AssetDatabase.GetAssetPath(rootFolder);
+            string[] subFolderGuids = AssetDatabase.FindAssets("t:DefaultAsset", new[] { rootPath });
+            Array.Sort(subFolderGuids, CompareTextureGuidsByPath);
+
+            for (int guidIndex = 0; guidIndex < subFolderGuids.Length; guidIndex++)
+            {
+                string folderPath = AssetDatabase.GUIDToAssetPath(subFolderGuids[guidIndex]);
+                if (string.IsNullOrEmpty(folderPath) || string.Equals(folderPath, rootPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!AssetDatabase.IsValidFolder(folderPath))
+                {
+                    continue;
+                }
+
+                string relativePath = folderPath.Substring(rootPath.Length).Trim('/');
+                if (relativePath.Length == 0 || relativePath.Contains("/"))
+                {
+                    continue;
+                }
+
+                DefaultAsset folderAsset = AssetDatabase.LoadAssetAtPath<DefaultAsset>(folderPath);
+                if (folderAsset == null)
+                {
+                    continue;
+                }
+
+                discoveredCategories.Add(new SourceCategory
+                {
+                    categoryName = folderAsset.name,
+                    textureFolder = folderAsset,
+                });
+            }
+
+            return discoveredCategories;
         }
 
         private Material ResolveBaseMaterial()

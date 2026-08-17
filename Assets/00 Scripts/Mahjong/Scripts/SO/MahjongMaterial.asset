@@ -30,99 +30,127 @@ MonoBehaviour:
     - {fileID: 2800000, guid: 4d6ba5ea4c370b9e193a0c0e39f8753d, type: 3}
     - {fileID: 2800000, guid: b3f60c8a4b70482ce9aefb72d62dbf84, type: 3}
     - {fileID: 2800000, guid: ef5d9e3e097d2b102a22589d54beb7f4, type: 3}
+    - {fileID: 2800000, guid: 150ff2fbf09056744949ffce7becdf01, type: 3}
+    - {fileID: 2800000, guid: 1891090ddef52dfb7b7299fa58ccfe15, type: 3}
+    - {fileID: 2800000, guid: 82b83e10ec193ec2abfa12a4f59c5856, type: 3}
     - {fileID: 2800000, guid: ee030053385faf54e80ea427373ec02b, type: 3}
     - {fileID: 2800000, guid: c923fb685299b7414b742113edd20d4e, type: 3}
+    - {fileID: 2800000, guid: c04b22877273f784dab126f0fa4e6e44, type: 3}
+    - {fileID: 2800000, guid: beab90922e67e7893bdaad78b72ea64f, type: 3}
+    - {fileID: 2800000, guid: ff0c0d0916d727bf980e799aaf6bd4a0, type: 3}
+    - {fileID: 2800000, guid: 4785c8c11f7bd747f9288f26c9215650, type: 3}
     - {fileID: 2800000, guid: 1718092e4e4c905759869658efa98d51, type: 3}
     - {fileID: 2800000, guid: d3a0523795ec0384a8821d6840d5f075, type: 3}
+    - {fileID: 2800000, guid: 7cb2b129ba084230b8043adde4ba6f4f, type: 3}
+    - {fileID: 2800000, guid: cb5a45b78175f02ecbbd3444a90df996, type: 3}
+    - {fileID: 2800000, guid: 051e837b837d71f2d9175d57db46952e, type: 3}
     - {fileID: 2800000, guid: a08c48b9ee8def352881070ff856ba59, type: 3}
     - {fileID: 2800000, guid: a31c02c01e48ca2c687703dc954faf0e, type: 3}
     - {fileID: 2800000, guid: d60d9daeb5ac4fc44880632072c69553, type: 3}
     - {fileID: 2800000, guid: 8ab22d824ffbe4d87921a8df4f793c33, type: 3}
-  - categoryName: 
-    textures: []
-  - categoryName: 
-    textures: []
   fillBaseMaterial: {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
   fillCategories:
+  - categoryName: Bamboo
+    textures:
+    - {fileID: 2800000, guid: a89dc9ca83de0c9abb3d74f0b5f325a7, type: 3}
+    - {fileID: 2800000, guid: 12f028c7ef76e12588d2eb0935291e50, type: 3}
+    - {fileID: 2800000, guid: a3609723baa63433c9839c79a004d0d5, type: 3}
+    - {fileID: 2800000, guid: e1ce87e216e3e6f9a8af1bcefba43cf9, type: 3}
+    - {fileID: 2800000, guid: ede9f109a37070badb5d79ce6ba282b1, type: 3}
+    - {fileID: 2800000, guid: 14225d730e82a8868b8704dcc42d9d7c, type: 3}
+    - {fileID: 2800000, guid: a89ff36c16d1b58c998aa358eaebd9fc, type: 3}
+    - {fileID: 2800000, guid: 9c8b67a14d8f360519789f944d6c1ced, type: 3}
+    - {fileID: 2800000, guid: 9205d1d02463ad0a9ac5f23509223b8b, type: 3}
+  - categoryName: ChineseNumber
+    textures:
+    - {fileID: 2800000, guid: 219e8403e0b6f4e97bba6afaf71f5e44, type: 3}
+    - {fileID: 2800000, guid: 9ce66796e85d6f8c5b57349a4c91930a, type: 3}
+    - {fileID: 2800000, guid: 745dfb7a925e18f8d9724515d603e666, type: 3}
+    - {fileID: 2800000, guid: 54d523674d8f1489cb0234bf91b105e7, type: 3}
+    - {fileID: 2800000, guid: 36eada77b794004ebb05a66bad1ad4ce, type: 3}
+    - {fileID: 2800000, guid: cd720895429c4706aaafd3ea3561f77a, type: 3}
+    - {fileID: 2800000, guid: e7df756f0c647f6e7a449d6bc54f3949, type: 3}
+    - {fileID: 2800000, guid: 53d9ed1728e643e3a91a67bb647215b6, type: 3}
+    - {fileID: 2800000, guid: 7b1b8cf5a24f1de2d892437095c22b62, type: 3}
+  - categoryName: CoinDot
+    textures:
+    - {fileID: 2800000, guid: 88082933fea8066d78c750c41f210072, type: 3}
+    - {fileID: 2800000, guid: c2b23ea7b5bd7c40ba8eb96b580340ed, type: 3}
+    - {fileID: 2800000, guid: a04c22f3a66ca0fb990749f4edcce685, type: 3}
+    - {fileID: 2800000, guid: 3e9bc6a92257c7d01b4fedfe002b8a11, type: 3}
+    - {fileID: 2800000, guid: 684d986fdb014201a817b24f42d59e57, type: 3}
+    - {fileID: 2800000, guid: 7ab799ff990b26935b3fdc871bfbf572, type: 3}
+    - {fileID: 2800000, guid: db7566dd79bcbf183b9597df4d36346f, type: 3}
+    - {fileID: 2800000, guid: c2823eeec0b0e33708e0a4d787d73cf9, type: 3}
+    - {fileID: 2800000, guid: 1346dec3227bc3d998d92eb388ea58c8, type: 3}
+  - categoryName: Dragons
+    textures:
+    - {fileID: 2800000, guid: 71c8fd81bc4775eecbb277a6d898e194, type: 3}
+    - {fileID: 2800000, guid: 44ad7e9a61c51537bb9181dce1853001, type: 3}
+    - {fileID: 2800000, guid: c2082d4fa950e9ed79a94b66b6f313c1, type: 3}
+    - {fileID: 2800000, guid: fbced6248eb585313a8fff09deb3e001, type: 3}
+    - {fileID: 2800000, guid: df85fe9c619467d12be6631fa89bb3f5, type: 3}
+  - categoryName: Flowers
+    textures:
+    - {fileID: 2800000, guid: 4422c6dc950bbd8d1b2863215c5ae400, type: 3}
+    - {fileID: 2800000, guid: d8b054da2c3c1e8f9ad381b26ab87f69, type: 3}
+    - {fileID: 2800000, guid: 21166c96d5cf83a918f9c2f7d876510b, type: 3}
+    - {fileID: 2800000, guid: 5a139e75813e784db90ace635aeb7ae5, type: 3}
+    - {fileID: 2800000, guid: cc78a7d8b2e356aa888148464dd2ad38, type: 3}
+    - {fileID: 2800000, guid: 48e97cad19770d95bb464dd189e523f4, type: 3}
+    - {fileID: 2800000, guid: 616f73880faafd75fa52d60d8ed5ebe7, type: 3}
+    - {fileID: 2800000, guid: f639e0944983c23e38b37da5cec7a06d, type: 3}
+  - categoryName: LuckyDot
+    textures:
+    - {fileID: 2800000, guid: 693eb631aedc265ea915d7f08614df52, type: 3}
+    - {fileID: 2800000, guid: 7452b2d311ebd7ced9d7c23868fec92e, type: 3}
+    - {fileID: 2800000, guid: d4155417990f5989aaf4d6475457b4a5, type: 3}
+    - {fileID: 2800000, guid: 772b4feeeef1fc00abc18a81d1594cc4, type: 3}
+    - {fileID: 2800000, guid: bfa9c7dc11addedf78741e252803edd6, type: 3}
+    - {fileID: 2800000, guid: ebcbf231a3025ef38aa24a82a7abcd2f, type: 3}
+    - {fileID: 2800000, guid: e19177914decf8647b7b80171c728bc9, type: 3}
+    - {fileID: 2800000, guid: 4e486986194837be1b9a066c8742cc24, type: 3}
+    - {fileID: 2800000, guid: 5cf9e1bd326a3e3a38f64cc8d31649d2, type: 3}
+  - categoryName: MiniFlower
+    textures:
+    - {fileID: 2800000, guid: c6e418ae57d9607b388c9cca81bfbf7b, type: 3}
+    - {fileID: 2800000, guid: f8fe9f6877445778197035762e436b26, type: 3}
+    - {fileID: 2800000, guid: 8788fd102e1a9f6388ca3f82e0513192, type: 3}
+    - {fileID: 2800000, guid: 8f1f8e7048ea0af768025b7209531bf4, type: 3}
+    - {fileID: 2800000, guid: 084dc544843b2f7de8b077f820061b31, type: 3}
+    - {fileID: 2800000, guid: 3d2287c96952a8a858da0738b38d8649, type: 3}
+    - {fileID: 2800000, guid: 1a266ad3fa2f7650bba44e13925ef3c6, type: 3}
+    - {fileID: 2800000, guid: 16931ae98217189e886696a299865a90, type: 3}
+    - {fileID: 2800000, guid: df33b520b2f573cb995822319c3913d9, type: 3}
   - categoryName: Number
     textures:
-    - {fileID: 2800000, guid: 87e1fecaebf5a54718dee5390ee59c03, type: 3}
-    - {fileID: 2800000, guid: f5a9104eece80024aa354562ed7301c5, type: 3}
-    - {fileID: 2800000, guid: 16d8b24b4d31b12feb7c6567de0a52ba, type: 3}
-    - {fileID: 2800000, guid: d607d834b7e4229669b1d89a244e92f2, type: 3}
-    - {fileID: 2800000, guid: 2d7ff070ed0352c77a3c3bdb7ab28ddd, type: 3}
-    - {fileID: 2800000, guid: 9a6e115a51197e0f59ada63dc8653ffc, type: 3}
-    - {fileID: 2800000, guid: 575cdf5e6ef8e592aa0436cacd42179f, type: 3}
-    - {fileID: 2800000, guid: ae08ca2f6e0005f26b172899ed1f5a9e, type: 3}
-    - {fileID: 2800000, guid: 0d7989f75fff060de8927ea5d480a0c9, type: 3}
-  - categoryName: Flower
+    - {fileID: 2800000, guid: 38c001538d05eb5d3b4880a8c40ebb83, type: 3}
+    - {fileID: 2800000, guid: e092080d39dd1aad2889e6894bac6f81, type: 3}
+    - {fileID: 2800000, guid: c14c274d1c99f7f2a83e95a9aee235b2, type: 3}
+    - {fileID: 2800000, guid: faa669f0751383576aa930bf3ad28dd3, type: 3}
+    - {fileID: 2800000, guid: 02e4be1b6a3c1c3fbab8bd4c20252fc5, type: 3}
+    - {fileID: 2800000, guid: fde1b59c7f4362213b9aa341fc20146c, type: 3}
+    - {fileID: 2800000, guid: 561328260154a4850bf6aeb498ddf68d, type: 3}
+    - {fileID: 2800000, guid: df2385e9f2812bc779a688d1f582b4f3, type: 3}
+    - {fileID: 2800000, guid: 94f9e2640ae56e048a11be7470d65565, type: 3}
+  - categoryName: Sakura
     textures:
-    - {fileID: 2800000, guid: 8ad659c2a7408e628824eff18828b620, type: 3}
-    - {fileID: 2800000, guid: 04754158c4859b3e1baa8be0ce619905, type: 3}
-    - {fileID: 2800000, guid: 8e5e0177e78a24e55aa626593d024dd0, type: 3}
-    - {fileID: 2800000, guid: 42bbb1df1adf156bc8c92e03bb0fc9c9, type: 3}
-    - {fileID: 2800000, guid: 79abe7cbc44ebf5838c0bd1ab6929bad, type: 3}
-    - {fileID: 2800000, guid: 9aa9a539a05d9d9c6a56d10bff0fcf3a, type: 3}
-    - {fileID: 2800000, guid: bf9b434e2f15243e9aa2b28bbde441cf, type: 3}
-    - {fileID: 2800000, guid: 3cbceadb540d29c4c91c90da0702533f, type: 3}
-    - {fileID: 2800000, guid: 60d1e083ab2f4c2ef9ac2210bac5e4b5, type: 3}
-  - categoryName: Rectangle
+    - {fileID: 2800000, guid: 0a591a78ea8d9ee7983c13379d6a8f97, type: 3}
+    - {fileID: 2800000, guid: 02a20aceb50f13341b3463104fd53438, type: 3}
+    - {fileID: 2800000, guid: 8bd534960c0712abdb3933fef84d5ad5, type: 3}
+    - {fileID: 2800000, guid: 5abf7a18f40d1a537b8a292d3723bde2, type: 3}
+    - {fileID: 2800000, guid: 2fd8387b754b2aa4bbaee325c30c29c9, type: 3}
+    - {fileID: 2800000, guid: e315df7dab64f54f3b81fe53b73367bf, type: 3}
+    - {fileID: 2800000, guid: 8f6d51baf446d71afbe04f9bddf01df1, type: 3}
+    - {fileID: 2800000, guid: 19a3bd065c5244c888834c2df9bfba4b, type: 3}
+    - {fileID: 2800000, guid: 35463b46b3522d6189219a90f3b7964f, type: 3}
+  - categoryName: Winds
     textures:
-    - {fileID: 2800000, guid: 9408d5891a7ececbc9dffe104e0a25a8, type: 3}
-    - {fileID: 2800000, guid: f26297efea7037521891a0b5407c0444, type: 3}
-    - {fileID: 2800000, guid: df9df33734eecceca842505c9c3af378, type: 3}
-    - {fileID: 2800000, guid: 2e2724a0f1b3553ab8a789f4a59b3c53, type: 3}
-    - {fileID: 2800000, guid: 2680f0c2f3348862789284aad3c59628, type: 3}
-    - {fileID: 2800000, guid: a081176d0482482b68d2d6952ea1d219, type: 3}
-    - {fileID: 2800000, guid: 581f2cfc516079c5c9710ac60aae3a59, type: 3}
-    - {fileID: 2800000, guid: 84f653d455f6679a0939405cab7987f4, type: 3}
-    - {fileID: 2800000, guid: 23ef1d9aa9027c3b1abb8b25b0336f9d, type: 3}
-    - {fileID: 2800000, guid: 96660fffdfa49b578929b42e17b8d4a8, type: 3}
-    - {fileID: 2800000, guid: f7772f6fef523a94087a4c7fa4ca4311, type: 3}
-    - {fileID: 2800000, guid: c986814743f34c42b866ce6f0a2de024, type: 3}
-    - {fileID: 2800000, guid: 5fe05e5f2e2bdd0fc8842956ccd0d315, type: 3}
-    - {fileID: 2800000, guid: 8b3327c867ac52196b2200667101aefd, type: 3}
-    - {fileID: 2800000, guid: 1a71812cee301dd70bd85aa1b5c40459, type: 3}
-    - {fileID: 2800000, guid: d44e7e79c2b4cd26a828224518e3793c, type: 3}
-    - {fileID: 2800000, guid: 23f6afb6a4ccffbeda73b8babe77291d, type: 3}
-    - {fileID: 2800000, guid: 41119a967fd112c718f71ee891c6e8cc, type: 3}
-    - {fileID: 2800000, guid: d25ee8deec394399e9ee8ac16b7a9f3a, type: 3}
-    - {fileID: 2800000, guid: 96994c93c77d35406b514df5d2dce713, type: 3}
-    - {fileID: 2800000, guid: ab51c6c2c7fce16bca30e9947d8be4e8, type: 3}
-    - {fileID: 2800000, guid: 16da3c2ca6ff6e289b90adb359689a0c, type: 3}
-    - {fileID: 2800000, guid: 4439edf1a72267aac856e01465edf1dc, type: 3}
-    - {fileID: 2800000, guid: 20030b62c53aecd3ca18cdf0fe3020c3, type: 3}
-    - {fileID: 2800000, guid: d44159b90209903dc8eb7383e1fd6041, type: 3}
-    - {fileID: 2800000, guid: fa692072ffa8518bfa0835d34365f8f1, type: 3}
-    - {fileID: 2800000, guid: 48c0b0c28893d5834909aa9932b41fcf, type: 3}
-    - {fileID: 2800000, guid: 5171ae889feeaa958a9fb4491d01592e, type: 3}
-    - {fileID: 2800000, guid: 921ef1a35bd1cc43db0258ff404bcd5b, type: 3}
-    - {fileID: 2800000, guid: f3d1f007e378a74248bcc22f11d3002a, type: 3}
-    - {fileID: 2800000, guid: b8a2eeaaf9b0d5a5bb99bbec88dd0fd6, type: 3}
-    - {fileID: 2800000, guid: fc81196b17cf2240f89c446129a43bdf, type: 3}
-    - {fileID: 2800000, guid: b826ad3c5ffc800da8a6630e44b46b78, type: 3}
-    - {fileID: 2800000, guid: 30fa8679c7da9810db1fcb2550c75676, type: 3}
-    - {fileID: 2800000, guid: d57d7a5b8de6909fd9f5b8c4d5782400, type: 3}
-  - categoryName: Chinese
-    textures:
-    - {fileID: 2800000, guid: 533a297f11d3f1a7b808ebb8646dde72, type: 3}
-    - {fileID: 2800000, guid: 582540541881076cc9661b9ba08c7a0f, type: 3}
-    - {fileID: 2800000, guid: 1ec30579a9a82a1d4b39513e440fc3d2, type: 3}
-    - {fileID: 2800000, guid: 6367d9b358ddeaef7997961be610d1b7, type: 3}
-    - {fileID: 2800000, guid: df4e1eba1f64b2322842679d3b853fa4, type: 3}
-    - {fileID: 2800000, guid: c1b919ee1f454f799b02ecff339c82f2, type: 3}
-    - {fileID: 2800000, guid: 1bef30d4c38756871a45026f7ca782f9, type: 3}
-    - {fileID: 2800000, guid: 5e9ec8dc0fccb7e92800c0a66c1be26b, type: 3}
-    - {fileID: 2800000, guid: 725a74c1316fb1c5281ed16560ace759, type: 3}
-    - {fileID: 2800000, guid: b7d2ba00200ae2f0495e371a0c080097, type: 3}
-    - {fileID: 2800000, guid: e6ab9902fc02dca57833ea462d9b5d91, type: 3}
-    - {fileID: 2800000, guid: c4a3274f557ba87c8a299a2d60ab6066, type: 3}
-    - {fileID: 2800000, guid: 0dc43c302e3616194bf93cf00c2c64c5, type: 3}
-    - {fileID: 2800000, guid: 450aaf54a75ae1fd29fb33cc6943906a, type: 3}
-    - {fileID: 2800000, guid: 308d16630ce9e7c12b974ed4cd956a2a, type: 3}
-    - {fileID: 2800000, guid: b4c2f3a92592f527281ee1c146336ec8, type: 3}
-    - {fileID: 2800000, guid: 7cb08dfe7dab6446ca55fbf8caa2f723, type: 3}
-    - {fileID: 2800000, guid: 71996dd1878071c43a224793b254592f, type: 3}
-    - {fileID: 2800000, guid: f44622b5b93f28fa2bfb9773b681d9f6, type: 3}
-    - {fileID: 2800000, guid: bc905d72188337f92b08d05687294d2e, type: 3}
-    - {fileID: 2800000, guid: 8b440cd61bec17b6db9d2726950c3742, type: 3}
+    - {fileID: 2800000, guid: 9504130824594d25b9e36553a9536e21, type: 3}
+    - {fileID: 2800000, guid: dc8cdd04dec79ababbff418fa84252b9, type: 3}
+    - {fileID: 2800000, guid: 3d03f72fa9aa362c49017bf3517b5c38, type: 3}
+    - {fileID: 2800000, guid: 9a812abe1d578c96886562a8c36be4f0, type: 3}
+    - {fileID: 2800000, guid: 22addddb1c3daf785adad4ee17822311, type: 3}
+    - {fileID: 2800000, guid: caa2a7b2845810606936799f2a9455a2, type: 3}
+    - {fileID: 2800000, guid: 6969f5e6e200022a094f8b11e27ad888, type: 3}
+    - {fileID: 2800000, guid: f8b74fa1f892778b5a259be6bcc38eb8, type: 3}
