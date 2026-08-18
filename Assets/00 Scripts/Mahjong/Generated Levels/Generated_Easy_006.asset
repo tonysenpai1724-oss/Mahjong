@@ -28,6 +28,7 @@ MonoBehaviour:
   <ComboTileRatio>k__BackingField: 0
   <FillCategoryNames>k__BackingField:
   - Dragons
+  - Vietnam
   <Tiles>k__BackingField:
   - matchId: 0
     gridCoordinate: {x: 0, y: 0, z: 0}

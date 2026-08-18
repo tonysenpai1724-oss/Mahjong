@@ -21,6 +21,9 @@ namespace MahjongOut3D.Managers
         [SerializeField] private PauseMenuView pauseMenuView;
         [SerializeField] private ResultScreenView resultScreenView;
 
+        private readonly List<Texture2D> availablePieceTextures = new List<Texture2D>();
+        private Texture2D selectedPiecePreviewTexture;
+
         /// <summary>
         /// Gets the currently active UI screen.
         /// </summary>
@@ -56,6 +59,7 @@ namespace MahjongOut3D.Managers
             RefreshScreenState();
             RefreshCoinDisplays();
             UpdateLevelSelectInfo();
+            RefreshPieceMaterialDropdown();
         }
 
         /// <summary>
@@ -169,7 +173,8 @@ namespace MahjongOut3D.Managers
                     () => Context.Services.Get<MatchManager>().UseUndo(),
                     () => Context.Services.Get<MatchManager>().UseShuffle(),
                     () => Context.Services.Get<MatchManager>().UseBomb(),
-                    () => Context.Services.Get<MatchManager>().UseXRay());
+                    () => Context.Services.Get<MatchManager>().UseXRay(),
+                    HandlePieceMaterialDropdownChanged);
             }
 
             if (pauseMenuView != null)
@@ -253,6 +258,7 @@ namespace MahjongOut3D.Managers
             }
 
             gameplayHudView.SetLevel(levelManager.CurrentLevelIndex);
+            RefreshPieceMaterialDropdown();
         }
 
         /// <summary>
@@ -292,6 +298,94 @@ namespace MahjongOut3D.Managers
         private void HandleLevelGenerated(LevelGeneratedEvent eventData)
         {
             UpdateGameplayHudInfo();
+            RefreshPieceMaterialDropdown();
+        }
+
+        private void RefreshPieceMaterialDropdown()
+        {
+            if (gameplayHudView == null || !Context.Services.TryGet(out VoxelLevelGenerator levelGenerator))
+            {
+                return;
+            }
+
+            availablePieceTextures.Clear();
+            IReadOnlyList<Texture2D> runtimeTextures = levelGenerator.GetAvailablePieceTextures();
+            for (int index = 0; index < runtimeTextures.Count; index++)
+            {
+                Texture2D texture = runtimeTextures[index];
+                if (texture != null)
+                {
+                    availablePieceTextures.Add(texture);
+                }
+            }
+
+            if (selectedPiecePreviewTexture != null)
+            {
+                Texture2D matchingTexture = FindMatchingPieceTexture(selectedPiecePreviewTexture);
+                if (matchingTexture != null)
+                {
+                    selectedPiecePreviewTexture = matchingTexture;
+                    if (levelGenerator.CurrentPieceTexture != matchingTexture)
+                    {
+                        levelGenerator.ApplyPieceTexture(matchingTexture);
+                    }
+                }
+                else
+                {
+                    selectedPiecePreviewTexture = null;
+                }
+            }
+
+            List<string> optionLabels = new List<string>(availablePieceTextures.Count);
+            int selectedIndex = 0;
+            Texture2D currentTexture = selectedPiecePreviewTexture != null ? selectedPiecePreviewTexture : levelGenerator.CurrentPieceTexture;
+            for (int index = 0; index < availablePieceTextures.Count; index++)
+            {
+                Texture2D texture = availablePieceTextures[index];
+                optionLabels.Add($"Piece: {texture.name}");
+                if (texture == currentTexture)
+                {
+                    selectedIndex = index;
+                }
+            }
+
+            gameplayHudView.SetPieceMaterialOptions(optionLabels, selectedIndex);
+        }
+
+        private void HandlePieceMaterialDropdownChanged(int selectedIndex)
+        {
+            if (!Context.Services.TryGet(out VoxelLevelGenerator levelGenerator))
+            {
+                return;
+            }
+
+            if (selectedIndex < 0 || selectedIndex >= availablePieceTextures.Count)
+            {
+                return;
+            }
+
+            selectedPiecePreviewTexture = availablePieceTextures[selectedIndex];
+            levelGenerator.ApplyPieceTexture(selectedPiecePreviewTexture);
+            RefreshPieceMaterialDropdown();
+        }
+
+        private Texture2D FindMatchingPieceTexture(Texture2D sourceTexture)
+        {
+            if (sourceTexture == null)
+            {
+                return null;
+            }
+
+            for (int index = 0; index < availablePieceTextures.Count; index++)
+            {
+                Texture2D candidate = availablePieceTextures[index];
+                if (candidate == sourceTexture)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         private void HandlePlayPressed()

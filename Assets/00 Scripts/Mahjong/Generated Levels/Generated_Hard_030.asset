@@ -31,6 +31,7 @@ MonoBehaviour:
   - MiniFlower
   - LuckyDot
   - Flowers
+  - Vietnam
   <Tiles>k__BackingField:
   - matchId: 0
     gridCoordinate: {x: 0, y: 0, z: 0}

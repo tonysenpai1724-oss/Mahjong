@@ -266,6 +266,36 @@ namespace MahjongOut3D.LevelSystem
             return resolvedPieceTextures[randomIndex];
         }
 
+        /// <summary>
+        /// Returns every currently active piece texture that can be previewed from the gameplay HUD.
+        /// </summary>
+        public IReadOnlyList<Texture2D> GetAvailablePieceTextures()
+        {
+            return mahjongMaterialSO != null ? mahjongMaterialSO.GetActivePieceTextures() : new List<Texture2D>();
+        }
+
+        /// <summary>
+        /// Gets the piece texture currently applied to the active board.
+        /// </summary>
+        public Texture2D CurrentPieceTexture => pieceTexture;
+
+        /// <summary>
+        /// Applies a piece texture to every spawned tile so designers can preview it at runtime.
+        /// </summary>
+        public void ApplyPieceTexture(Texture2D texture)
+        {
+            pieceTexture = texture;
+
+            for (int index = 0; index < spawnedTiles.Count; index++)
+            {
+                MahjongTile tile = spawnedTiles[index];
+                if (tile != null)
+                {
+                    tile.SetupPieceTexture(texture);
+                }
+            }
+        }
+
         private Texture2D GetFillTextureForMatch(int matchId)
         {
             if (activeLevelFillTextures.Count == 0)

@@ -61,6 +61,35 @@ MonoBehaviour:
     - {fileID: 2800000, guid: a89ff36c16d1b58c998aa358eaebd9fc, type: 3}
     - {fileID: 2800000, guid: 9c8b67a14d8f360519789f944d6c1ced, type: 3}
     - {fileID: 2800000, guid: 9205d1d02463ad0a9ac5f23509223b8b, type: 3}
+  - categoryName: Cards
+    textures:
+    - {fileID: 2800000, guid: 9c77a15243c58a957923d05198ee3497, type: 3}
+    - {fileID: 2800000, guid: 817443a8510de0007a2398efaaba4dae, type: 3}
+    - {fileID: 2800000, guid: 3b4ff3f0b345f5df1b23a70f0e854718, type: 3}
+    - {fileID: 2800000, guid: ffca1d0fa8baa68be944293b1a9345c1, type: 3}
+    - {fileID: 2800000, guid: 088df9162c9144c80aa03ddaa47b7f01, type: 3}
+    - {fileID: 2800000, guid: c06333f8124a51329aa20a61052804bb, type: 3}
+    - {fileID: 2800000, guid: 26045dda55dcf6323ba598430bc046b8, type: 3}
+    - {fileID: 2800000, guid: eeb95bc884aede1d48869cfa100f3640, type: 3}
+    - {fileID: 2800000, guid: 88179242fe0682a96a4b34e7710abb56, type: 3}
+    - {fileID: 2800000, guid: 918317a00ae0783d2b27600bd77c5080, type: 3}
+    - {fileID: 2800000, guid: 497873b8c5a6e2069811833ecfc1025c, type: 3}
+    - {fileID: 2800000, guid: be82c12fe70c371e08336e2cc9014e70, type: 3}
+    - {fileID: 2800000, guid: 0a5c16125cfcd451e8ee8c1a02fe642d, type: 3}
+    - {fileID: 2800000, guid: d0c752dfb87bd66869381306f5f5be58, type: 3}
+    - {fileID: 2800000, guid: bfe98f350eaa2c8bd93a304552f1dcb8, type: 3}
+    - {fileID: 2800000, guid: 1e7455c112b7d61ba9f3d38ff032aeb1, type: 3}
+    - {fileID: 2800000, guid: cd5063da827d85776b3fc8663b6543c2, type: 3}
+    - {fileID: 2800000, guid: 2994783b10cbc9d36a1f300162b8d99c, type: 3}
+  - categoryName: China
+    textures:
+    - {fileID: 2800000, guid: 8c37f91235e2739218b887ecea2734a0, type: 3}
+    - {fileID: 2800000, guid: d114890dbe8ad4040a5016a4048d6ab5, type: 3}
+    - {fileID: 2800000, guid: bfb3ca4102973ab67af38289eccbf6fb, type: 3}
+    - {fileID: 2800000, guid: 5a426a962e7e08a54897cfed26f92aa7, type: 3}
+    - {fileID: 2800000, guid: f9f197225c35b9f7ba1329244dfe5ac2, type: 3}
+    - {fileID: 2800000, guid: 8388ac6cf5eea6360b290a0bfb01873b, type: 3}
+    - {fileID: 2800000, guid: b2589e9373b82415d8b39037d4ea6342, type: 3}
   - categoryName: ChineseNumber
     textures:
     - {fileID: 2800000, guid: 219e8403e0b6f4e97bba6afaf71f5e44, type: 3}
@@ -90,6 +119,15 @@ MonoBehaviour:
     - {fileID: 2800000, guid: c2082d4fa950e9ed79a94b66b6f313c1, type: 3}
     - {fileID: 2800000, guid: fbced6248eb585313a8fff09deb3e001, type: 3}
     - {fileID: 2800000, guid: df85fe9c619467d12be6631fa89bb3f5, type: 3}
+  - categoryName: Egypt
+    textures:
+    - {fileID: 2800000, guid: 0d283428f7becdbee98f9de439ae2019, type: 3}
+    - {fileID: 2800000, guid: 16fa9cf04fa32430a8f2ed280bb1e040, type: 3}
+    - {fileID: 2800000, guid: 75a711f8d7ed34498abd2a8e35753fe8, type: 3}
+    - {fileID: 2800000, guid: 11ebe117582c7e6729b9b275f4a7bb47, type: 3}
+    - {fileID: 2800000, guid: b3b396acf21337ab184ff736cadb431a, type: 3}
+    - {fileID: 2800000, guid: c0ea131359ed1608ca895718fb7ca7f0, type: 3}
+    - {fileID: 2800000, guid: c09cb14226cf0c4a199796b0598bd759, type: 3}
   - categoryName: Flowers
     textures:
     - {fileID: 2800000, guid: 4422c6dc950bbd8d1b2863215c5ae400, type: 3}
@@ -133,6 +171,12 @@ MonoBehaviour:
     - {fileID: 2800000, guid: 561328260154a4850bf6aeb498ddf68d, type: 3}
     - {fileID: 2800000, guid: df2385e9f2812bc779a688d1f582b4f3, type: 3}
     - {fileID: 2800000, guid: 94f9e2640ae56e048a11be7470d65565, type: 3}
+  - categoryName: Seasons
+    textures:
+    - {fileID: 2800000, guid: 7fe0ef6464909745cbadca722669b035, type: 3}
+    - {fileID: 2800000, guid: e508fd040f04b78989c1af79af17b12b, type: 3}
+    - {fileID: 2800000, guid: 528d61ab8370685d0b978933733ba555, type: 3}
+    - {fileID: 2800000, guid: f9054df6be2945cc18bd5bc82936474f, type: 3}
   - categoryName: Sakura
     textures:
     - {fileID: 2800000, guid: 0a591a78ea8d9ee7983c13379d6a8f97, type: 3}
@@ -144,6 +188,20 @@ MonoBehaviour:
     - {fileID: 2800000, guid: 8f6d51baf446d71afbe04f9bddf01df1, type: 3}
     - {fileID: 2800000, guid: 19a3bd065c5244c888834c2df9bfba4b, type: 3}
     - {fileID: 2800000, guid: 35463b46b3522d6189219a90f3b7964f, type: 3}
+  - categoryName: Sky
+    textures:
+    - {fileID: 2800000, guid: 08ae4294fb913046a9c5d0623c4e40b4, type: 3}
+    - {fileID: 2800000, guid: 25af702247d4ed102b86b9d90bf76499, type: 3}
+    - {fileID: 2800000, guid: 79aca7e0867744c44acbd1b0c9880e26, type: 3}
+    - {fileID: 2800000, guid: 94e9189568debdcb4965e7c47e79d3cc, type: 3}
+  - categoryName: Vietnam
+    textures:
+    - {fileID: 2800000, guid: 243a435eb95bb997ea9f3a83ed0c4173, type: 3}
+    - {fileID: 2800000, guid: dcb5a7774df09e3de86f4a4f47ac7256, type: 3}
+    - {fileID: 2800000, guid: e215620c1517a2b5cb8ede88fb7e2c3d, type: 3}
+    - {fileID: 2800000, guid: f6d30f2cc53d804b0b1d1a30513a76c4, type: 3}
+    - {fileID: 2800000, guid: 0a3de8488ab98c77b95b6513eb7f74b9, type: 3}
+    - {fileID: 2800000, guid: ffb2b1997825fcafcb77db443a25f146, type: 3}
   - categoryName: Winds
     textures:
     - {fileID: 2800000, guid: 9504130824594d25b9e36553a9536e21, type: 3}
