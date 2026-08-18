@@ -866,6 +866,15 @@ namespace MahjongOut3D.TileSystem
             }
         }
 
+        /// <summary>
+        /// Reapplies the current runtime state to colliders and visuals without changing gameplay state.
+        /// </summary>
+        /// <param name="instant">True to snap the presentation immediately.</param>
+        public void RefreshPresentation(bool instant = true)
+        {
+            ApplyStateToPresentation(state, instant);
+        }
+
         private IEnumerator PlayBlockedTapFeedbackRoutine()
         {
             blockedTapBaseLocalPosition = transform.localPosition;

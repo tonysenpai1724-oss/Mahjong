@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using MahjongOut3D.Core;
 using MahjongOut3D.Data;
@@ -95,12 +96,47 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private bool generateOnStart;
         [SerializeField] private bool clearExistingChildrenOnGenerate = true;
         [SerializeField] private bool usePooling = true;
+        [SerializeField] private bool generateIncrementally = true;
+        [SerializeField, Min(1)] private int tilesPerFrame = 24;
+        [SerializeField] private bool prewarmPoolForGeneration = true;
+        [SerializeField, Min(1)] private int prewarmTilesPerFrame = 32;
+        [SerializeField] private bool playAssembleOnLoad = true;
+        [SerializeField, Min(0.05f)] private float assembleDurationSeconds = 0.45f;
+        [SerializeField, Range(0f, 0.4f)] private float assembleMaxStaggerSeconds = 0.16f;
+        [SerializeField, Min(0.1f)] private float assembleScatterRadius = 3.2f;
+        [SerializeField, Min(0f)] private float assembleDepthJitter = 0.8f;
         [SerializeField, Min(1f)] private float cameraFramePaddingOnLoad = 1.7f;
 
         private readonly List<MahjongTile> spawnedTiles = new List<MahjongTile>();
         private readonly List<Transform> runtimeBlockRoots = new List<Transform>();
         private readonly Dictionary<int, Texture2D> fillTexturesByMatchId = new Dictionary<int, Texture2D>();
         private readonly List<Texture2D> activeLevelFillTextures = new List<Texture2D>();
+
+        private readonly struct TileAssemblePose
+        {
+            public TileAssemblePose(MahjongTile tile, Vector3 startPosition, Quaternion startRotation, Vector3 endPosition, Quaternion endRotation, float delaySeconds)
+            {
+                Tile = tile;
+                StartPosition = startPosition;
+                StartRotation = startRotation;
+                EndPosition = endPosition;
+                EndRotation = endRotation;
+                DelaySeconds = delaySeconds;
+            }
+
+            public MahjongTile Tile { get; }
+
+            public Vector3 StartPosition { get; }
+
+            public Quaternion StartRotation { get; }
+
+            public Vector3 EndPosition { get; }
+
+            public Quaternion EndRotation { get; }
+
+            public float DelaySeconds { get; }
+        }
+
         private ComponentPool<MahjongTile> tilePool;
         private GameContext context;
         private LevelManager levelManager;
@@ -110,6 +146,7 @@ namespace MahjongOut3D.LevelSystem
         private int nextTileId;
         private MahjongTile runtimeFallbackTilePrefab;
         private Quaternion defaultTileRootLocalRotation = Quaternion.identity;
+        private Coroutine activeGenerationRoutine;
         public MahjongMaterialSO mahjongMaterialSO;
         private Material pieceBaseMaterial;
         private Texture2D pieceTexture;
@@ -391,18 +428,86 @@ namespace MahjongOut3D.LevelSystem
         /// </summary>
         private IReadOnlyList<MahjongTile> Generate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX)
         {
+            CancelActiveGeneration();
+
+            if (ShouldGenerateIncrementally())
+            {
+                activeGenerationRoutine = StartCoroutine(GenerateIncrementally(levelName, gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX));
+                return spawnedTiles;
+            }
+
+            return GenerateImmediate(levelName, gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX);
+        }
+
+        private IReadOnlyList<MahjongTile> GenerateImmediate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX)
+        {
+            if (!TryPrepareGeneration(gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, out VoxelGridData grid))
+            {
+                return spawnedTiles;
+            }
+
+            SpawnTileDefinitionsImmediate(grid, tileDefinitions);
+            if (ShouldPlayAssembleOnLoad())
+            {
+                activeGenerationRoutine = StartCoroutine(FinalizeGenerationRoutine(levelName, grid));
+            }
+            else
+            {
+                FinalizeGeneration(levelName, grid);
+            }
+
+            return spawnedTiles;
+        }
+
+        private IEnumerator GenerateIncrementally(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX)
+        {
+            if (!TryPrepareGeneration(gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, out VoxelGridData grid))
+            {
+                activeGenerationRoutine = null;
+                yield break;
+            }
+
+            if (prewarmPoolForGeneration)
+            {
+                yield return PrewarmPoolIfNeeded(CountSpawnableTileDefinitions(grid, tileDefinitions));
+            }
+
+            yield return SpawnTileDefinitionsIncrementally(grid, tileDefinitions, GetTilesPerFrame());
+            if (ShouldPlayAssembleOnLoad())
+            {
+                yield return FinalizeGenerationRoutine(levelName, grid);
+            }
+            else
+            {
+                FinalizeGeneration(levelName, grid);
+            }
+
+            activeGenerationRoutine = null;
+        }
+
+        private bool TryPrepareGeneration(
+            VoxelGridSize gridSize,
+            VoxelGridLayoutSettings layoutOverride,
+            IList<LevelTileDefinition> tileDefinitions,
+            int runtimeBlockCount,
+            float blockStrideLocalX,
+            out VoxelGridData grid)
+        {
+            grid = null;
             if (context == null)
             {
                 MahjongRuntimeLogger.LogWarning("VoxelLevelGenerator must be initialized before generating levels.");
-                return spawnedTiles;
+                return false;
             }
 
             EnsureTileTemplate();
 
+            tileManager?.SetVisibilityRefreshSuspended(true);
+
             ClearGeneratedLevel();
             PrepareRuntimeBlockRoots(runtimeBlockCount, blockStrideLocalX);
 
-            VoxelGridData grid = levelManager.CreateGrid(gridSize, layoutOverride);
+            grid = levelManager.CreateGrid(gridSize, layoutOverride);
             levelManager.SetActiveGrid(grid);
             pieceBaseMaterial = mahjongMaterialSO != null ? mahjongMaterialSO.PieceBaseMaterial : null;
             pieceTexture = RandomPieceTexture();
@@ -412,25 +517,320 @@ namespace MahjongOut3D.LevelSystem
             }
 
             PrepareFillTexturesForLevel(tileDefinitions);
-          
-            if (tileDefinitions != null)
+            return true;
+        }
+
+        private void SpawnTileDefinitionsImmediate(VoxelGridData grid, IList<LevelTileDefinition> tileDefinitions)
+        {
+            if (tileDefinitions == null)
             {
-                for (int index = 0; index < tileDefinitions.Count; index++)
+                return;
+            }
+
+            for (int index = 0; index < tileDefinitions.Count; index++)
+            {
+                LevelTileDefinition definition = tileDefinitions[index];
+                if (definition == null || !grid.Contains(definition.GridCoordinate))
                 {
-                    LevelTileDefinition definition = tileDefinitions[index];
-                    if (definition == null || !grid.Contains(definition.GridCoordinate))
+                    continue;
+                }
+
+                SpawnTile(grid, definition);
+            }
+        }
+
+        private IEnumerator SpawnTileDefinitionsIncrementally(VoxelGridData grid, IList<LevelTileDefinition> tileDefinitions, int batchSize)
+        {
+            if (tileDefinitions == null)
+            {
+                yield break;
+            }
+
+            int spawnedThisFrame = 0;
+            for (int index = 0; index < tileDefinitions.Count; index++)
+            {
+                LevelTileDefinition definition = tileDefinitions[index];
+                if (definition == null || !grid.Contains(definition.GridCoordinate))
+                {
+                    continue;
+                }
+
+                SpawnTile(grid, definition);
+                spawnedThisFrame++;
+                if (spawnedThisFrame >= batchSize)
+                {
+                    spawnedThisFrame = 0;
+                    yield return null;
+                }
+            }
+        }
+
+        private void FinalizeGeneration(string levelName, VoxelGridData grid)
+        {
+            tileManager?.SetVisibilityRefreshSuspended(false);
+            tileManager.RefreshTileExposure();
+            RefreshSpawnedTilePresentation();
+            FocusCameraOnGrid(grid);
+            context.EventBus.Publish(new LevelGeneratedEvent(levelName, spawnedTiles.Count, grid));
+        }
+
+        private IEnumerator FinalizeGenerationRoutine(string levelName, VoxelGridData grid)
+        {
+            FocusCameraOnGrid(grid);
+            yield return null;
+            yield return PlayAssembleSequence(grid);
+            tileManager?.SetVisibilityRefreshSuspended(false);
+            tileManager.RefreshTileExposure();
+            RefreshSpawnedTilePresentation();
+            context.EventBus.Publish(new LevelGeneratedEvent(levelName, spawnedTiles.Count, grid));
+            activeGenerationRoutine = null;
+        }
+
+        private void CancelActiveGeneration()
+        {
+            if (activeGenerationRoutine == null)
+            {
+                return;
+            }
+
+            Coroutine runningRoutine = activeGenerationRoutine;
+            activeGenerationRoutine = null;
+            StopCoroutine(runningRoutine);
+            tileManager?.SetVisibilityRefreshSuspended(false);
+        }
+
+        private bool ShouldGenerateIncrementally()
+        {
+            return generateIncrementally && Application.isPlaying;
+        }
+
+        private bool ShouldPlayAssembleOnLoad()
+        {
+            return playAssembleOnLoad && Application.isPlaying && spawnedTiles.Count > 0;
+        }
+
+        private int CountSpawnableTileDefinitions(VoxelGridData grid, IList<LevelTileDefinition> tileDefinitions)
+        {
+            if (grid == null || tileDefinitions == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int index = 0; index < tileDefinitions.Count; index++)
+            {
+                LevelTileDefinition definition = tileDefinitions[index];
+                if (definition != null && grid.Contains(definition.GridCoordinate))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private IEnumerator PrewarmPoolIfNeeded(int requiredTileCount)
+        {
+            if (!usePooling || tilePool == null || requiredTileCount <= tilePool.AvailableCount)
+            {
+                yield break;
+            }
+
+            int missingTileCount = requiredTileCount - tilePool.AvailableCount;
+            int warmedThisFrame = 0;
+            for (int index = 0; index < missingTileCount; index++)
+            {
+                MahjongTile pooledTile = tilePool.Get(tileRoot);
+                tilePool.Release(pooledTile, tileRoot);
+                warmedThisFrame++;
+                if (warmedThisFrame >= GetPrewarmTilesPerFrame())
+                {
+                    warmedThisFrame = 0;
+                    yield return null;
+                }
+            }
+        }
+
+        private int GetTilesPerFrame()
+        {
+            return Mathf.Max(1, tilesPerFrame);
+        }
+
+        private int GetPrewarmTilesPerFrame()
+        {
+            return Mathf.Max(1, prewarmTilesPerFrame);
+        }
+
+        private void RefreshSpawnedTilePresentation()
+        {
+            for (int index = 0; index < spawnedTiles.Count; index++)
+            {
+                MahjongTile tile = spawnedTiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                tile.RefreshPresentation(true);
+            }
+        }
+
+        private IEnumerator PlayAssembleSequence(VoxelGridData grid)
+        {
+            if (spawnedTiles.Count == 0)
+            {
+                yield break;
+            }
+
+            List<TileAssemblePose> poses = BuildTileAssemblePoses(grid);
+            if (poses.Count == 0)
+            {
+                yield break;
+            }
+
+            float duration = Mathf.Max(0.05f, assembleDurationSeconds);
+            float totalDuration = duration;
+            for (int index = 0; index < poses.Count; index++)
+            {
+                TileAssemblePose pose = poses[index];
+                if (pose.DelaySeconds + duration > totalDuration)
+                {
+                    totalDuration = pose.DelaySeconds + duration;
+                }
+            }
+
+            float elapsed = 0f;
+            while (elapsed < totalDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                for (int index = 0; index < poses.Count; index++)
+                {
+                    TileAssemblePose pose = poses[index];
+                    MahjongTile tile = pose.Tile;
+                    if (tile == null)
                     {
                         continue;
                     }
 
-                    SpawnTile(grid, definition);
+                    float normalizedTime = Mathf.Clamp01((elapsed - pose.DelaySeconds) / duration);
+                    float easedTime = EaseOutCubic(normalizedTime);
+                    tile.transform.SetPositionAndRotation(
+                        Vector3.LerpUnclamped(pose.StartPosition, pose.EndPosition, easedTime),
+                        Quaternion.SlerpUnclamped(pose.StartRotation, pose.EndRotation, easedTime));
+                }
+
+                yield return null;
+            }
+
+            for (int index = 0; index < poses.Count; index++)
+            {
+                TileAssemblePose pose = poses[index];
+                if (pose.Tile == null)
+                {
+                    continue;
+                }
+
+                pose.Tile.transform.SetPositionAndRotation(pose.EndPosition, pose.EndRotation);
+            }
+        }
+
+        private List<TileAssemblePose> BuildTileAssemblePoses(VoxelGridData grid)
+        {
+            List<TileAssemblePose> poses = new List<TileAssemblePose>(spawnedTiles.Count);
+            if (!TryBuildSpawnedTileBounds(out Bounds worldBounds))
+            {
+                Transform tileRootTransform = tileRoot != null ? tileRoot : transform;
+                if (grid != null && tileRootTransform != null)
+                {
+                    worldBounds = TransformBounds(tileRootTransform, grid.GetLocalBounds());
+                }
+                else
+                {
+                    return poses;
                 }
             }
 
-            tileManager.RefreshTileExposure();
-            FocusCameraOnGrid(grid);
-            context.EventBus.Publish(new LevelGeneratedEvent(levelName, spawnedTiles.Count, grid));
-            return spawnedTiles;
+            Vector3 center = worldBounds.center;
+            Camera activeCamera = cameraManager != null ? cameraManager.ActiveCamera : null;
+            Vector3 cameraPosition = activeCamera != null ? activeCamera.transform.position : center - (Vector3.forward * 8f);
+            Vector3 cameraForward = activeCamera != null ? activeCamera.transform.forward.normalized : (center - cameraPosition).normalized;
+            if (cameraForward.sqrMagnitude <= Mathf.Epsilon)
+            {
+                cameraForward = Vector3.forward;
+            }
+
+            Vector3 cameraRight = activeCamera != null ? activeCamera.transform.right.normalized : Vector3.right;
+            Vector3 cameraUp = activeCamera != null ? activeCamera.transform.up.normalized : Vector3.up;
+            float distanceToCenter = Vector3.Distance(cameraPosition, center);
+            Vector3 assembleOrigin = cameraPosition + (cameraForward * Mathf.Max(1.6f, distanceToCenter * 0.32f));
+            float maxStagger = assembleMaxStaggerSeconds;
+            int poseCount = Mathf.Max(1, spawnedTiles.Count - 1);
+
+            for (int index = 0; index < spawnedTiles.Count; index++)
+            {
+                MahjongTile tile = spawnedTiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                Vector3 endPosition = tile.transform.position;
+                Quaternion endRotation = tile.transform.rotation;
+                Vector2 scatter2D = ResolveAssembleScatter(index, tile.TileId);
+                float depthOffset = ResolveAssembleDepthOffset(index, tile.TileId);
+                Vector3 startPosition = assembleOrigin
+                    + (cameraRight * scatter2D.x * assembleScatterRadius)
+                    + (cameraUp * scatter2D.y * assembleScatterRadius)
+                    - (cameraForward * depthOffset);
+                Quaternion startRotation = Quaternion.Euler(
+                    ResolveHashedRange(tile.TileId, 0, -65f, 65f),
+                    ResolveHashedRange(tile.TileId, 1, -140f, 140f),
+                    ResolveHashedRange(tile.TileId, 2, -45f, 45f)) * endRotation;
+                float delay = maxStagger * (index / (float)poseCount);
+
+                tile.SetVisible(true);
+                if (tile.TileCollider != null)
+                {
+                    tile.TileCollider.enabled = false;
+                }
+
+                tile.transform.SetPositionAndRotation(startPosition, startRotation);
+                poses.Add(new TileAssemblePose(tile, startPosition, startRotation, endPosition, endRotation, delay));
+            }
+
+            return poses;
+        }
+
+        private Vector2 ResolveAssembleScatter(int index, int tileId)
+        {
+            float x = ResolveHashedRange(tileId, index * 3, -1f, 1f);
+            float y = ResolveHashedRange(tileId, (index * 3) + 1, -1f, 1f);
+            Vector2 scatter = new Vector2(x, y);
+            if (scatter.sqrMagnitude <= 0.0001f)
+            {
+                return new Vector2(0.2f, 0.35f);
+            }
+
+            return scatter.normalized * Mathf.Lerp(0.35f, 1f, Mathf.Clamp01(Mathf.Abs(ResolveHashedRange(tileId, (index * 3) + 2, 0f, 1f))));
+        }
+
+        private float ResolveAssembleDepthOffset(int index, int tileId)
+        {
+            return Mathf.Lerp(0f, assembleDepthJitter, ResolveHashedRange(tileId, index + 7, 0f, 1f));
+        }
+
+        private static float ResolveHashedRange(int seed, int salt, float min, float max)
+        {
+            float wave = Mathf.Sin((seed * 12.9898f) + (salt * 78.233f)) * 43758.5453f;
+            float normalized = wave - Mathf.Floor(wave);
+            return Mathf.Lerp(min, max, normalized);
+        }
+
+        private static float EaseOutCubic(float t)
+        {
+            float clamped = Mathf.Clamp01(t);
+            float inverse = 1f - clamped;
+            return 1f - (inverse * inverse * inverse);
         }
 
         private void ConfigureFillTexturePool(IList<string> categoryNames)

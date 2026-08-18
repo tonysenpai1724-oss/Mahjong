@@ -24,8 +24,10 @@ MonoBehaviour:
   <BlockSpacingCells>k__BackingField: 1
   <LayerCount>k__BackingField: 1
   <Difficulty>k__BackingField: 0
+  <FaceDownTileRatio>k__BackingField: 0
+  <ComboTileRatio>k__BackingField: 0
   <FillCategoryNames>k__BackingField:
-  - Flower
+  - Sakura
   <Tiles>k__BackingField:
   - matchId: 0
     gridCoordinate: {x: 0, y: 0, z: 0}

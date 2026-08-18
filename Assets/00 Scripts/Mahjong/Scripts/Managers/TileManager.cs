@@ -26,6 +26,7 @@ namespace MahjongOut3D.Managers
         private float xrayEndTime;
         private int activeXRayDepth;
         private bool wasXRayActiveLastFrame;
+        private bool isVisibilityRefreshSuspended;
 
         /// <summary>
         /// Gets the number of active tracked tiles.
@@ -41,6 +42,11 @@ namespace MahjongOut3D.Managers
         /// Gets a value indicating whether non-selectable visible tiles should currently be darkened.
         /// </summary>
         public bool DimNonSelectableTiles => dimNonSelectableTiles;
+
+        /// <summary>
+        /// Gets a value indicating whether tile visibility refresh is temporarily suspended.
+        /// </summary>
+        public bool IsVisibilityRefreshSuspended => isVisibilityRefreshSuspended;
 
         /// <summary>
         /// Enables or disables darkened feedback for visible tiles that cannot currently be selected.
@@ -63,6 +69,15 @@ namespace MahjongOut3D.Managers
         public void ToggleDimNonSelectableTiles()
         {
             SetDimNonSelectableTiles(!dimNonSelectableTiles);
+        }
+
+        /// <summary>
+        /// Temporarily suspends or resumes visibility refresh while a level is being assembled.
+        /// </summary>
+        /// <param name="isSuspended">True to suspend visibility refresh; otherwise false.</param>
+        public void SetVisibilityRefreshSuspended(bool isSuspended)
+        {
+            isVisibilityRefreshSuspended = isSuspended;
         }
 
         /// <summary>
@@ -262,6 +277,11 @@ namespace MahjongOut3D.Managers
         /// </summary>
         public void RefreshTileExposure()
         {
+            if (isVisibilityRefreshSuspended)
+            {
+                return;
+            }
+
             if (!Context.Services.TryGet(out LevelManager levelManager) || levelManager.ActiveGrid == null)
             {
                 return;

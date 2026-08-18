@@ -27,8 +27,8 @@ MonoBehaviour:
   <FaceDownTileRatio>k__BackingField: 0
   <ComboTileRatio>k__BackingField: 0
   <FillCategoryNames>k__BackingField:
-  - Chinese
-  - Flower
+  - Winds
+  - Sakura
   <Tiles>k__BackingField:
   - matchId: 0
     gridCoordinate: {x: 0, y: 0, z: 0}

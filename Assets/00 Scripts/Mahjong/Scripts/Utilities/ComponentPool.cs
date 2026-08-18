@@ -13,6 +13,11 @@ namespace MahjongOut3D.Utilities
         private readonly Stack<TComponent> availableComponents = new Stack<TComponent>();
 
         /// <summary>
+        /// Gets the number of currently inactive pooled instances ready for reuse.
+        /// </summary>
+        public int AvailableCount => availableComponents.Count;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ComponentPool{TComponent}"/> class.
         /// </summary>
         /// <param name="prefab">Prefab used when the pool is empty.</param>

@@ -20,9 +20,14 @@ MonoBehaviour:
   <LayoutOverride>k__BackingField: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
   <Shape>k__BackingField: 0
   <UseSurfaceTilePlacement>k__BackingField: 1
+  <BlockCount>k__BackingField: 1
+  <BlockSpacingCells>k__BackingField: 1
   <LayerCount>k__BackingField: 1
   <Difficulty>k__BackingField: 0
-  <FillCategoryNames>k__BackingField: []
+  <FaceDownTileRatio>k__BackingField: 0
+  <ComboTileRatio>k__BackingField: 0
+  <FillCategoryNames>k__BackingField:
+  - MiniFlower
   <Tiles>k__BackingField:
   - matchId: 0
     gridCoordinate: {x: 0, y: 0, z: 0}
