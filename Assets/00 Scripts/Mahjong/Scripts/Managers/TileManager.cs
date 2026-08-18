@@ -17,6 +17,7 @@ namespace MahjongOut3D.Managers
         [SerializeField] private LayerMask tileLayerMask = ~0;
         [SerializeField, Min(1f)] private float maxRaycastDistance = 250f;
         [SerializeField] private TileExposureSettings exposureSettings;
+        [SerializeField] private bool dimNonSelectableTiles = true;
 
         private readonly Dictionary<int, MahjongTile> tilesById = new Dictionary<int, MahjongTile>();
         private readonly Dictionary<int, bool> exposedStateByTileId = new Dictionary<int, bool>();
@@ -35,6 +36,34 @@ namespace MahjongOut3D.Managers
         /// Gets the bootstrap order for the tile manager.
         /// </summary>
         public override int InitializationOrder => 20;
+
+        /// <summary>
+        /// Gets a value indicating whether non-selectable visible tiles should currently be darkened.
+        /// </summary>
+        public bool DimNonSelectableTiles => dimNonSelectableTiles;
+
+        /// <summary>
+        /// Enables or disables darkened feedback for visible tiles that cannot currently be selected.
+        /// </summary>
+        /// <param name="shouldDim">True to darken blocked tiles; otherwise false.</param>
+        public void SetDimNonSelectableTiles(bool shouldDim)
+        {
+            if (dimNonSelectableTiles == shouldDim)
+            {
+                return;
+            }
+
+            dimNonSelectableTiles = shouldDim;
+            RefreshTileSelectableVisuals();
+        }
+
+        /// <summary>
+        /// Toggles darkened feedback for visible tiles that cannot currently be selected.
+        /// </summary>
+        public void ToggleDimNonSelectableTiles()
+        {
+            SetDimNonSelectableTiles(!dimNonSelectableTiles);
+        }
 
         /// <summary>
         /// Subscribes to input and discovers scene tiles during bootstrap.
@@ -103,6 +132,7 @@ namespace MahjongOut3D.Managers
             tile.StateChanged += HandleTileStateChanged;
             tile.SelectionChanged += HandleTileSelectionChanged;
             exposedStateByTileId[tile.TileId] = false;
+            UpdateTileSelectableVisual(tile);
             return true;
         }
 
@@ -243,12 +273,14 @@ namespace MahjongOut3D.Managers
             {
                 if (tile == null || tile.IsRemoved || tile.IsMatched)
                 {
+                    UpdateTileSelectableVisual(tile);
                     continue;
                 }
 
                 if (tile.IsBufferedSelection)
                 {
                     UpdateExposureState(tile, false);
+                    UpdateTileSelectableVisual(tile);
                     continue;
                 }
 
@@ -269,6 +301,8 @@ namespace MahjongOut3D.Managers
                 {
                     tile.SetVisible(false);
                 }
+
+                UpdateTileSelectableVisual(tile);
             }
         }
 
@@ -469,6 +503,7 @@ namespace MahjongOut3D.Managers
         /// <param name="eventData">Tile state change payload.</param>
         private void HandleTileStateChanged(TileStateChangedEvent eventData)
         {
+            UpdateTileSelectableVisual(eventData.Tile);
             Context.EventBus.Publish(eventData);
         }
 
@@ -497,6 +532,36 @@ namespace MahjongOut3D.Managers
         private void HandleGridCellChanged(VoxelGridCellChangedEvent eventData)
         {
             RefreshTileExposure();
+        }
+
+        /// <summary>
+        /// Reapplies blocked-tile dimming to every registered tile.
+        /// </summary>
+        private void RefreshTileSelectableVisuals()
+        {
+            foreach (MahjongTile tile in tilesById.Values)
+            {
+                UpdateTileSelectableVisual(tile);
+            }
+        }
+
+        /// <summary>
+        /// Updates the dimmed feedback for a single tile based on its current selection rules.
+        /// </summary>
+        /// <param name="tile">Tile to refresh.</param>
+        private void UpdateTileSelectableVisual(MahjongTile tile)
+        {
+            if (tile == null)
+            {
+                return;
+            }
+
+            bool shouldDim = dimNonSelectableTiles
+                && tile.State == TileState.Visible
+                && !tile.IsBufferedSelection
+                && !IsTileSelectable(tile);
+
+            tile.SetSelectionBlockedVisual(shouldDim);
         }
 
         /// <summary>

@@ -782,6 +782,26 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Enables or disables the dimmed feedback used when the tile cannot currently be selected.
+        /// </summary>
+        /// <param name="isBlocked">True to darken the tile; otherwise false.</param>
+        public void SetSelectionBlockedVisual(bool isBlocked)
+        {
+            if (visualController == null)
+            {
+                CacheReferences();
+            }
+
+            if (visualController == null)
+            {
+                return;
+            }
+
+            visualController.SetSelectionBlocked(isBlocked);
+            visualController.ApplyState(state, true);
+        }
+
+        /// <summary>
         /// Plays a short shake to indicate that the tile cannot currently be selected.
         /// </summary>
         public void PlayBlockedTapFeedback()

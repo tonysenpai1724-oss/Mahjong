@@ -37,6 +37,9 @@ namespace MahjongOut3D.TileSystem
         [field: SerializeField]
         public Color HintEmissionColor { get; private set; } = new Color(0.15f, 1f, 0.85f, 1f);
 
+        [field: SerializeField]
+        public Color BlockedTintColor { get; private set; } = new Color(0f, 0f, 0f, 1f);
+
         [field: SerializeField, Range(0f, 4f)]
         public float SelectedTintStrength { get; private set; } = 0.18f;
 
@@ -51,6 +54,9 @@ namespace MahjongOut3D.TileSystem
 
         [field: SerializeField, Range(0f, 8f)]
         public float HintEmissionIntensity { get; private set; } = 2.2f;
+
+        [field: SerializeField, Range(0f, 1f)]
+        public float BlockedTintStrength { get; private set; } = 0.6f;
 
         [field: Header("Shader Properties")]
         [field: SerializeField]

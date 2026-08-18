@@ -31,6 +31,7 @@ namespace MahjongOut3D.TileSystem
         private bool hasRuntimeBaseColorOverride;
         private Color runtimeBaseColorOverride = Color.white;
         private bool isHintHighlighted;
+        private bool isSelectionBlocked;
         private bool hasResolvedTargetRenderers;
 
         /// <summary>
@@ -50,6 +51,15 @@ namespace MahjongOut3D.TileSystem
             {
                 outlinePresenter.SetHintHighlighted(isHighlighted);
             }
+        }
+
+        /// <summary>
+        /// Enables or disables the dimmed visual used for tiles that cannot currently be selected.
+        /// </summary>
+        /// <param name="isBlocked">True to darken the tile; otherwise false.</param>
+        public void SetSelectionBlocked(bool isBlocked)
+        {
+            isSelectionBlocked = isBlocked;
         }
 
         /// <summary>
@@ -319,11 +329,18 @@ namespace MahjongOut3D.TileSystem
                 renderer.GetPropertyBlock(propertyBlock);
                 Color emissionColor = Color.black;
 
-                if (hasRuntimeBaseColorOverride)
+                if (hasRuntimeBaseColorOverride || cachedHasPrimaryBaseColor[index])
                 {
-                    Color overrideTintColor = ResolveTintColor(runtimeBaseColorOverride, state);
-                    SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetBaseColorProperty(), overrideTintColor);
-                    SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetSecondaryBaseColorProperty(), overrideTintColor);
+                    Color primaryBaseColor = hasRuntimeBaseColorOverride ? runtimeBaseColorOverride : cachedPrimaryBaseColors[index];
+                    Color primaryTintColor = ResolveTintColor(primaryBaseColor, state);
+                    SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetBaseColorProperty(), primaryTintColor);
+                }
+
+                if (hasRuntimeBaseColorOverride || cachedHasSecondaryBaseColor[index])
+                {
+                    Color secondaryBaseColor = hasRuntimeBaseColorOverride ? runtimeBaseColorOverride : cachedSecondaryBaseColors[index];
+                    Color secondaryTintColor = ResolveTintColor(secondaryBaseColor, state);
+                    SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetSecondaryBaseColorProperty(), secondaryTintColor);
                 }
 
                 if (state == TileState.Selected)
@@ -445,6 +462,11 @@ namespace MahjongOut3D.TileSystem
             if (isHintHighlighted)
             {
                 return Color.Lerp(baseColor, GetHintTintColor(), GetHintTintStrength());
+            }
+
+            if (state == TileState.Visible && isSelectionBlocked)
+            {
+                return Color.Lerp(baseColor, GetBlockedTintColor(), GetBlockedTintStrength());
             }
 
             return baseColor;
@@ -626,6 +648,24 @@ namespace MahjongOut3D.TileSystem
         private float GetHintEmissionIntensity()
         {
             return settings != null ? settings.HintEmissionIntensity : 2.2f;
+        }
+
+        /// <summary>
+        /// Gets the blocked tint color.
+        /// </summary>
+        /// <returns>Blocked tint color.</returns>
+        private Color GetBlockedTintColor()
+        {
+            return settings != null ? settings.BlockedTintColor : new Color(0f, 0f, 0f, 1f);
+        }
+
+        /// <summary>
+        /// Gets the blocked tint blend strength.
+        /// </summary>
+        /// <returns>Blocked tint strength.</returns>
+        private float GetBlockedTintStrength()
+        {
+            return settings != null ? settings.BlockedTintStrength : 0.6f;
         }
 
         /// <summary>
