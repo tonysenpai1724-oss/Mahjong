@@ -170,8 +170,9 @@ namespace MahjongOut3D.Managers
             Quaternion uprightCardRotation = GetTrayFacingRotation(cameraForward, Vector3.up);
 
             float slideDistance = GetMatchSlideDistance();
-            float impactOffset = GetMatchContactCenterOffset(firstTile, secondTile, uprightCardRotation, cameraRight);
-            float stageOffset = Mathf.Max(impactOffset + 0.18f, slideDistance * 0.45f);
+            float contactOffset = GetMatchContactCenterOffset(firstTile, secondTile, uprightCardRotation, cameraRight);
+            float visibleImpactOffset = contactOffset + (GetMatchDisappearGap() * 0.5f);
+            float stageOffset = Mathf.Max(visibleImpactOffset + 0.18f, slideDistance * 0.45f);
 
             Vector3 impactWorld = GetMatchCenterWorldPosition(firstTile, secondTile);
             Vector3 firstStageWorld = impactWorld - (cameraRight * stageOffset);
@@ -180,8 +181,8 @@ namespace MahjongOut3D.Managers
             Quaternion firstStageRotation = uprightCardRotation;
             Quaternion secondStageRotation = uprightCardRotation;
 
-            Vector3 firstImpactWorld = impactWorld - (cameraRight * impactOffset);
-            Vector3 secondImpactWorld = impactWorld + (cameraRight * impactOffset);
+            Vector3 firstImpactWorld = impactWorld - (cameraRight * visibleImpactOffset);
+            Vector3 secondImpactWorld = impactWorld + (cameraRight * visibleImpactOffset);
             Quaternion firstImpactRotation = uprightCardRotation;
             Quaternion secondImpactRotation = uprightCardRotation;
 
@@ -636,6 +637,7 @@ namespace MahjongOut3D.Managers
         private float GetMatchDurationSeconds() => animationSettings != null ? animationSettings.MatchDurationSeconds : 0.35f;
         private float GetMatchSlideDistance() => animationSettings != null ? animationSettings.MatchSlideDistance : 1.25f;
         private float GetMatchRotationDegrees() => animationSettings != null ? animationSettings.MatchRotationDegrees : 55f;
+        private float GetMatchDisappearGap() => animationSettings != null ? animationSettings.MatchDisappearGap : 0.08f;
         private float GetHintDurationSeconds() => animationSettings != null ? animationSettings.HintDurationSeconds : 0.7f;
         private float GetMismatchDelaySeconds() => animationSettings != null ? animationSettings.MismatchDelaySeconds : 0.2f;
         private float GetTrayMoveDurationSeconds() => animationSettings != null ? animationSettings.TrayMoveDurationSeconds : 0.22f;

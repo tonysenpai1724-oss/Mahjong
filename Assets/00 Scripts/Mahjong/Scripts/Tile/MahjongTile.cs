@@ -53,6 +53,7 @@ namespace MahjongOut3D.TileSystem
         private Vector3 blockedTapBaseLocalPosition;
         private Vector3 pieceFaceBaseLocalPosition;
         private Vector3 fillFaceBaseLocalPosition;
+        private Vector3 fillFaceBaseLocalScale;
         private Quaternion pieceFaceBaseLocalRotation;
         private Quaternion fillFaceBaseLocalRotation;
         private bool hasCachedFaceBaseLocalRotations;
@@ -660,6 +661,7 @@ namespace MahjongOut3D.TileSystem
 
             if (texture == null)
             {
+                ResetFillRendererScale();
                 fillRenderer.SetPropertyBlock(fillPropertyBlock);
                 return;
             }
@@ -681,6 +683,70 @@ namespace MahjongOut3D.TileSystem
             {
                 fillRenderer.SetPropertyBlock(fillPropertyBlock);
             }
+
+            ApplyFillRendererAspect(texture);
+        }
+
+        private void ResetFillRendererScale()
+        {
+            CacheFaceBaseLocalRotations();
+            if (fillRenderer == null)
+            {
+                return;
+            }
+
+            fillRenderer.transform.localScale = fillFaceBaseLocalScale == Vector3.zero
+                ? fillRenderer.transform.localScale
+                : fillFaceBaseLocalScale;
+        }
+
+        private void ApplyFillRendererAspect(Texture2D texture)
+        {
+            CacheFaceBaseLocalRotations();
+            if (fillRenderer == null || texture == null)
+            {
+                return;
+            }
+
+            MeshFilter meshFilter = fillRenderer.GetComponent<MeshFilter>();
+            Mesh mesh = meshFilter != null ? meshFilter.sharedMesh : null;
+            if (mesh == null)
+            {
+                ResetFillRendererScale();
+                return;
+            }
+
+            Vector3 baseScale = fillFaceBaseLocalScale == Vector3.zero ? fillRenderer.transform.localScale : fillFaceBaseLocalScale;
+            float meshWidth = Mathf.Abs(mesh.bounds.size.x * baseScale.x);
+            float meshHeight = Mathf.Abs(mesh.bounds.size.y * baseScale.y);
+            if (meshWidth <= Mathf.Epsilon || meshHeight <= Mathf.Epsilon || texture.height <= 0)
+            {
+                ResetFillRendererScale();
+                return;
+            }
+
+            float surfaceAspect = meshWidth / meshHeight;
+            float textureAspect = texture.width / (float)texture.height;
+            Vector3 adjustedScale = baseScale;
+
+            if (Mathf.Abs(surfaceAspect - textureAspect) <= 0.01f)
+            {
+                fillRenderer.transform.localScale = adjustedScale;
+                return;
+            }
+
+            if (textureAspect > surfaceAspect)
+            {
+                float fittedHeight = meshWidth / textureAspect;
+                adjustedScale.y = baseScale.y * (fittedHeight / meshHeight);
+            }
+            else
+            {
+                float fittedWidth = meshHeight * textureAspect;
+                adjustedScale.x = baseScale.x * (fittedWidth / meshWidth);
+            }
+
+            fillRenderer.transform.localScale = adjustedScale;
         }
 
         /// <summary>
@@ -1263,6 +1329,7 @@ namespace MahjongOut3D.TileSystem
             if (fillRenderer != null)
             {
                 fillFaceBaseLocalPosition = fillRenderer.transform.localPosition;
+                fillFaceBaseLocalScale = fillRenderer.transform.localScale;
                 fillFaceBaseLocalRotation = fillRenderer.transform.localRotation;
             }
 

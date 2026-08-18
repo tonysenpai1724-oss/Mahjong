@@ -10,7 +10,7 @@ namespace MahjongOut3D.Data
     {
         [field: Header("Match")]
         [field: SerializeField, Min(0.05f)]
-        public float MatchDurationSeconds { get; private set; } = 0.35f;
+        public float MatchDurationSeconds { get; private set; } = 0.26f;
 
         [field: SerializeField, Min(0.1f)]
         public float MatchSlideDistance { get; private set; } = 1.25f;
@@ -23,6 +23,9 @@ namespace MahjongOut3D.Data
 
         [field: SerializeField, Min(0f)]
         public float MatchDepthOffset { get; private set; } = 1.25f;
+
+        [field: SerializeField, Min(0f)]
+        public float MatchDisappearGap { get; private set; } = 0.22f;
 
         [field: SerializeField, Min(0.05f)]
         public float HintDurationSeconds { get; private set; } = 0.7f;

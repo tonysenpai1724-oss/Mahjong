@@ -217,8 +217,9 @@ namespace MahjongOut3D.LevelSystem
                 definition.Tiles);
 
             float blockStrideLocalX = ResolveBlockStrideLocalX(singleBlockGridSize, definition.LayoutOverride, singleBlockRuntimeTiles, definition.BlockSpacingCells);
+            float blockStrideLocalY = ResolveBlockStrideLocalY(singleBlockGridSize, definition.LayoutOverride, singleBlockRuntimeTiles, definition.BlockSpacingCells);
             IList<LevelTileDefinition> runtimeTiles = ExpandRuntimeTileDefinitions(definition, singleBlockGridSize, definition.LayoutOverride, singleBlockRuntimeTiles);
-            return Generate(definition.LevelName, definition.GetRuntimeGridSize(), definition.LayoutOverride, runtimeTiles, definition.BlockCount, blockStrideLocalX);
+            return Generate(definition.LevelName, definition.GetRuntimeGridSize(), definition.LayoutOverride, runtimeTiles, definition.BlockCount, blockStrideLocalX, blockStrideLocalY);
         }
 
         /// <summary>
@@ -243,7 +244,7 @@ namespace MahjongOut3D.LevelSystem
                 jsonData.shape,
                 null,
                 LevelJsonSerializer.ToTileDefinitions(jsonData));
-            return Generate(jsonData.levelName, gridSize, null, runtimeTiles, 1, 0f);
+            return Generate(jsonData.levelName, gridSize, null, runtimeTiles, 1, 0f, 0f);
         }
         /// <summary>
         /// Returns a random piece texture from the configured MahjongMaterialSO.
@@ -355,7 +356,7 @@ namespace MahjongOut3D.LevelSystem
 
             levelManager?.SetActiveLevelDefinition(null, false);
             ConfigureFillTexturePool(null);
-            return Generate("ArrayGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles, 1, 0f);
+            return Generate("ArrayGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles, 1, 0f, 0f);
         }
 
         /// <summary>
@@ -406,7 +407,7 @@ namespace MahjongOut3D.LevelSystem
 
             levelManager?.SetActiveLevelDefinition(null, false);
             ConfigureFillTexturePool(null);
-            return Generate("MaskGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles, 1, 0f);
+            return Generate("MaskGeneratedLevel", new VoxelGridSize(width, height, depth), null, tiles, 1, 0f, 0f);
         }
 
         /// <summary>
@@ -456,22 +457,22 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the runtime grid, spawns tiles and focuses the orbit camera.
         /// </summary>
-        private IReadOnlyList<MahjongTile> Generate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX)
+        private IReadOnlyList<MahjongTile> Generate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX, float blockStrideLocalY)
         {
             CancelActiveGeneration();
 
             if (ShouldGenerateIncrementally())
             {
-                activeGenerationRoutine = StartCoroutine(GenerateIncrementally(levelName, gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX));
+                activeGenerationRoutine = StartCoroutine(GenerateIncrementally(levelName, gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, blockStrideLocalY));
                 return spawnedTiles;
             }
 
-            return GenerateImmediate(levelName, gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX);
+            return GenerateImmediate(levelName, gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, blockStrideLocalY);
         }
 
-        private IReadOnlyList<MahjongTile> GenerateImmediate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX)
+        private IReadOnlyList<MahjongTile> GenerateImmediate(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX, float blockStrideLocalY)
         {
-            if (!TryPrepareGeneration(gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, out VoxelGridData grid))
+            if (!TryPrepareGeneration(gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, blockStrideLocalY, out VoxelGridData grid))
             {
                 return spawnedTiles;
             }
@@ -489,9 +490,9 @@ namespace MahjongOut3D.LevelSystem
             return spawnedTiles;
         }
 
-        private IEnumerator GenerateIncrementally(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX)
+        private IEnumerator GenerateIncrementally(string levelName, VoxelGridSize gridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> tileDefinitions, int runtimeBlockCount, float blockStrideLocalX, float blockStrideLocalY)
         {
-            if (!TryPrepareGeneration(gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, out VoxelGridData grid))
+            if (!TryPrepareGeneration(gridSize, layoutOverride, tileDefinitions, runtimeBlockCount, blockStrideLocalX, blockStrideLocalY, out VoxelGridData grid))
             {
                 activeGenerationRoutine = null;
                 yield break;
@@ -521,6 +522,7 @@ namespace MahjongOut3D.LevelSystem
             IList<LevelTileDefinition> tileDefinitions,
             int runtimeBlockCount,
             float blockStrideLocalX,
+            float blockStrideLocalY,
             out VoxelGridData grid)
         {
             grid = null;
@@ -535,7 +537,7 @@ namespace MahjongOut3D.LevelSystem
             tileManager?.SetVisibilityRefreshSuspended(true);
 
             ClearGeneratedLevel();
-            PrepareRuntimeBlockRoots(runtimeBlockCount, blockStrideLocalX);
+            PrepareRuntimeBlockRoots(runtimeBlockCount, blockStrideLocalX, blockStrideLocalY);
 
             grid = levelManager.CreateGrid(gridSize, layoutOverride);
             levelManager.SetActiveGrid(grid);
@@ -1658,26 +1660,44 @@ namespace MahjongOut3D.LevelSystem
                 worldBounds = TransformBounds(tileRootTransform, localBounds);
             }
 
-            cameraManager.FrameBounds(worldBounds, cameraFramePaddingOnLoad, true, true);
+            float framePadding = ResolveCameraFramePadding();
+            cameraManager.FrameBounds(worldBounds, framePadding, true, true);
             zoomSlider?.SyncWithCamera();
+        }
+
+        private float ResolveCameraFramePadding()
+        {
+            float framePadding = runtimeBlockRoots.Count <= 1
+                ? 1f
+                : Mathf.Max(1f, cameraFramePaddingOnLoad);
+
+            if (runtimeBlockRoots.Count == 2)
+            {
+                framePadding = Mathf.Max(framePadding, 1.42f);
+            }
+
+            return framePadding;
         }
 
         /// <summary>
         /// Creates one runtime transform root per duplicated block.
         /// </summary>
-        private void PrepareRuntimeBlockRoots(int blockCount, float blockStrideLocalX)
+        private void PrepareRuntimeBlockRoots(int blockCount, float blockStrideLocalX, float blockStrideLocalY)
         {
             ClearRuntimeBlockRoots();
 
             Transform rootParent = tileRoot == null ? transform : tileRoot;
             int resolvedBlockCount = Mathf.Max(1, blockCount);
             float centeredStartOffset = -0.5f * (resolvedBlockCount - 1) * blockStrideLocalX;
+            float centeredVerticalOffset = -0.5f * (resolvedBlockCount - 1) * blockStrideLocalY;
             for (int blockIndex = 0; blockIndex < resolvedBlockCount; blockIndex++)
             {
                 GameObject blockRootObject = new GameObject(resolvedBlockCount > 1 ? $"Runtime Block {blockIndex + 1}" : "Runtime Block");
                 Transform blockRoot = blockRootObject.transform;
                 blockRoot.SetParent(rootParent, false);
-                blockRoot.localPosition = new Vector3(centeredStartOffset + (blockStrideLocalX * blockIndex), 0f, 0f);
+                blockRoot.localPosition = resolvedBlockCount == 2
+                    ? new Vector3(0f, centeredVerticalOffset + (blockStrideLocalY * blockIndex), 0f)
+                    : new Vector3(centeredStartOffset + (blockStrideLocalX * blockIndex), 0f, 0f);
                 blockRoot.localRotation = Quaternion.identity;
                 blockRoot.localScale = Vector3.one;
                 runtimeBlockRoots.Add(blockRoot);
@@ -1731,6 +1751,22 @@ namespace MahjongOut3D.LevelSystem
 
             return baseWidth + (Mathf.Max(0, blockSpacingCells) * Mathf.Max(0.01f, cellSize.x));
         }
+
+        private float ResolveBlockStrideLocalY(VoxelGridSize singleBlockGridSize, VoxelGridLayoutSettings layoutOverride, IList<LevelTileDefinition> singleBlockRuntimeTiles, int blockSpacingCells)
+        {
+            VoxelGridLayoutSettings resolvedLayout = layoutOverride != null ? layoutOverride : levelManager != null ? levelManager.DefaultGridLayout : null;
+            Vector3 cellSize = resolvedLayout != null ? resolvedLayout.CellSize : new Vector3(0.95f, 0.45f, 0.7f);
+
+            Bounds blockBounds = BuildLocalTileBounds(singleBlockGridSize, layoutOverride, singleBlockRuntimeTiles);
+            float baseHeight = Mathf.Max(blockBounds.size.y, blockBounds.size.z);
+            if (baseHeight <= Mathf.Epsilon)
+            {
+                baseHeight = Mathf.Max(cellSize.z, singleBlockGridSize.Depth * cellSize.z, cellSize.y, singleBlockGridSize.Height * cellSize.y);
+            }
+
+            return baseHeight + (Mathf.Max(0, blockSpacingCells) * Mathf.Max(0.01f, Mathf.Max(cellSize.y, cellSize.z)));
+        }
+
 
         /// <summary>
         /// Builds local-space bounds around the tile centers of one authored block.
