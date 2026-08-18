@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MahjongOut3D.Data;
 using MahjongOut3D.TileSystem;
 using UnityEngine;
 
@@ -38,6 +39,8 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private string outputFolder = "Assets/00 Scripts/Mahjong/Generated Levels";
         [SerializeField] private string levelNamePrefix = "Generated";
         [SerializeField] private int seed = 20260730;
+        [SerializeField] private TextAsset jsonGenerationConfig;
+        [SerializeField] private string googleSheetUrl;
         [SerializeField] private GenerationWriteMode generationWriteMode = GenerationWriteMode.GenerateNew;
         [SerializeField] private DifficultyBatchDefinition easySettings = DifficultyBatchDefinition.CreateEasyDefaults();
         [SerializeField] private DifficultyBatchDefinition normalSettings = DifficultyBatchDefinition.CreateNormalDefaults();
@@ -247,6 +250,45 @@ namespace MahjongOut3D.LevelSystem
                     difficulty = LevelDifficulty.Expert,
                 };
             }
+
+            /// <summary>
+            /// Creates a one-off level request from a JSON-config row.
+            /// </summary>
+            public static DifficultyBatchDefinition CreateCustom(string label, int layerCount, int minPairCount, int maxPairCount, LevelShapeType shape, LevelDifficulty difficulty)
+            {
+                int resolvedLayerCount = Mathf.Max(1, layerCount);
+                int resolvedMinPairCount = Mathf.Max(1, minPairCount);
+                int resolvedMaxPairCount = Mathf.Max(resolvedMinPairCount, maxPairCount);
+                return new DifficultyBatchDefinition
+                {
+                    label = string.IsNullOrWhiteSpace(label) ? difficulty.ToString() : label.Trim(),
+                    levelCount = 1,
+                    minLayerCount = resolvedLayerCount,
+                    maxLayerCount = resolvedLayerCount,
+                    minPairCount = resolvedMinPairCount,
+                    maxPairCount = resolvedMaxPairCount,
+                    flippedTileChance = ResolveDefaultFlippedTileChance(difficulty),
+                    shape = NormalizeSupportedShapeType(shape),
+                    allowedShapes = new List<LevelShapeType>(),
+                    difficulty = difficulty,
+                };
+            }
+
+            private static float ResolveDefaultFlippedTileChance(LevelDifficulty difficulty)
+            {
+                switch (difficulty)
+                {
+                    case LevelDifficulty.Easy:
+                        return 0.35f;
+                    case LevelDifficulty.Normal:
+                        return 0.45f;
+                    case LevelDifficulty.Hard:
+                        return 0.55f;
+                    case LevelDifficulty.Expert:
+                    default:
+                        return 0.65f;
+                }
+            }
         }
 
         private static LevelShapeType NormalizeSupportedShapeType(LevelShapeType shape)
@@ -350,6 +392,68 @@ namespace MahjongOut3D.LevelSystem
             /// Gets or sets the generated shell-layer count.
             /// </summary>
             public int LayerCount { get; set; }
+
+            /// <summary>
+            /// Gets or sets the desired catalog slot for this generated level.
+            /// </summary>
+            public int CatalogIndex { get; set; } = -1;
+
+            /// <summary>
+            /// Gets or sets the duplicated runtime block count.
+            /// </summary>
+            public int BlockCount { get; set; } = 1;
+
+            /// <summary>
+            /// Gets or sets the grid spacing between duplicated runtime blocks.
+            /// </summary>
+            public int BlockSpacingCells { get; set; } = 1;
+
+            /// <summary>
+            /// Gets or sets the face-down tile ratio for this generated level.
+            /// </summary>
+            public float FaceDownTileRatio { get; set; }
+
+            /// <summary>
+            /// Gets or sets the combo tile ratio for this generated level.
+            /// </summary>
+            public float ComboTileRatio { get; set; }
+
+            /// <summary>
+            /// Gets or sets the fill categories constrained for this generated level.
+            /// </summary>
+            public List<string> FillCategoryNames { get; set; } = new List<string>();
+        }
+
+        /// <summary>
+        /// Wraps a set of single-level JSON generation rows.
+        /// </summary>
+        [Serializable]
+        public sealed class JsonGenerationConfig
+        {
+            public List<JsonGenerationLevelEntry> levels = new List<JsonGenerationLevelEntry>();
+        }
+
+        /// <summary>
+        /// Describes one JSON-authored level generation row.
+        /// </summary>
+        [Serializable]
+        public sealed class JsonGenerationLevelEntry
+        {
+            public string levelName;
+            public int levelIndex;
+            public string difficulty = "Easy";
+            public int layerCount = 1;
+            public int categoryCount = 1;
+            public int minPair = 10;
+            public int maxPair = 20;
+            public int uniquePair = 10;
+            public string shape = "Cube";
+            public float faceDown;
+            public int totalMatchedCount;
+            public int blockCount = 1;
+            public int blockSpacingCells = 1;
+            public float comboTileRatio;
+            public List<string> fillCategoryNames = new List<string>();
         }
 
         /// <summary>
@@ -522,6 +626,85 @@ namespace MahjongOut3D.LevelSystem
             EnsureFolderExists(outputFolder);
             int startingSequence = writeMode == GenerationWriteMode.GenerateNew ? GetHighestExistingSequence() : 0;
             List<GeneratedLevelData> generatedData = GenerateLevelData(startingSequence);
+            return WriteGeneratedAssets(generatedData, writeMode);
+        }
+
+        /// <summary>
+        /// Generates ScriptableObject level assets from the configured JSON row list.
+        /// </summary>
+        public List<LevelDefinition> GenerateAssetsFromJsonConfig()
+        {
+            return GenerateAssetsFromJsonConfig(generationWriteMode);
+        }
+
+        /// <summary>
+        /// Generates ScriptableObject level assets from the configured JSON row list.
+        /// </summary>
+        public List<LevelDefinition> GenerateAssetsFromJsonConfig(GenerationWriteMode writeMode)
+        {
+            if (targetCatalog == null)
+            {
+                throw new InvalidOperationException("ProceduralLevelBatchGenerator requires a target LevelCatalog.");
+            }
+
+            if (jsonGenerationConfig == null || string.IsNullOrWhiteSpace(jsonGenerationConfig.text))
+            {
+                throw new InvalidOperationException("Assign a JSON generation config TextAsset before generating levels from JSON.");
+            }
+
+            if (string.IsNullOrWhiteSpace(outputFolder) || !outputFolder.StartsWith("Assets", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Output folder must be a valid Unity project path starting with 'Assets'.");
+            }
+
+            EnsureFolderExists(outputFolder);
+            List<GeneratedLevelData> generatedData = GenerateLevelDataFromJsonConfig(jsonGenerationConfig.text);
+            return WriteGeneratedAssets(generatedData, writeMode);
+        }
+
+        /// <summary>
+        /// Generates ScriptableObject level assets from Google Sheet CSV content.
+        /// </summary>
+        public List<LevelDefinition> GenerateAssetsFromGoogleSheetCsv(string csvText)
+        {
+            return GenerateAssetsFromGoogleSheetCsv(csvText, generationWriteMode);
+        }
+
+        /// <summary>
+        /// Generates ScriptableObject level assets from Google Sheet CSV content.
+        /// </summary>
+        public List<LevelDefinition> GenerateAssetsFromGoogleSheetCsv(string csvText, GenerationWriteMode writeMode)
+        {
+            if (targetCatalog == null)
+            {
+                throw new InvalidOperationException("ProceduralLevelBatchGenerator requires a target LevelCatalog.");
+            }
+
+            if (string.IsNullOrWhiteSpace(csvText))
+            {
+                throw new InvalidOperationException("Google Sheet CSV content is empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(outputFolder) || !outputFolder.StartsWith("Assets", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Output folder must be a valid Unity project path starting with 'Assets'.");
+            }
+
+            EnsureFolderExists(outputFolder);
+            List<GeneratedLevelData> generatedData = GenerateLevelDataFromEntries(ParseGoogleSheetEntries(csvText));
+            return WriteGeneratedAssets(generatedData, writeMode);
+        }
+
+        /// <summary>
+        /// Resolves the configured Google Sheet URL into a CSV download URL when possible.
+        /// </summary>
+        public string GetResolvedGoogleSheetCsvUrl()
+        {
+            return ResolveGoogleSheetCsvUrl(googleSheetUrl);
+        }
+
+        private List<LevelDefinition> WriteGeneratedAssets(List<GeneratedLevelData> generatedData, GenerationWriteMode writeMode)
+        {
             List<LevelDefinition> generatedAssets = new List<LevelDefinition>(generatedData.Count);
 
             for (int index = 0; index < generatedData.Count; index++)
@@ -553,7 +736,7 @@ namespace MahjongOut3D.LevelSystem
                 generatedAssets.Add(asset);
             }
 
-            ApplyCatalogEntries(generatedAssets);
+            ApplyCatalogEntries(generatedAssets, generatedData);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             EditorUtility.SetDirty(this);
@@ -609,8 +792,614 @@ namespace MahjongOut3D.LevelSystem
                     UseSurfaceTilePlacement = ShouldUseSurfaceTilePlacement(candidate.Shape, layerCount),
                     Tiles = tileDefinitions,
                     LayerCount = layerCount,
+                    BlockCount = 1,
+                    BlockSpacingCells = 1,
                 });
             }
+        }
+
+        private List<GeneratedLevelData> GenerateLevelDataFromJsonConfig(string json)
+        {
+            SanitizeSerializedConfiguration();
+
+            JsonGenerationConfig config = ParseJsonGenerationConfig(json);
+            if (config == null || config.levels == null || config.levels.Count == 0)
+            {
+                throw new InvalidOperationException("JSON generation config is empty. Add at least one row inside 'levels'.");
+            }
+
+            return GenerateLevelDataFromEntries(config.levels);
+        }
+
+        private List<GeneratedLevelData> GenerateLevelDataFromEntries(List<JsonGenerationLevelEntry> entries)
+        {
+            SanitizeSerializedConfiguration();
+
+            if (entries == null || entries.Count == 0)
+            {
+                throw new InvalidOperationException("Level generation entries are empty.");
+            }
+
+            List<string> availableFillCategoryNames = new List<string>();
+#if UNITY_EDITOR
+            availableFillCategoryNames = ResolveAvailableFillCategoryNames();
+#endif
+            List<GeneratedLevelData> results = new List<GeneratedLevelData>(entries.Count);
+            System.Random random = new System.Random(seed);
+
+            for (int index = 0; index < entries.Count; index++)
+            {
+                JsonGenerationLevelEntry entry = entries[index];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                results.Add(GenerateConfiguredLevelData(entry, availableFillCategoryNames, random));
+            }
+
+            return results;
+        }
+
+        private static List<JsonGenerationLevelEntry> ParseGoogleSheetEntries(string csvText)
+        {
+            List<string[]> rows = CSVReader.ReadCSV(csvText);
+            if (rows == null || rows.Count == 0)
+            {
+                throw new InvalidOperationException("Google Sheet CSV has no rows.");
+            }
+
+            int headerRowIndex = FindFirstNonEmptyRow(rows);
+            if (headerRowIndex < 0)
+            {
+                throw new InvalidOperationException("Google Sheet CSV has no header row.");
+            }
+
+            Dictionary<string, int> headerMap = BuildSheetHeaderMap(rows[headerRowIndex]);
+            if (!headerMap.ContainsKey("levelindex"))
+            {
+                throw new InvalidOperationException("Google Sheet must contain a 'Level Index' column.");
+            }
+
+            List<JsonGenerationLevelEntry> entries = new List<JsonGenerationLevelEntry>();
+            for (int rowIndex = headerRowIndex + 1; rowIndex < rows.Count; rowIndex++)
+            {
+                string[] row = rows[rowIndex];
+                if (row == null || IsSheetRowEmpty(row))
+                {
+                    continue;
+                }
+
+                string levelIndexValue = GetSheetCell(row, headerMap, "levelindex");
+                if (string.IsNullOrWhiteSpace(levelIndexValue))
+                {
+                    continue;
+                }
+
+                entries.Add(new JsonGenerationLevelEntry
+                {
+                    levelName = GetSheetCell(row, headerMap, "levelname"),
+                    levelIndex = ParseIntOrDefault(levelIndexValue, 0),
+                    difficulty = GetSheetCell(row, headerMap, "difficulty", "easy") ?? "Easy",
+                    layerCount = ParseIntOrDefault(GetSheetCell(row, headerMap, "layercount", "layers", "layer"), 1),
+                    categoryCount = ParseIntOrDefault(GetSheetCell(row, headerMap, "categorycount", "categories"), 1),
+                    minPair = ParseIntOrDefault(GetSheetCell(row, headerMap, "minpair"), 10),
+                    maxPair = ParseIntOrDefault(GetSheetCell(row, headerMap, "maxpair"), 20),
+                    uniquePair = ParseIntOrDefault(GetSheetCell(row, headerMap, "uniquepair"), -1),
+                    shape = GetSheetCell(row, headerMap, "shape", "shapetype") ?? "Cube",
+                    faceDown = ParseFloatOrDefault(GetSheetCell(row, headerMap, "facedown", "facedownratio"), 0f),
+                    totalMatchedCount = ParseIntOrDefault(GetSheetCell(row, headerMap, "totalmatchedcount"), 0),
+                    blockCount = ParseIntOrDefault(GetSheetCell(row, headerMap, "blockcount"), 1),
+                    blockSpacingCells = ParseIntOrDefault(GetSheetCell(row, headerMap, "blockspacingcells", "blockspacing"), 1),
+                    comboTileRatio = ParseFloatOrDefault(GetSheetCell(row, headerMap, "combotileratio"), 0f),
+                    fillCategoryNames = ParseFillCategoryNames(GetSheetCell(row, headerMap, "fillcategorynames", "fillcategories", "categorynames")),
+                });
+            }
+
+            if (entries.Count == 0)
+            {
+                throw new InvalidOperationException("Google Sheet CSV has no valid data rows under the header.");
+            }
+
+            return entries;
+        }
+
+        private GeneratedLevelData GenerateConfiguredLevelData(JsonGenerationLevelEntry entry, List<string> availableFillCategoryNames, System.Random random)
+        {
+            LevelDifficulty difficulty = ParseDifficultyOrDefault(entry != null ? entry.difficulty : null);
+            LevelShapeType shape = ParseShapeOrDefault(entry != null ? entry.shape : null);
+            DifficultyBatchDefinition settings = DifficultyBatchDefinition.CreateCustom(
+                entry != null ? entry.difficulty : null,
+                entry != null ? entry.layerCount : 1,
+                entry != null ? entry.minPair : 1,
+                entry != null ? entry.maxPair : 1,
+                shape,
+                difficulty);
+
+            ShapeCandidate candidate = null;
+            VoxelGridSize logicalGridSize = default;
+            List<LevelTileDefinition> tileDefinitions = null;
+            bool solved = false;
+
+            for (int attempt = 0; attempt < MaxSolvableGenerationAttemptsPerLevel; attempt++)
+            {
+                candidate = CreateShapeCandidate(settings, random);
+                int tileCount = GetTargetTileCount(settings, candidate);
+                List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
+                logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
+
+                if (TryBuildTileDefinitions(shape, occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions, entry != null ? entry.uniquePair : -1))
+                {
+                    solved = true;
+                    break;
+                }
+            }
+
+            if (!solved || candidate == null || tileDefinitions == null)
+            {
+                string levelLabel = entry != null && !string.IsNullOrWhiteSpace(entry.levelName)
+                    ? entry.levelName
+                    : $"levelIndex {Mathf.Max(0, entry != null ? entry.levelIndex : 0)}";
+                throw new InvalidOperationException($"Failed to generate a solvable JSON-config level for {levelLabel}. Check pair bounds, layer count, and uniquePair settings.");
+            }
+
+            int layerCount = GetLayerCount(tileDefinitions);
+            return new GeneratedLevelData
+            {
+                LevelName = ResolveGeneratedLevelName(entry, difficulty),
+                CatalogIndex = Mathf.Max(0, entry != null ? entry.levelIndex : 0),
+                GridSize = ResolveSerializedGridSize(tileDefinitions, logicalGridSize),
+                LayoutOverride = layoutOverride,
+                Shape = candidate.Shape,
+                Difficulty = difficulty,
+                UseSurfaceTilePlacement = ShouldUseSurfaceTilePlacement(candidate.Shape, layerCount),
+                Tiles = tileDefinitions,
+                LayerCount = layerCount,
+                BlockCount = Mathf.Max(1, entry != null ? entry.blockCount : 1),
+                BlockSpacingCells = Mathf.Max(0, entry != null ? entry.blockSpacingCells : 1),
+                FaceDownTileRatio = NormalizeRatio(entry != null ? entry.faceDown : 0f),
+                ComboTileRatio = NormalizeRatio(entry != null ? entry.comboTileRatio : 0f),
+                FillCategoryNames = ResolveFillCategoryNames(entry, availableFillCategoryNames, random),
+            };
+        }
+
+        private string ResolveGeneratedLevelName(JsonGenerationLevelEntry entry, LevelDifficulty difficulty)
+        {
+            if (entry != null && !string.IsNullOrWhiteSpace(entry.levelName))
+            {
+                return entry.levelName.Trim();
+            }
+
+            int levelIndex = Mathf.Max(0, entry != null ? entry.levelIndex : 0);
+            return $"{levelNamePrefix}_{difficulty}_{levelIndex:000}";
+        }
+
+        private static JsonGenerationConfig ParseJsonGenerationConfig(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return null;
+            }
+
+            return JsonUtility.FromJson<JsonGenerationConfig>(json);
+        }
+
+        private static LevelDifficulty ParseDifficultyOrDefault(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return LevelDifficulty.Easy;
+            }
+
+            string normalized = value.Trim();
+            if (normalized.Equals("easy", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelDifficulty.Easy;
+            }
+
+            if (normalized.Equals("normal", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelDifficulty.Normal;
+            }
+
+            if (normalized.Equals("hard", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelDifficulty.Hard;
+            }
+
+            if (normalized.Equals("superhard", StringComparison.OrdinalIgnoreCase)
+                || normalized.Equals("expert", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelDifficulty.Expert;
+            }
+
+            return LevelDifficulty.Easy;
+        }
+
+        private static LevelShapeType ParseShapeOrDefault(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return LevelShapeType.Cube;
+            }
+
+            string normalized = value.Trim();
+            if (normalized.Equals("cube", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.Cube;
+            }
+
+            if (normalized.Equals("heart", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.Heart;
+            }
+
+            if (normalized.Equals("cylinder", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.Cylinder;
+            }
+
+            return LevelShapeType.Cube;
+        }
+
+        private static float NormalizeRatio(float rawValue)
+        {
+            if (rawValue > 1f && rawValue <= 100f)
+            {
+                return Mathf.Clamp01(rawValue / 100f);
+            }
+
+            return Mathf.Clamp01(rawValue);
+        }
+
+        private static List<string> ResolveFillCategoryNames(JsonGenerationLevelEntry entry, List<string> availableFillCategoryNames, System.Random random)
+        {
+            List<string> resolvedNames = new List<string>();
+            if (entry != null && entry.fillCategoryNames != null)
+            {
+                for (int index = 0; index < entry.fillCategoryNames.Count; index++)
+                {
+                    string categoryName = entry.fillCategoryNames[index];
+                    if (string.IsNullOrWhiteSpace(categoryName))
+                    {
+                        continue;
+                    }
+
+                    string trimmedName = categoryName.Trim();
+                    if (!ContainsIgnoreCase(resolvedNames, trimmedName))
+                    {
+                        resolvedNames.Add(trimmedName);
+                    }
+                }
+            }
+
+            int categoryCount = Mathf.Max(0, entry != null ? entry.categoryCount : 0);
+            if (categoryCount <= 0)
+            {
+                return resolvedNames;
+            }
+
+            if (resolvedNames.Count >= categoryCount)
+            {
+                if (resolvedNames.Count > categoryCount)
+                {
+                    resolvedNames.RemoveRange(categoryCount, resolvedNames.Count - categoryCount);
+                }
+
+                return resolvedNames;
+            }
+
+            if (availableFillCategoryNames == null || availableFillCategoryNames.Count == 0)
+            {
+                return resolvedNames;
+            }
+
+            List<string> shuffledCandidates = new List<string>(availableFillCategoryNames);
+            ShuffleList(shuffledCandidates, random);
+            for (int index = 0; index < shuffledCandidates.Count && resolvedNames.Count < categoryCount; index++)
+            {
+                string candidate = shuffledCandidates[index];
+                if (string.IsNullOrWhiteSpace(candidate) || ContainsIgnoreCase(resolvedNames, candidate))
+                {
+                    continue;
+                }
+
+                resolvedNames.Add(candidate.Trim());
+            }
+
+            return resolvedNames;
+        }
+
+        private static bool ContainsIgnoreCase(List<string> values, string candidate)
+        {
+            if (values == null || string.IsNullOrWhiteSpace(candidate))
+            {
+                return false;
+            }
+
+            for (int index = 0; index < values.Count; index++)
+            {
+                if (string.Equals(values[index], candidate, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static int FindFirstNonEmptyRow(List<string[]> rows)
+        {
+            if (rows == null)
+            {
+                return -1;
+            }
+
+            for (int index = 0; index < rows.Count; index++)
+            {
+                if (!IsSheetRowEmpty(rows[index]))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        private static bool IsSheetRowEmpty(string[] row)
+        {
+            if (row == null || row.Length == 0)
+            {
+                return true;
+            }
+
+            for (int index = 0; index < row.Length; index++)
+            {
+                if (!string.IsNullOrWhiteSpace(row[index]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static Dictionary<string, int> BuildSheetHeaderMap(string[] headerRow)
+        {
+            Dictionary<string, int> headerMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (headerRow == null)
+            {
+                return headerMap;
+            }
+
+            for (int index = 0; index < headerRow.Length; index++)
+            {
+                string normalizedHeader = NormalizeSheetHeader(headerRow[index]);
+                if (string.IsNullOrWhiteSpace(normalizedHeader) || headerMap.ContainsKey(normalizedHeader))
+                {
+                    continue;
+                }
+
+                headerMap.Add(normalizedHeader, index);
+            }
+
+            return headerMap;
+        }
+
+        private static string NormalizeSheetHeader(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            char[] chars = value.Trim().ToLowerInvariant().ToCharArray();
+            System.Text.StringBuilder builder = new System.Text.StringBuilder(chars.Length);
+            for (int index = 0; index < chars.Length; index++)
+            {
+                char current = chars[index];
+                if (char.IsLetterOrDigit(current))
+                {
+                    builder.Append(current);
+                }
+            }
+
+            return builder.ToString();
+        }
+
+        private static string GetSheetCell(string[] row, Dictionary<string, int> headerMap, params string[] aliases)
+        {
+            if (row == null || headerMap == null || aliases == null)
+            {
+                return string.Empty;
+            }
+
+            for (int aliasIndex = 0; aliasIndex < aliases.Length; aliasIndex++)
+            {
+                string normalizedAlias = NormalizeSheetHeader(aliases[aliasIndex]);
+                if (!headerMap.TryGetValue(normalizedAlias, out int cellIndex))
+                {
+                    continue;
+                }
+
+                if (cellIndex < 0 || cellIndex >= row.Length)
+                {
+                    return string.Empty;
+                }
+
+                return row[cellIndex] != null ? row[cellIndex].Trim() : string.Empty;
+            }
+
+            return string.Empty;
+        }
+
+        private static int ParseIntOrDefault(string value, int defaultValue)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return defaultValue;
+            }
+
+            return int.TryParse(value.Trim(), out int parsedValue) ? parsedValue : defaultValue;
+        }
+
+        private static float ParseFloatOrDefault(string value, float defaultValue)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return defaultValue;
+            }
+
+            string normalized = value.Trim().Replace(",", ".");
+            return float.TryParse(normalized, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out float parsedValue)
+                ? parsedValue
+                : defaultValue;
+        }
+
+        private static List<string> ParseFillCategoryNames(string rawValue)
+        {
+            List<string> results = new List<string>();
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return results;
+            }
+
+            string[] splitValues = rawValue.Split(new[] { '|', ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int index = 0; index < splitValues.Length; index++)
+            {
+                string candidate = splitValues[index].Trim();
+                if (string.IsNullOrWhiteSpace(candidate) || ContainsIgnoreCase(results, candidate))
+                {
+                    continue;
+                }
+
+                results.Add(candidate);
+            }
+
+            return results;
+        }
+
+        public static string ResolveGoogleSheetCsvUrl(string rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl))
+            {
+                return string.Empty;
+            }
+
+            string trimmedUrl = rawUrl.Trim();
+            if (trimmedUrl.IndexOf("output=csv", StringComparison.OrdinalIgnoreCase) >= 0
+                || trimmedUrl.IndexOf("format=csv", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return trimmedUrl;
+            }
+
+            string spreadsheetId = TryExtractBetween(trimmedUrl, "/d/e/", "/") ?? TryExtractBetween(trimmedUrl, "/d/", "/");
+            string gid = TryExtractQueryValue(trimmedUrl, "gid");
+            if (string.IsNullOrWhiteSpace(gid))
+            {
+                gid = TryExtractFragmentValue(trimmedUrl, "gid");
+            }
+
+            if (string.IsNullOrWhiteSpace(gid))
+            {
+                gid = "0";
+            }
+
+            if (string.IsNullOrWhiteSpace(spreadsheetId))
+            {
+                return trimmedUrl;
+            }
+
+            if (trimmedUrl.Contains("/d/e/"))
+            {
+                return $"https://docs.google.com/spreadsheets/d/e/{spreadsheetId}/pub?gid={gid}&single=true&output=csv";
+            }
+
+            return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}/export?format=csv&gid={gid}";
+        }
+
+        private static string TryExtractBetween(string value, string startToken, string endToken)
+        {
+            if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(startToken))
+            {
+                return null;
+            }
+
+            int startIndex = value.IndexOf(startToken, StringComparison.OrdinalIgnoreCase);
+            if (startIndex < 0)
+            {
+                return null;
+            }
+
+            startIndex += startToken.Length;
+            int endIndex = string.IsNullOrWhiteSpace(endToken)
+                ? -1
+                : value.IndexOf(endToken, startIndex, StringComparison.OrdinalIgnoreCase);
+
+            if (endIndex < 0)
+            {
+                endIndex = value.Length;
+            }
+
+            return endIndex > startIndex ? value.Substring(startIndex, endIndex - startIndex) : null;
+        }
+
+        private static string TryExtractQueryValue(string url, string key)
+        {
+            if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
+            {
+                return null;
+            }
+
+            string token = $"{key}=";
+            int queryIndex = url.IndexOf('?');
+            if (queryIndex < 0)
+            {
+                return null;
+            }
+
+            string query = url.Substring(queryIndex + 1);
+            string[] segments = query.Split('&');
+            for (int index = 0; index < segments.Length; index++)
+            {
+                if (!segments[index].StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return segments[index].Substring(token.Length);
+            }
+
+            return null;
+        }
+
+        private static string TryExtractFragmentValue(string url, string key)
+        {
+            if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
+            {
+                return null;
+            }
+
+            int fragmentIndex = url.IndexOf('#');
+            if (fragmentIndex < 0)
+            {
+                return null;
+            }
+
+            string fragment = url.Substring(fragmentIndex + 1);
+            string[] segments = fragment.Split('&');
+            string token = $"{key}=";
+            for (int index = 0; index < segments.Length; index++)
+            {
+                if (!segments[index].StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return segments[index].Substring(token.Length);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -1370,7 +2159,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds tile definitions and assigns match ids in pairs.
         /// </summary>
-        private bool TryBuildTileDefinitions(LevelShapeType shape, List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, DifficultyBatchDefinition settings, System.Random random, out List<LevelTileDefinition> tileDefinitions)
+        private bool TryBuildTileDefinitions(LevelShapeType shape, List<TilePlacementData> occupiedCoordinates, VoxelGridSize shapeGridSize, VoxelGridSize logicalGridSize, DifficultyBatchDefinition settings, System.Random random, out List<LevelTileDefinition> tileDefinitions, int requestedUniquePairCount = -1)
         {
             tileDefinitions = new List<LevelTileDefinition>(occupiedCoordinates != null ? occupiedCoordinates.Count : 0);
             if (occupiedCoordinates == null || occupiedCoordinates.Count == 0)
@@ -1389,15 +2178,142 @@ namespace MahjongOut3D.LevelSystem
                 return false;
             }
 
+            List<int> matchIdsByPair = BuildMatchIdsByPair(orderedPairs.Count, requestedUniquePairCount, random);
+            if (matchIdsByPair == null || matchIdsByPair.Count != orderedPairs.Count)
+            {
+                tileDefinitions.Clear();
+                return false;
+            }
+
             int tileIndex = 0;
             for (int pairIndex = 0; pairIndex < orderedPairs.Count; pairIndex++)
             {
                 TilePlacementPair pair = orderedPairs[pairIndex];
-                tileDefinitions.Add(CreateTileDefinition(shape, pairIndex, tileIndex++, pair.First, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
-                tileDefinitions.Add(CreateTileDefinition(shape, pairIndex, tileIndex++, pair.Second, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+                int matchId = matchIdsByPair[pairIndex];
+                tileDefinitions.Add(CreateTileDefinition(shape, matchId, tileIndex++, pair.First, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
+                tileDefinitions.Add(CreateTileDefinition(shape, matchId, tileIndex++, pair.Second, shapeGridSize, logicalGridSize, settings.FlippedTileChance, random));
             }
 
             return true;
+        }
+
+        private static List<int> BuildMatchIdsByPair(int pairCount, int requestedUniquePairCount, System.Random random)
+        {
+            if (pairCount <= 0)
+            {
+                return new List<int>();
+            }
+
+            int uniquePairCount = ResolveUniquePairCount(requestedUniquePairCount, pairCount);
+            int repeatedPairCount = pairCount - uniquePairCount;
+            if (repeatedPairCount == 1)
+            {
+                return null;
+            }
+
+            List<int> groupSizes = new List<int>(pairCount);
+            for (int index = 0; index < uniquePairCount; index++)
+            {
+                groupSizes.Add(1);
+            }
+
+            while (repeatedPairCount > 0)
+            {
+                int nextGroupSize = ResolveRepeatedGroupSize(repeatedPairCount, random);
+                if (nextGroupSize < 2)
+                {
+                    return null;
+                }
+
+                groupSizes.Add(nextGroupSize);
+                repeatedPairCount -= nextGroupSize;
+            }
+
+            ShuffleList(groupSizes, random);
+
+            List<int> matchIds = new List<int>(pairCount);
+            int nextMatchId = 0;
+            for (int index = 0; index < groupSizes.Count; index++)
+            {
+                int groupSize = groupSizes[index];
+                for (int pairIndex = 0; pairIndex < groupSize; pairIndex++)
+                {
+                    matchIds.Add(nextMatchId);
+                }
+
+                nextMatchId++;
+            }
+
+            ShuffleList(matchIds, random);
+            return matchIds;
+        }
+
+        private static int ResolveUniquePairCount(int requestedUniquePairCount, int pairCount)
+        {
+            if (pairCount <= 0)
+            {
+                return 0;
+            }
+
+            if (requestedUniquePairCount < 0)
+            {
+                return pairCount;
+            }
+
+            int resolvedUniquePairCount = Mathf.Clamp(requestedUniquePairCount, 0, pairCount);
+            if (pairCount - resolvedUniquePairCount == 1)
+            {
+                resolvedUniquePairCount = Mathf.Min(pairCount, resolvedUniquePairCount + 1);
+            }
+
+            return resolvedUniquePairCount;
+        }
+
+        private static int ResolveRepeatedGroupSize(int repeatedPairCount, System.Random random)
+        {
+            if (repeatedPairCount < 2)
+            {
+                return 0;
+            }
+
+            if (repeatedPairCount == 2 || repeatedPairCount == 3)
+            {
+                return repeatedPairCount;
+            }
+
+            List<int> validGroupSizes = new List<int>();
+            for (int groupSize = 2; groupSize <= repeatedPairCount; groupSize++)
+            {
+                if (repeatedPairCount - groupSize == 1)
+                {
+                    continue;
+                }
+
+                validGroupSizes.Add(groupSize);
+            }
+
+            if (validGroupSizes.Count == 0)
+            {
+                return 0;
+            }
+
+            return validGroupSizes[random.Next(0, validGroupSizes.Count)];
+        }
+
+        private static void ShuffleList<T>(List<T> values, System.Random random)
+        {
+            if (values == null || values.Count <= 1 || random == null)
+            {
+                return;
+            }
+
+            for (int index = values.Count - 1; index > 0; index--)
+            {
+                int swapIndex = random.Next(0, index + 1);
+                T current = values[index];
+                values[index] = values[swapIndex];
+                values[swapIndex] = current;
+            }
         }
 
         /// <summary>
@@ -2419,8 +3335,21 @@ namespace MahjongOut3D.LevelSystem
             serializedObject.FindProperty("<LayoutOverride>k__BackingField").objectReferenceValue = data.LayoutOverride;
             serializedObject.FindProperty("<Shape>k__BackingField").intValue = (int)data.Shape;
             serializedObject.FindProperty("<UseSurfaceTilePlacement>k__BackingField").boolValue = data.UseSurfaceTilePlacement;
+            serializedObject.FindProperty("<BlockCount>k__BackingField").intValue = Mathf.Max(1, data.BlockCount);
+            serializedObject.FindProperty("<BlockSpacingCells>k__BackingField").intValue = Mathf.Max(0, data.BlockSpacingCells);
             serializedObject.FindProperty("<LayerCount>k__BackingField").intValue = Mathf.Max(0, data.LayerCount);
             serializedObject.FindProperty("<Difficulty>k__BackingField").enumValueIndex = (int)data.Difficulty;
+            serializedObject.FindProperty("<FaceDownTileRatio>k__BackingField").floatValue = Mathf.Clamp01(data.FaceDownTileRatio);
+            serializedObject.FindProperty("<ComboTileRatio>k__BackingField").floatValue = Mathf.Clamp01(data.ComboTileRatio);
+
+            SerializedProperty fillCategoryProperty = serializedObject.FindProperty("<FillCategoryNames>k__BackingField");
+            fillCategoryProperty.ClearArray();
+            List<string> fillCategoryNames = data.FillCategoryNames ?? new List<string>();
+            for (int index = 0; index < fillCategoryNames.Count; index++)
+            {
+                fillCategoryProperty.InsertArrayElementAtIndex(index);
+                fillCategoryProperty.GetArrayElementAtIndex(index).stringValue = fillCategoryNames[index];
+            }
 
             SerializedProperty tilesProperty = serializedObject.FindProperty("<Tiles>k__BackingField");
             tilesProperty.ClearArray();
@@ -2453,7 +3382,7 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Applies generated assets into the configured level catalog.
         /// </summary>
-        private void ApplyCatalogEntries(List<LevelDefinition> generatedAssets)
+        private void ApplyCatalogEntries(List<LevelDefinition> generatedAssets, List<GeneratedLevelData> generatedData)
         {
             SerializedObject catalogObject = new SerializedObject(targetCatalog);
             SerializedProperty levelsProperty = catalogObject.FindProperty("<Levels>k__BackingField");
@@ -2461,8 +3390,25 @@ namespace MahjongOut3D.LevelSystem
             for (int index = 0; index < generatedAssets.Count; index++)
             {
                 LevelDefinition generatedAsset = generatedAssets[index];
+                GeneratedLevelData generatedEntry = generatedData != null && index < generatedData.Count ? generatedData[index] : null;
                 if (generatedAsset == null)
                 {
+                    continue;
+                }
+
+                if (generatedEntry != null && generatedEntry.CatalogIndex >= 0)
+                {
+                    if (levelsProperty.arraySize <= generatedEntry.CatalogIndex)
+                    {
+                        int previousSize = levelsProperty.arraySize;
+                        levelsProperty.arraySize = generatedEntry.CatalogIndex + 1;
+                        for (int fillIndex = previousSize; fillIndex < levelsProperty.arraySize; fillIndex++)
+                        {
+                            levelsProperty.GetArrayElementAtIndex(fillIndex).objectReferenceValue = null;
+                        }
+                    }
+
+                    levelsProperty.GetArrayElementAtIndex(generatedEntry.CatalogIndex).objectReferenceValue = generatedAsset;
                     continue;
                 }
 
@@ -2542,6 +3488,42 @@ namespace MahjongOut3D.LevelSystem
 
                 currentPath = nextPath;
             }
+        }
+
+        private static List<string> ResolveAvailableFillCategoryNames()
+        {
+            HashSet<string> seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<string> resolvedNames = new List<string>();
+            string[] materialGuids = AssetDatabase.FindAssets("t:MahjongMaterialSO");
+
+            for (int guidIndex = 0; guidIndex < materialGuids.Length; guidIndex++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(materialGuids[guidIndex]);
+                MahjongMaterialSO materialLibrary = AssetDatabase.LoadAssetAtPath<MahjongMaterialSO>(assetPath);
+                if (materialLibrary == null || materialLibrary.FillCategories == null)
+                {
+                    continue;
+                }
+
+                for (int categoryIndex = 0; categoryIndex < materialLibrary.FillCategories.Count; categoryIndex++)
+                {
+                    MahjongMaterialCategory category = materialLibrary.FillCategories[categoryIndex];
+                    string categoryName = category != null ? category.CategoryName : null;
+                    if (string.IsNullOrWhiteSpace(categoryName))
+                    {
+                        continue;
+                    }
+
+                    string trimmedName = categoryName.Trim();
+                    if (seenNames.Add(trimmedName))
+                    {
+                        resolvedNames.Add(trimmedName);
+                    }
+                }
+            }
+
+            resolvedNames.Sort(StringComparer.OrdinalIgnoreCase);
+            return resolvedNames;
         }
 
         /// <summary>
