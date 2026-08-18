@@ -1522,6 +1522,7 @@ namespace MahjongOut3D.LevelSystem
                 LocalPosition = baseLocalPosition - placementOffset,
                 LocalEulerAngles = definition.LocalEulerAngles,
                 SurfaceShellIndex = definition.SurfaceShellIndex,
+                RuntimeBlockIndex = definition.RuntimeBlockIndex,
             };
             
             tile.ApplyRuntimeData(runtimeData);

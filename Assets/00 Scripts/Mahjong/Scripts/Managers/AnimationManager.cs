@@ -132,6 +132,16 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Cancels transient gameplay animations so pooled tiles can be reused safely during level reloads.
+        /// </summary>
+        public void CancelTransientAnimations()
+        {
+            StopAllCoroutines();
+            ClearHintHighlight();
+            SetAnimationLock(false);
+        }
+
+        /// <summary>
         /// Executes the full match animation and camera shake sequence.
         /// </summary>
         private IEnumerator PlayMatchSequenceRoutine(MahjongTile firstTile, MahjongTile secondTile, Action onCompleted)

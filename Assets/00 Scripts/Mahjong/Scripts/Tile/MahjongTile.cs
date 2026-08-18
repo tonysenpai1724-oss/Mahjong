@@ -16,6 +16,7 @@ namespace MahjongOut3D.TileSystem
         [SerializeField] private int matchId;
         [SerializeField] private Vector3Int gridCoordinate;
         [SerializeField] private int surfaceShellIndex;
+        [SerializeField] private int runtimeBlockIndex;
         [SerializeField] private Vector3 boardLocalPosition;
         [SerializeField] private Vector3 boardLocalEulerAngles;
         [SerializeField] private bool isBufferedSelection;
@@ -90,6 +91,11 @@ namespace MahjongOut3D.TileSystem
         /// Gets the nested shell depth for surface-generated levels, where zero is outermost.
         /// </summary>
         public int SurfaceShellIndex => Mathf.Max(0, surfaceShellIndex);
+
+        /// <summary>
+        /// Gets the duplicated runtime block index that owns this tile.
+        /// </summary>
+        public int RuntimeBlockIndex => Mathf.Max(0, runtimeBlockIndex);
 
         /// <summary>
         /// Gets the authored board-local position used when restoring the tile from the selection tray.
@@ -301,6 +307,7 @@ namespace MahjongOut3D.TileSystem
             matchId = runtimeData.MatchId;
             gridCoordinate = runtimeData.GridCoordinate;
             surfaceShellIndex = runtimeData.SurfaceShellIndex;
+            runtimeBlockIndex = runtimeData.RuntimeBlockIndex;
             boardLocalPosition = runtimeData.LocalPosition;
             boardLocalEulerAngles = runtimeData.LocalEulerAngles;
             isBufferedSelection = false;

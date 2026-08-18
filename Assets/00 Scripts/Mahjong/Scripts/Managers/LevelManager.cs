@@ -116,6 +116,16 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
+            if (Context.Services.TryGet(out MatchManager matchManager))
+            {
+                matchManager.PrepareForLevelReload();
+            }
+
+            if (Context.Services.TryGet(out AnimationManager animationManager))
+            {
+                animationManager.CancelTransientAnimations();
+            }
+
             SetCurrentLevel(levelIndex);
             SetActiveLevelDefinition(definition, definition != null && definition.UseSurfaceTilePlacement);
             Debug.Log($"[Mahjong] LoadLevel success path. Generating level '{definition.name}' at index {levelIndex}.");

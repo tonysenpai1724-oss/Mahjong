@@ -15,6 +15,7 @@ namespace MahjongOut3D.TileSystem
         [SerializeField] private Vector3 localPosition;
         [SerializeField] private Vector3 localEulerAngles;
         [SerializeField] private int surfaceShellIndex;
+        [SerializeField] private int runtimeBlockIndex;
 
         /// <summary>
         /// Gets or sets the unique runtime tile identifier.
@@ -68,6 +69,15 @@ namespace MahjongOut3D.TileSystem
         {
             get => Mathf.Max(0, surfaceShellIndex);
             set => surfaceShellIndex = Mathf.Max(0, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the duplicated runtime block index that owns this tile.
+        /// </summary>
+        public int RuntimeBlockIndex
+        {
+            get => Mathf.Max(0, runtimeBlockIndex);
+            set => runtimeBlockIndex = Mathf.Max(0, value);
         }
     }
 }

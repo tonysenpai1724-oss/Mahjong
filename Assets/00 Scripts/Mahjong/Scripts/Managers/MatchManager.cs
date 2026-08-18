@@ -14,6 +14,8 @@ namespace MahjongOut3D.Managers
     /// </summary>
     public sealed class MatchManager : ManagerBehaviour
     {
+        private const string SelectHistoryActionName = "Select";
+        private const string MatchHistoryActionName = "Match";
         private const float AnimationCompletionTimeoutSeconds = 5f;
         private const int SelectionTrayCapacity = 4;
         private const float MemoryRevealTimeoutSeconds = 2f;
@@ -116,6 +118,56 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Clears transient tray, selection and coroutine state before the active level is regenerated.
+        /// </summary>
+        public void PrepareForLevelReload()
+        {
+            StopAllCoroutines();
+            CancelMemoryRevealTimeout();
+
+            for (int index = 0; index < selectedTiles.Count; index++)
+            {
+                MahjongTile tile = selectedTiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                tile.SetBufferedSelection(false);
+                tile.RestoreBoardParent();
+                tile.RestoreBoardPose();
+                tile.StopFaceFlipAnimation(false);
+                tile.Deselect();
+                if (tile.TileCollider != null)
+                {
+                    tile.TileCollider.enabled = !tile.IsRemoved && !tile.IsMatched;
+                }
+            }
+
+            for (int index = 0; index < memorySelectedTiles.Count; index++)
+            {
+                MahjongTile tile = memorySelectedTiles[index];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                tile.StopFaceFlipAnimation(false);
+                tile.Deselect();
+            }
+
+            selectedTiles.Clear();
+            memorySelectedTiles.Clear();
+            history.Clear();
+            pendingMatchQueue.Clear();
+            pendingMatchedTiles.Clear();
+            memorySelectionOriginalFaceStates.Clear();
+            comboSourceTiles.Clear();
+            isMemoryRevealLocked = false;
+            IsResolvingMatch = false;
+        }
+
+        /// <summary>
         /// Uses the hint power-up to highlight a valid exposed pair.
         /// </summary>
         /// <returns>True when a hint was used successfully; otherwise false.</returns>
@@ -154,7 +206,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            RestoreSelectionRecord(record);
+            RestoreHistoryRecord(record);
 
             GetTileManager()?.RefreshTileExposure();
             PublishProgress();
@@ -223,7 +275,7 @@ namespace MahjongOut3D.Managers
             }
 
             GetAudioManager()?.PlayPowerUp(PowerUpType.Bomb);
-            StartCoroutine(ResolveMatchedPair(firstTile, secondTile, false));
+            QueueMatchedPairForResolution(firstTile, secondTile, false);
             Context.EventBus.Publish(new PowerUpUsedEvent(PowerUpType.Bomb));
             return true;
         }
@@ -239,7 +291,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            StartCoroutine(ResolveMatchedPair(firstTile, secondTile, false));
+            QueueMatchedPairForResolution(firstTile, secondTile, false);
             return true;
         }
 
@@ -322,15 +374,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private void HandleLevelGenerated(LevelGeneratedEvent eventData)
         {
-            CancelMemoryRevealTimeout();
-            selectedTiles.Clear();
-            memorySelectedTiles.Clear();
-            history.Clear();
-            pendingMatchQueue.Clear();
-            pendingMatchedTiles.Clear();
-            memorySelectionOriginalFaceStates.Clear();
-            comboSourceTiles.Clear();
-            isMemoryRevealLocked = false;
+            PrepareForLevelReload();
             totalTiles = eventData.SpawnedTileCount;
             ApplyDifficultyTileFaceState();
             AssignDifficultyComboTiles();
@@ -1263,11 +1307,28 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private MoveHistoryRecord CreateSelectionSnapshotRecord(MahjongTile tile, bool isMemoryRevealSelection = false)
         {
-            MoveHistoryRecord record = CreateSnapshotRecord("Select", new[] { tile });
+            MoveHistoryRecord record = CreateSnapshotRecord(SelectHistoryActionName, new[] { tile });
             for (int index = 0; index < record.snapshots.Count; index++)
             {
                 record.snapshots[index].state = TileState.Visible;
                 record.snapshots[index].isBufferedSelection = false;
+            }
+
+            return record;
+        }
+
+        private MoveHistoryRecord CreateMatchSnapshotRecord(MahjongTile trayTile, MahjongTile boardTile)
+        {
+            MoveHistoryRecord record = CreateSnapshotRecord(MatchHistoryActionName, new[] { trayTile, boardTile });
+            for (int index = 0; index < record.snapshots.Count; index++)
+            {
+                TileStateSnapshot snapshot = record.snapshots[index];
+                if (boardTile != null && snapshot.tileId == boardTile.TileId)
+                {
+                    snapshot.state = TileState.Visible;
+                    snapshot.isBufferedSelection = false;
+                    record.snapshots[index] = snapshot;
+                }
             }
 
             return record;
@@ -1450,7 +1511,9 @@ namespace MahjongOut3D.Managers
                 yield break;
             }
 
-            history.Push(CreateSelectionSnapshotRecord(tappedTile));
+            history.Push(matchingTrayTile != null
+                ? CreateMatchSnapshotRecord(matchingTrayTile, tappedTile)
+                : CreateSelectionSnapshotRecord(tappedTile));
 
             if (tappedTile.IsFaceDown)
             {
@@ -1573,7 +1636,7 @@ namespace MahjongOut3D.Managers
             return false;
         }
 
-        private bool IsTilePendingMatch(MahjongTile tile)
+        public bool IsTilePendingMatch(MahjongTile tile)
         {
             return tile != null && pendingMatchedTiles.Contains(tile);
         }
@@ -1590,7 +1653,7 @@ namespace MahjongOut3D.Managers
             while (history.Count > 0)
             {
                 MoveHistoryRecord candidate = history.Pop();
-                if (candidate != null && candidate.actionName == "Select")
+                if (IsUndoableHistoryRecord(candidate))
                 {
                     record = candidate;
                     break;
@@ -1611,13 +1674,19 @@ namespace MahjongOut3D.Managers
         {
             foreach (MoveHistoryRecord record in history)
             {
-                if (record != null && record.actionName == "Select")
+                if (IsUndoableHistoryRecord(record))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private static bool IsUndoableHistoryRecord(MoveHistoryRecord record)
+        {
+            return record != null
+                && (record.actionName == SelectHistoryActionName || record.actionName == MatchHistoryActionName);
         }
 
         private bool ShouldRestoreMemoryTileFaceDown(MahjongTile tile)

@@ -366,7 +366,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return IsTileExposed(tile) && IsTileSurfaceVisibleFromCamera(tile);
+                return IsTileExposed(tile);
             }
 
             if (exposureSettings != null && exposureSettings.RequireSurfaceExposure && !IsTileExposed(tile))
@@ -439,7 +439,7 @@ namespace MahjongOut3D.Managers
             bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
             if (useSurfaceRules)
             {
-                return IsTileExposed(tile) && IsTileSurfaceVisibleFromCamera(tile);
+                return IsTileExposed(tile);
             }
 
             return IsTileSelectable(tile);
@@ -470,18 +470,12 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Monitors X-Ray expiry and refreshes tile visibility only when the effect ends.
+        /// Monitors X-Ray state changes and refreshes tile visibility only when the reveal state actually changes.
         /// </summary>
         private void Update()
         {
-            if (Context != null && Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement)
-            {
-                RefreshTileExposure();
-                return;
-            }
-
             bool isXRayActive = IsXRayActive();
-            if (wasXRayActiveLastFrame && !isXRayActive)
+            if (wasXRayActiveLastFrame != isXRayActive)
             {
                 RefreshTileExposure();
             }
@@ -576,9 +570,14 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
+            bool isPendingMatch = Context != null
+                && Context.Services.TryGet(out MatchManager matchManager)
+                && matchManager.IsTilePendingMatch(tile);
+
             bool shouldDim = dimNonSelectableTiles
                 && tile.State == TileState.Visible
                 && !tile.IsBufferedSelection
+                && !isPendingMatch
                 && !IsTileSelectable(tile);
 
             tile.SetSelectionBlockedVisual(shouldDim);
@@ -723,7 +722,7 @@ namespace MahjongOut3D.Managers
                 ? BuildSurfaceCoverCheckSamplePoints(boxCollider, tile.transform, GetVisibilitySampleInset())
                 : BuildSurfaceCoverCheckSamplePoints(tileCollider.bounds, outwardNormal, GetVisibilitySampleInset());
             int openSampleCount = 0;
-            float checkDistance = maxRaycastDistance;
+            float checkDistance = GetSurfaceExposureCheckDistance(tile, outwardNormal);
 
             for (int index = 0; index < samplePoints.Length; index++)
             {
@@ -740,7 +739,7 @@ namespace MahjongOut3D.Managers
                     }
 
                     MahjongTile hitTile = hit.collider.GetComponentInParent<MahjongTile>();
-                    if (hitTile == null || hitTile == tile || hitTile.IsRemoved || hitTile.IsMatched)
+                    if (!IsCoveringTileForSurfaceExposure(tile, hitTile))
                     {
                         continue;
                     }
@@ -790,7 +789,7 @@ namespace MahjongOut3D.Managers
                     }
 
                     MahjongTile hitTile = hit.collider.GetComponentInParent<MahjongTile>();
-                    if (hitTile == null || hitTile == tile || hitTile.IsRemoved || hitTile.IsMatched)
+                    if (!IsCoveringTileForSurfaceExposure(tile, hitTile))
                     {
                         continue;
                     }
@@ -800,6 +799,26 @@ namespace MahjongOut3D.Managers
             }
 
             return false;
+        }
+
+        private static bool IsCoveringTileForSurfaceExposure(MahjongTile sourceTile, MahjongTile candidateTile)
+        {
+            if (sourceTile == null || candidateTile == null)
+            {
+                return false;
+            }
+
+            if (candidateTile == sourceTile || candidateTile.IsRemoved || candidateTile.IsMatched)
+            {
+                return false;
+            }
+
+            if (candidateTile.RuntimeBlockIndex != sourceTile.RuntimeBlockIndex)
+            {
+                return false;
+            }
+
+            return candidateTile.SurfaceShellIndex < sourceTile.SurfaceShellIndex;
         }
 
         /// <summary>
@@ -817,7 +836,16 @@ namespace MahjongOut3D.Managers
             for (int index = 0; index < directions.Length; index++)
             {
                 Vector3Int neighbor = grid.GetNeighborCoordinate(coordinate, directions[index]);
-                if (!grid.Contains(neighbor) || !grid.IsOccupied(neighbor))
+                if (!grid.Contains(neighbor) || !grid.TryGetTileId(neighbor, out int neighborTileId))
+                {
+                    return true;
+                }
+
+                if (!TryGetTile(neighborTileId, out MahjongTile neighborTile)
+                    || neighborTile == null
+                    || neighborTile.IsRemoved
+                    || neighborTile.IsMatched
+                    || neighborTile.RuntimeBlockIndex != tile.RuntimeBlockIndex)
                 {
                     return true;
                 }
