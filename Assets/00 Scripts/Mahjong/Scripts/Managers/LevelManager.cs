@@ -256,5 +256,15 @@ namespace MahjongOut3D.Managers
         {
             Context.EventBus.Publish(eventData);
         }
+        public  LevelDefinition GetLevelDefinition(int levelIndex)
+        {
+            if (levelCatalog == null || !levelCatalog.TryGetLevel(levelIndex, out LevelDefinition definition))
+            {
+                Debug.LogWarning($"[Mahjong] GetLevelDefinition failed. Invalid catalog or missing level at index {levelIndex}.");
+                return null;
+            }
+            return definition;
+        }
+       
     }
 }

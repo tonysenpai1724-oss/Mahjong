@@ -227,6 +227,7 @@ public enum EGameSetting
     Music,
     Sound,
     Vibration,
+    Notification,
 }
 public enum EShopType
 {

@@ -14,27 +14,27 @@ public class HomeMainPanel : HomePanel
 
     public override void InitFirstTime()
     {
-        InitLevel();
+        //InitLevel();
     }
-    void InitLevel()
-    {
-        int need = IPlayerInfoController.Instance.MaxLevel();
-        int has = lstItems.Count;
-        for (int i = 0; i < need - has; i++)
-        {
-            lstItems.Add(Instantiate(itemPrefab, itemParent));
-        }
-        for (int i = 0; i < lstItems.Count; i++)
-        {
-            gameObject.SetActive(i < need);
-            if (i < need)
-                lstItems[i].InitLevel(i + 1);
-        }
-        scrollTransform.gameObject.SetActive(false);
-        Canvas.ForceUpdateCanvases();
-        scrollTransform.gameObject.SetActive(true);
-        SnapLevel(IPlayerInfoController.Instance.CurrentLevel());
-    }
+    // void InitLevel()
+    // {
+    //     int need = IPlayerInfoController.Instance.MaxLevel();
+    //     int has = lstItems.Count;
+    //     for (int i = 0; i < need - has; i++)
+    //     {
+    //         lstItems.Add(Instantiate(itemPrefab, itemParent));
+    //     }
+    //     for (int i = 0; i < lstItems.Count; i++)
+    //     {
+    //         gameObject.SetActive(i < need);
+    //         if (i < need)
+    //             lstItems[i].InitLevel(i + 1);
+    //     }
+    //     scrollTransform.gameObject.SetActive(false);
+    //     Canvas.ForceUpdateCanvases();
+    //     scrollTransform.gameObject.SetActive(true);
+    //     SnapLevel(IPlayerInfoController.Instance.CurrentLevel());
+    // }
     [Button()]
     void SnapLevel(int level)
     {
