@@ -103,29 +103,102 @@ public class GameplayManager : Singleton<GameplayManager>
                 IAchievementController.Instance.UpdateAchievementProgress(EAchievementType.WinEndlessStage);
             IAchievementController.Instance.UpdateAchievementProgress(EAchievementType.LevelWin);
 
-            PackReward = new PackageResource();
-            PackReward.AddResource(new CommonResource(ECommonResource.Coin, 15));
-            PackReward.AddResource(new CommonResource(ECommonResource.Gem, 10));
-            PackReward.AddResource(new CommonResource(ECommonResource.ActivePoint, 1));
-
-            PackReward.ReceiveResource(EResourceFrom.ReviveIngame);
-            UIManager.Instance.ShowPopupEndGame();
+            PackReward = CreateWinRewardPackage();
+            UIManager.Instance.ShowPopupWinGame();
         }
         else
         {
+            PackReward = null;
             if (GameManager.Instance.GameType == EGameType.Endless)
             {
-                PackReward = new PackageResource();
-                PackReward.AddResource(new CommonResource(ECommonResource.Coin, Score));
-                PackReward.AddResource(new CommonResource(ECommonResource.ActivePoint, Score / 10));
+                PackReward = CreateLoseRewardPackage();
             }
-            UIManager.Instance.ShowPopupEndGame();
+
+            UIManager.Instance.ShowPopupLoseGame();
         }
     }
     public void SetGameOver(bool win)
     {
         winGame = win;
         SetState(EGamePlayState.GameOver);
+    }
+
+    public void ClaimCurrentReward(int multiplier, EResourceFrom resourceFrom)
+    {
+        if (PackReward == null)
+        {
+            return;
+        }
+
+        CreateScaledPackage(PackReward, multiplier).ReceiveResource(resourceFrom);
+        PackReward = null;
+    }
+
+    public void ReviveFromAds(int reviveTimeBonus = 30)
+    {
+        PackReward = null;
+        if (LevelTime <= 0)
+        {
+            LevelTime = reviveTimeBonus;
+        }
+
+        winGame = false;
+        SetState(EGamePlayState.Running);
+    }
+
+    PackageResource CreateWinRewardPackage()
+    {
+        PackageResource package = new PackageResource();
+        package.AddResource(new CommonResource(ECommonResource.Coin, 15));
+        package.AddResource(new CommonResource(ECommonResource.Gem, 10));
+        package.AddResource(new CommonResource(ECommonResource.ActivePoint, 1));
+        return package;
+    }
+
+    PackageResource CreateLoseRewardPackage()
+    {
+        PackageResource package = new PackageResource();
+        package.AddResource(new CommonResource(ECommonResource.Coin, Score));
+        package.AddResource(new CommonResource(ECommonResource.ActivePoint, Score / 10));
+        return package;
+    }
+
+    PackageResource CreateScaledPackage(PackageResource source, int multiplier)
+    {
+        PackageResource package = new PackageResource();
+        if (source == null)
+        {
+            return package;
+        }
+
+        int safeMultiplier = Mathf.Max(1, multiplier);
+        foreach (var resource in source.lstResource)
+        {
+            GameResource clone = CloneResource(resource, safeMultiplier);
+            if (clone != null)
+            {
+                package.AddResource(clone);
+            }
+        }
+
+        return package;
+    }
+
+    GameResource CloneResource(GameResource resource, int multiplier)
+    {
+        switch (resource)
+        {
+            case CommonResource commonResource:
+                return new CommonResource(commonResource.resourceType, commonResource.resourceValue * multiplier);
+            case VirtualResource virtualResource:
+                return new VirtualResource(virtualResource.resourceType, virtualResource.resourceValue * multiplier);
+            case ExpireableResource expireableResource:
+                return new ExpireableResource(expireableResource.resourceType, expireableResource.resourceValue * multiplier);
+            case ContentActiveResource contentActiveResource:
+                return new ContentActiveResource(contentActiveResource.resourceType);
+            default:
+                return resource != null ? GameResource.GetResource(resource.GetRewardDataString()) : null;
+        }
     }
     public void OnClick(Vector3 pos)
     {

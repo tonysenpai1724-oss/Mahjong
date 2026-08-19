@@ -236,7 +236,6 @@ public class GameManager : Singleton<GameManager>
     public void ShowAdsReward(System.Action actionComplete, string placement)
     {
         actionComplete?.Invoke();
-        return;
     }
     public void ShowInterAds(System.Action actionClose, string placement)
     {

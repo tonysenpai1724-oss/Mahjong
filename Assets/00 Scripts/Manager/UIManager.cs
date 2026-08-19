@@ -260,7 +260,22 @@ public class UIManager : Singleton<UIManager>
     }
     public void ShowPopupEndGame()
     {
-        UIBase ui = GetUI("Popup End Game");
+        if (GameplayManager.Instance != null && GameplayManager.Instance.winGame)
+        {
+            ShowPopupWinGame();
+            return;
+        }
+
+        ShowPopupLoseGame();
+    }
+    public void ShowPopupWinGame()
+    {
+        UIBase ui = GetUI("Popup Win");
+        ui.Show();
+    }
+    public void ShowPopupLoseGame()
+    {
+        UIBase ui = GetUI("Popup Loss");
         ui.Show();
     }
     public void ShowPopupBooster()
