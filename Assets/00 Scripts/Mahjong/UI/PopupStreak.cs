@@ -11,6 +11,9 @@ using Spine;
 public class PopupStreak : UIBase
 {
     [SerializeField] List<Image> listTick;
+    [SerializeField] Image starImage;
+    [SerializeField] Sprite starCompleteSprite;
+    [SerializeField] Sprite starIncompleteSprite;
     [SerializeField] TextMeshProUGUI txtStreakOld, txtStreakNew;
     // [SerializeField] SkeletonAnimation skeletonAnimation;
     [SerializeField] float yTop, yMid, yBot;
@@ -53,6 +56,11 @@ public class PopupStreak : UIBase
         bool canPlayAnim = IPlayerInfoController.Instance.ShowStreakAnim();
         bool hasPlayedToday = IPlayerInfoController.Instance.HasPlayedToday();
 
+        if (starImage != null)
+        {
+            starImage.sprite = (hasPlayedToday || streakCount > 0) ? starCompleteSprite : starIncompleteSprite;
+        }
+
         // Skeleton animation is currently disabled.
         if (canPlayAnim)
         {
@@ -90,16 +98,24 @@ public class PopupStreak : UIBase
             if (item == null)
                 continue;
 
-            if (listDayOfWeek.Contains((DayOfWeek)i))
+            DayOfWeek day = (DayOfWeek)i;
+            bool isDayInStreak = listDayOfWeek.Contains(day);
+            bool isToday = day == DateTime.Now.Date.DayOfWeek;
+
+            if (isDayInStreak)
             {
-                if ((DayOfWeek)i != DateTime.Now.Date.DayOfWeek)
-                    item.fillAmount = 1f;
+                if (isToday)
+                {
+                    item.fillAmount = hasPlayedToday ? 1f : (canPlayAnim ? 0f : 1f);
+                }
                 else
-                    item.fillAmount = IPlayerInfoController.Instance.ShowStreakAnim() ? 0 : 1;
+                {
+                    item.fillAmount = 1f;
+                }
             }
             else
             {
-                item.fillAmount = 0;
+                item.fillAmount = 0f;
             }
         }
 

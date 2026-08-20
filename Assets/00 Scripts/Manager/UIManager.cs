@@ -308,6 +308,11 @@ public class UIManager : Singleton<UIManager>
         UIBase ui = GetUI("Popup No Ads");
         ui.Show();
     }
+    public void ShowPopupStreak()
+    {
+        UIBase ui = GetUI("Popup Streak");
+        ui.Show();
+    }
     public void ShowPopupWeaponChest()
     {
         UIBase ui = GetUI("Popup Weapon Chest");

@@ -8,27 +8,28 @@ using Sirenix.OdinInspector;
 public class HomePlayButton : HomeFeatureButton
 {
     public TMPro.TextMeshProUGUI txtLevel;
-  //  public TMPro.TextMeshProUGUI txtDifficulty;
+    public TMPro.TextMeshProUGUI txtDifficulty;
     public LevelCatalog levelCatalog;
     public Image difficultyImage;
-    public LevelDefinitionsUI levelDefinitionsUI;
+    //public LevelDefinitionsUI levelDefinitionsUI;
     void OnEnable()
     {
         txtLevel.text ="Level " + IPlayerInfoController.Instance.CurrentLevel().ToString();
          LevelDefinition levelDef = levelCatalog.TryGetLevel(IPlayerInfoController.Instance.CurrentLevel() - 1, 
          out LevelDefinition def) ? def : null;
          Sprite difficultySprite = null;
-        if (levelDef != null)
-        {
-            foreach (var kvp in levelDefinitionsUI.levelDefinitions)
-            {
-                if (kvp.Value == levelDef.Difficulty)
-                {
-                    difficultySprite = kvp.Key;
-                    break;
-                }
-            }
-        }
+         txtDifficulty.text = levelDef != null ? levelDef.Difficulty.ToString() : "Unknown";
+        // if (levelDef != null)
+        // {
+        //     foreach (var kvp in levelDefinitionsUI.levelDefinitions)
+        //     {
+        //         if (kvp.Value == levelDef.Difficulty)
+        //         {
+        //             difficultySprite = kvp.Key;
+        //             break;
+        //         }
+        //     }
+        // }
         difficultyImage.sprite = difficultySprite;
       
 

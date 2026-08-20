@@ -10,6 +10,7 @@ public class UIQuestItem : MonoBehaviour
     public Sprite bgSpriteIncomplete;
     public Sprite bgSpriteComplete;
     public Image fillBar;
+    public Image tickImage;
     public TextMeshProUGUI txtTitle;
     public TextMeshProUGUI txtProgress;
     public TextMeshProUGUI txtReward;
@@ -47,7 +48,8 @@ public class UIQuestItem : MonoBehaviour
             txtProgress.text = $"{progress}/{condition}";
         }
 
-        bool isComplete = questItem.rewardState == ERewardState.CanClaim || questItem.rewardState == ERewardState.Claimed;
+        bool isClaimed = questItem.rewardState == ERewardState.Claimed;
+        bool isComplete = questItem.rewardState == ERewardState.CanClaim || isClaimed;
 
         if (bg != null)
         {
@@ -55,14 +57,21 @@ public class UIQuestItem : MonoBehaviour
             bg.sprite = isComplete ? bgSpriteComplete : bgSpriteIncomplete;
         }
 
+        if (tickImage != null)
+        {
+            tickImage.gameObject.SetActive(isClaimed);
+        }
+
         if (button != null)
         {
             button.onClick.RemoveAllListeners();
+            button.interactable = !isClaimed;
+
             if (questItem.rewardState == ERewardState.CanClaim)
             {
                 button.onClick.AddListener(() => IDailyQuestController.Instance.ClaimQuestReward(questItem.questConfig.questType));
             }
-            else
+            else if (!isClaimed)
             {
                 button.onClick.AddListener(() => IDailyQuestController.Instance.OnGoQuest(questItem.questConfig.questType));
             }

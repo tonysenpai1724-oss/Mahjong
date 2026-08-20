@@ -67,7 +67,7 @@ public class PopupQuest : UIBase
         var renderQuests = new List<QuestItem>();
         foreach (var quest in lstQuest)
         {
-            if (quest == null || quest.questConfig == null || quest.rewardState == ERewardState.Claimed)
+            if (quest == null || quest.questConfig == null)
             {
                 continue;
             }

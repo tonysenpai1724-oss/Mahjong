@@ -46,7 +46,7 @@ public class PopupDailyQuest : UIBase
         List<QuestItem> renderQuests = new List<QuestItem>();
         foreach (var quest in quests)
         {
-            if (quest == null || quest.questConfig == null || quest.rewardState == ERewardState.Claimed)
+            if (quest == null || quest.questConfig == null)
             {
                 continue;
             }

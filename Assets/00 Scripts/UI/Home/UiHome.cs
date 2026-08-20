@@ -31,4 +31,9 @@ public class UiHome : MonoBehaviour
             homePanels[i].SetActive(homeToggleButtons[i] == button);
         }
     }
+
+    public void OnClickHomeButton(BottomNavButton button)
+    {
+        OnClickHomeButton((HomeToggleButton)button);
+    }
 }
