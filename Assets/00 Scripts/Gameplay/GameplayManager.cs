@@ -17,7 +17,13 @@ public class GameplayManager : Singleton<GameplayManager>
     public int CurrentLevel { get; set; }
     public int LevelTime { get; private set; }
     public int Score { get; private set; }
+    public int CurrentCombo { get; private set; }
     public PackageResource PackReward { get; private set; }
+
+    [SerializeField] private float comboWindowSeconds = 8f;
+    public float ComboWindowSeconds => comboWindowSeconds;
+
+    private float lastMatchTime = float.NegativeInfinity;
     public IEnumerator IEInit()
     {
         DebugCustom.LogColor("Init Level");
@@ -53,6 +59,7 @@ public class GameplayManager : Singleton<GameplayManager>
     }
     public void StartGame()
     {
+        ResetCombo();
         SetState(EGamePlayState.Running);
     }
     private void Update()
@@ -120,6 +127,7 @@ public class GameplayManager : Singleton<GameplayManager>
     public void SetGameOver(bool win)
     {
         winGame = win;
+        ResetCombo();
         SetState(EGamePlayState.GameOver);
     }
 
@@ -200,6 +208,35 @@ public class GameplayManager : Singleton<GameplayManager>
                 return resource != null ? GameResource.GetResource(resource.GetRewardDataString()) : null;
         }
     }
+    public void RegisterSuccessfulMatch(int baseScore = 10)
+    {
+        float now = Time.unscaledTime;
+        if (CurrentCombo > 0 && now - lastMatchTime <= comboWindowSeconds)
+        {
+            CurrentCombo++;
+        }
+        else
+        {
+            CurrentCombo = 1;
+        }
+
+        lastMatchTime = now;
+        int comboBonus = Mathf.Max(0, CurrentCombo - 1) * (Mathf.Max(5, baseScore / 2));
+        Score += baseScore + comboBonus;
+
+        if (CurrentCombo > 1)
+        {
+            var gameplayHud = UnityEngine.Object.FindAnyObjectByType<MahjongOut3D.UI.GameplayHudView>(FindObjectsInactive.Include);
+            gameplayHud?.ShowComboText(CurrentCombo);
+        }
+    }
+
+    public void ResetCombo()
+    {
+        CurrentCombo = 0;
+        lastMatchTime = float.NegativeInfinity;
+    }
+
     public void OnClick(Vector3 pos)
     {
         DebugCustom.LogColor("OnClick", pos);

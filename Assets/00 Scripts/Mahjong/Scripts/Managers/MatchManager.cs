@@ -596,6 +596,7 @@ namespace MahjongOut3D.Managers
         {
             PrepareForLevelReload();
             totalTiles = eventData.SpawnedTileCount;
+            GameplayManager.Instance?.ResetCombo();
             ApplyDifficultyTileFaceState();
             AssignDifficultyComboTiles();
             if (GameplayManager.Instance != null)
@@ -731,6 +732,7 @@ namespace MahjongOut3D.Managers
 
                 ReflowSelectionTray();
                 GetTileManager()?.RefreshTileExposure();
+                GameplayManager.Instance?.RegisterSuccessfulMatch(GetMatchScoreValue(firstTile, secondTile));
                 Context.EventBus.Publish(new MatchSucceededEvent(firstTile, secondTile));
                 PublishProgress();
 
@@ -788,9 +790,10 @@ namespace MahjongOut3D.Managers
 
                 firstTile.Deselect();
                 secondTile.Deselect();
-            selectedTiles.Clear();
-            Context.EventBus.Publish(new MatchFailedEvent(firstTile, secondTile));
-        }
+                GameplayManager.Instance?.ResetCombo();
+                selectedTiles.Clear();
+                Context.EventBus.Publish(new MatchFailedEvent(firstTile, secondTile));
+            }
             finally
             {
                 EndResolution();
@@ -857,6 +860,7 @@ namespace MahjongOut3D.Managers
                 memorySelectedTiles.Clear();
                 ClearMemorySelectionOriginalFaceState(firstTile);
                 ClearMemorySelectionOriginalFaceState(secondTile);
+                GameplayManager.Instance?.ResetCombo();
                 Context.EventBus.Publish(new MatchFailedEvent(firstTile, secondTile));
             }
             finally
@@ -2172,6 +2176,17 @@ namespace MahjongOut3D.Managers
         private bool TryUsePowerUp(PowerUpType powerUpType, int cost)
         {
             return GetSaveManager()?.TrySpendCoins(cost) ?? false;
+        }
+
+        private int GetMatchScoreValue(MahjongTile firstTile, MahjongTile secondTile)
+        {
+            int baseScore = 10;
+            if ((firstTile != null && firstTile.IsComboTile) || (secondTile != null && secondTile.IsComboTile))
+            {
+                baseScore += 15;
+            }
+
+            return baseScore;
         }
 
         private int GetCoinsPerMatch() => powerUpSettings != null ? powerUpSettings.CoinsPerMatch : 2;

@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,9 +24,11 @@ namespace MahjongOut3D.UI
         [SerializeField] private Button bombButton;
         [SerializeField] private Button xrayButton;
         [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
+        [SerializeField] private TMP_Text comboText;
 
         private Action<int> pieceMaterialChangedCallback;
         private bool suppressPieceMaterialDropdownCallback;
+        private Sequence comboPopupSequence;
 
         /// <summary>
         /// Binds HUD buttons to runtime callbacks.
@@ -113,6 +117,56 @@ namespace MahjongOut3D.UI
         }
 
         /// <summary>
+        /// Shows a floating combo popup. If no combo text is assigned, it creates one automatically.
+        /// </summary>
+        public void ShowComboText(int combo)
+        {
+            TMP_Text targetText = EnsureComboText();
+            if (targetText == null)
+            {
+                return;
+            }
+
+            if (combo <= 1)
+            {
+                targetText.gameObject.SetActive(false);
+                return;
+            }
+
+            if (comboPopupSequence != null)
+            {
+                comboPopupSequence.Kill(true);
+                comboPopupSequence = null;
+            }
+
+            targetText.text = $"COMBO x{combo}";
+            targetText.color = new Color(targetText.color.r, targetText.color.g, targetText.color.b, 1f);
+            targetText.rectTransform.localScale = Vector3.one * 0.7f;
+            targetText.rectTransform.anchoredPosition = new Vector2(0f, 300f);
+            targetText.gameObject.SetActive(true);
+
+            comboPopupSequence = DOTween.Sequence();
+            comboPopupSequence.Append(targetText.rectTransform.DOAnchorPosY(500f, 0.42f).SetEase(Ease.OutCubic));
+            comboPopupSequence.Join(targetText.rectTransform.DOScale(Vector3.one * 1.65f, 0.42f).SetEase(Ease.OutBack));
+            comboPopupSequence.Append(targetText.rectTransform.DOScale(Vector3.one * 1.15f, 0.18f).SetEase(Ease.Linear));
+            comboPopupSequence.Join(DOTween.To(() => targetText.color.a, alpha =>
+            {
+                Color color = targetText.color;
+                color.a = alpha;
+                targetText.color = color;
+            }, 0f, 0.65f).SetDelay(0.18f));
+            comboPopupSequence.OnComplete(() =>
+            {
+                targetText.gameObject.SetActive(false);
+                Color hideColor = targetText.color;
+                hideColor.a = 1f;
+                targetText.color = hideColor;
+                targetText.rectTransform.localScale = Vector3.one;
+                comboPopupSequence = null;
+            });
+        }
+
+        /// <summary>
         /// Binds a UI button when the reference exists.
         /// </summary>
         private static void BindButton(Button button, Action callback)
@@ -186,6 +240,41 @@ namespace MahjongOut3D.UI
 
             dropdownObject.SetActive(false);
             return pieceMaterialDropdown;
+        }
+
+        private TMP_Text EnsureComboText()
+        {
+            if (comboText != null)
+            {
+                return comboText;
+            }
+
+            RectTransform root = transform as RectTransform;
+            if (root == null)
+            {
+                return null;
+            }
+
+            GameObject textObject = new GameObject("ComboText", typeof(RectTransform));
+            textObject.transform.SetParent(root, false);
+
+            RectTransform textRect = textObject.GetComponent<RectTransform>();
+            textRect.anchorMin = new Vector2(0.5f, 0.5f);
+            textRect.anchorMax = new Vector2(0.5f, 0.5f);
+            textRect.pivot = new Vector2(0.5f, 0.5f);
+            textRect.sizeDelta = new Vector2(260f, 80f);
+            textRect.anchoredPosition = new Vector2(0f, 180f);
+
+            comboText = textObject.AddComponent<TextMeshProUGUI>();
+            comboText.text = "COMBO x1";
+            comboText.fontSize = 54;
+            comboText.fontStyle = FontStyles.Bold;
+            comboText.alignment = TextAlignmentOptions.Center;
+            comboText.raycastTarget = false;
+            comboText.color = new Color(1f, 0.7f, 0.15f, 0f);
+            comboText.enableAutoSizing = false;
+            comboText.gameObject.SetActive(false);
+            return comboText;
         }
 
         private static TMP_DefaultControls.Resources BuildDropdownResources()
