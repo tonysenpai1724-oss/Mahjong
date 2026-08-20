@@ -63,19 +63,37 @@ public class PopupQuest : UIBase
         #endregion
 
         #region Quest
-        List<QuestItem> lstQuest = IDailyQuestController.Instance.GetQuestItems()
-            .OrderBy(q => Mathf.Abs(((float)((int)q.rewardState) - 0.9f))).ToList();
-        if (lstItems == null)
+        List<QuestItem> lstQuest = IDailyQuestController.Instance.GetQuestItems();
+        var renderQuests = new List<QuestItem>();
+        foreach (var quest in lstQuest)
         {
-            lstItems = new List<UIQuestItem>();
-            foreach (var item in lstQuest)
+            if (quest == null || quest.questConfig == null || quest.rewardState == ERewardState.Claimed)
             {
-                lstItems.Add(Instantiate(itemPrefab, itemParent));
+                continue;
+            }
+            renderQuests.Add(quest);
+        }
+
+        renderQuests = renderQuests.OrderBy(q => Mathf.Abs(((float)((int)q.rewardState) - 0.9f))).ToList();
+        while (lstItems == null || lstItems.Count < renderQuests.Count)
+        {
+            lstItems ??= new List<UIQuestItem>();
+            lstItems.Add(Instantiate(itemPrefab, itemParent));
+        }
+
+        while (lstItems != null && lstItems.Count > renderQuests.Count)
+        {
+            UIQuestItem extraItem = lstItems[lstItems.Count - 1];
+            lstItems.RemoveAt(lstItems.Count - 1);
+            if (extraItem != null)
+            {
+                Destroy(extraItem.gameObject);
             }
         }
-        for (int i = 0; i < lstQuest.Count; i++)
+
+        for (int i = 0; i < renderQuests.Count; i++)
         {
-            lstItems[i].InitQuest(lstQuest[i]);
+            lstItems[i].InitQuest(renderQuests[i]);
         }
         #endregion
     }

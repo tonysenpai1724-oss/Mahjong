@@ -273,6 +273,8 @@ namespace MahjongOut3D.UI
             comboText.raycastTarget = false;
             comboText.color = new Color(1f, 0.7f, 0.15f, 0f);
             comboText.enableAutoSizing = false;
+            comboText.outlineColor = Color.black;
+            comboText.outlineWidth = 0.35f;
             comboText.gameObject.SetActive(false);
             return comboText;
         }

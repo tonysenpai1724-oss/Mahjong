@@ -187,6 +187,7 @@ namespace MahjongOut3D.Managers
             GetAnimationManager()?.PlayHintSequence(firstTile, secondTile);
             Context.EventBus.Publish(new HintSuggestedEvent(firstTile, secondTile));
             Context.EventBus.Publish(new PowerUpUsedEvent(PowerUpType.Hint));
+            IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.UseBooster);
             return true;
         }
 
@@ -212,6 +213,7 @@ namespace MahjongOut3D.Managers
             PublishProgress();
             GetAudioManager()?.PlayPowerUp(PowerUpType.Undo);
             Context.EventBus.Publish(new PowerUpUsedEvent(PowerUpType.Undo));
+            IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.UseBooster);
             return true;
         }
 
@@ -254,6 +256,7 @@ namespace MahjongOut3D.Managers
             tileManager.RefreshTileExposure();
             GetAudioManager()?.PlayPowerUp(PowerUpType.Shuffle);
             Context.EventBus.Publish(new PowerUpUsedEvent(PowerUpType.Shuffle));
+            IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.UseBooster);
             EvaluateBoardState();
             return true;
         }
@@ -277,6 +280,7 @@ namespace MahjongOut3D.Managers
             GetAudioManager()?.PlayPowerUp(PowerUpType.Bomb);
             QueueMatchedPairForResolution(firstTile, secondTile, false);
             Context.EventBus.Publish(new PowerUpUsedEvent(PowerUpType.Bomb));
+            IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.UseBooster);
             return true;
         }
 
@@ -315,6 +319,7 @@ namespace MahjongOut3D.Managers
             tileManager.EnableXRay(GetXRayDurationSeconds(), GetXRayRevealDepth());
             GetAudioManager()?.PlayPowerUp(PowerUpType.XRay);
             Context.EventBus.Publish(new PowerUpUsedEvent(PowerUpType.XRay));
+            IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.UseBooster);
             return true;
         }
 
@@ -732,6 +737,7 @@ namespace MahjongOut3D.Managers
 
                 ReflowSelectionTray();
                 GetTileManager()?.RefreshTileExposure();
+                IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.Match3);
                 GameplayManager.Instance?.RegisterSuccessfulMatch(GetMatchScoreValue(firstTile, secondTile));
                 Context.EventBus.Publish(new MatchSucceededEvent(firstTile, secondTile));
                 PublishProgress();

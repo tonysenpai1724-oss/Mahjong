@@ -32,6 +32,8 @@ public enum EAchievementType
 {
     Login,
     LevelPlay,
+    Match3,
+    UseBooster,
     LevelWin,
     LevelCompleted,
     EndlessPlay,

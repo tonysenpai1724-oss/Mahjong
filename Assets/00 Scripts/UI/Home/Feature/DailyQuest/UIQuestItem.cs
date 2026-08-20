@@ -6,35 +6,66 @@ using TMPro;
 
 public class UIQuestItem : MonoBehaviour
 {
-    public GameObject btnClaim, btnGo, checkObj;
-    public CommonFill questFill;
-    public TextMeshProUGUI txtDesc, txtProgress, txtPoint;
+    public Image bg;
+    public Sprite bgSpriteIncomplete;
+    public Sprite bgSpriteComplete;
+    public Image fillBar;
+    public TextMeshProUGUI txtTitle;
+    public TextMeshProUGUI txtProgress;
+    public TextMeshProUGUI txtReward;
+    public Button button;
 
     public QuestItem questItem;
 
     public void InitQuest(QuestItem questItem)
     {
         this.questItem = questItem;
-        txtDesc.text = questItem.questConfig.GetQuestDesc();
-        txtPoint.text = questItem.questConfig.pointReward.ToString();
-        int condition = questItem.questConfig.questCondition;
-        int progress = (int)questItem.progress;
+        if (txtTitle != null)
+        {
+            txtTitle.text = questItem.questConfig.GetQuestDesc();
+        }
 
-        questFill.SetFill((float)progress / (float)condition);
-        txtProgress.text = $"{progress}/{condition}";
-        ERewardState rewardState = questItem.rewardState;
-        btnClaim.SetActive(rewardState == ERewardState.CanClaim);
-        btnGo.SetActive(rewardState == ERewardState.Progress);
-        checkObj.SetActive(rewardState == ERewardState.Claimed);
-    }
+        if (txtReward != null)
+        {
+            txtReward.text = $"{questItem.questConfig.pointReward}";
+        }
 
-    public void OnClickClaim()
-    {
-        IDailyQuestController.Instance.ClaimQuestReward(questItem.questConfig.questType);
-    }
+        int condition = Mathf.Max(1, questItem.questConfig.questCondition);
+        int progress = Mathf.Clamp((int)questItem.progress, 0, condition);
+        float fillRatio = condition > 0 ? (float)progress / condition : 0f;
 
-    public void OnClickGo()
-    {
-        IDailyQuestController.Instance.OnGoQuest(questItem.questConfig.questType);
+        if (fillBar != null)
+        {
+            fillBar.type = Image.Type.Filled;
+            fillBar.fillMethod = Image.FillMethod.Horizontal;
+            fillBar.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fillBar.fillAmount = Mathf.Clamp01(fillRatio);
+        }
+
+        if (txtProgress != null)
+        {
+            txtProgress.text = $"{progress}/{condition}";
+        }
+
+        bool isComplete = questItem.rewardState == ERewardState.CanClaim || questItem.rewardState == ERewardState.Claimed;
+
+        if (bg != null)
+        {
+            bg.gameObject.SetActive(true);
+            bg.sprite = isComplete ? bgSpriteComplete : bgSpriteIncomplete;
+        }
+
+        if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
+            if (questItem.rewardState == ERewardState.CanClaim)
+            {
+                button.onClick.AddListener(() => IDailyQuestController.Instance.ClaimQuestReward(questItem.questConfig.questType));
+            }
+            else
+            {
+                button.onClick.AddListener(() => IDailyQuestController.Instance.OnGoQuest(questItem.questConfig.questType));
+            }
+        }
     }
 }

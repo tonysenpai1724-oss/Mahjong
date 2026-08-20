@@ -6,7 +6,7 @@ public class HomeQuestButton : HomeFeatureButton
 {
     public override void OnClick()
     {
-        UIManager.Instance.ShowPopupQuest();
+        UIManager.Instance.ShowPopupDailyQuest();
     }
 
     protected override void CheckActive()

@@ -10,7 +10,7 @@ public class UIManager : Singleton<UIManager>
     public SafeArea uISafeZone;
 
     public List<UIBase> lstOpenningUI;
-    public Dictionary<string, UIBase> dicUsedUI;
+    [System.NonSerialized] private Dictionary<string, UIBase> dicUsedUI;
 
     public UiHome uIHome;
     public UiGameplay uIGameplay;
@@ -381,8 +381,21 @@ public class UIManager : Singleton<UIManager>
     public void ShowPopupQuest()
     {
         UIBase ui = GetUI("Popup Quest");
-        ui.Show();
+        if (ui != null)
+        {
+            ui.Show();
+        }
     }
+
+    public void ShowPopupDailyQuest()
+    {
+        UIBase ui = GetUI("Popup Daily Task");
+        if (ui != null)
+        {
+            ui.Show();
+        }
+    }
+
     public void ShowPopupLuckyWheel()
     {
         UIBase ui = GetUI("Popup Lucky Wheel");

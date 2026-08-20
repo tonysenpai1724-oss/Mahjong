@@ -150,13 +150,53 @@ public class DailyQuestControllerLocal :
     protected override void OnInitSuccess()
     {
         base.OnInitSuccess();
+        if (DataSystem.Instance != null && DataSystem.Instance.dataDailyQuest != null)
+        {
+            DataSystem.Instance.dataDailyQuest.EnsureDefaultQuestConfigs();
+        }
+
+        EnsureDefaultQuestProgress();
         NewQuestList();
     }
+
+    void EnsureDefaultQuestProgress()
+    {
+        if (cachedData == null)
+        {
+            return;
+        }
+
+        foreach (var questType in Helper.GetListEnum<EAchievementType>())
+        {
+            if (!cachedData.dicQuestProgress.ContainsKey(questType.ToString()))
+            {
+                cachedData.UpdateQuestProgress(questType, 0, true);
+            }
+        }
+
+        if (!cachedData.dicQuestProgress.ContainsKey(EAchievementType.Login.ToString()) || cachedData.GetProgressQuest(EAchievementType.Login) <= 0)
+        {
+            cachedData.UpdateQuestProgress(EAchievementType.Login, 1, true);
+        }
+    }
+
     void NewQuestList()
     {
+        if (DataSystem.Instance == null || DataSystem.Instance.dataDailyQuest == null)
+        {
+            return;
+        }
+
+        DataSystem.Instance.dataDailyQuest.EnsureDefaultQuestConfigs();
+
         lstQuest = new List<QuestItem>();
         foreach (var item in DataSystem.Instance.dataDailyQuest.lstQuestConfig)
         {
+            if (item == null)
+            {
+                continue;
+            }
+
             QuestItem quest = new QuestItem();
             quest.questConfig = item;
             quest.progress = cachedData.GetProgressQuest(item.questType);
@@ -167,7 +207,8 @@ public class DailyQuestControllerLocal :
 
         lstDailyMileStone = new List<QuestMileStone>();
         int last = 0;
-        foreach (var item in DataSystem.Instance.dataDailyQuest.dicDailyMilestone)
+        var dailyMilestones = DataSystem.Instance.dataDailyQuest.dicDailyMilestone ?? new Dictionary<int, string>();
+        foreach (var item in dailyMilestones)
         {
             QuestMileStone quest = new QuestMileStone();
             quest.isDaily = true;
@@ -185,7 +226,8 @@ public class DailyQuestControllerLocal :
 
         lstWeeklyMileStone = new List<QuestMileStone>();
         last = 0;
-        foreach (var item in DataSystem.Instance.dataDailyQuest.dicWeeklyMilestone)
+        var weeklyMilestones = DataSystem.Instance.dataDailyQuest.dicWeeklyMilestone ?? new Dictionary<int, string>();
+        foreach (var item in weeklyMilestones)
         {
             QuestMileStone quest = new QuestMileStone();
             quest.isDaily = false;
@@ -264,26 +306,33 @@ public class DailyQuestControllerLocal :
     public void ClaimQuestReward(EAchievementType questType)
     {
         QuestItem quest = lstQuest.Find(q => q.questConfig.questType == questType);
-        if (quest != null && quest.rewardState == ERewardState.CanClaim)
+        if (quest == null || quest.rewardState != ERewardState.CanClaim)
         {
-            quest.rewardState = ERewardState.Claimed;
-            cachedData.SetClaimDailyQuest(questType);
-            cachedData.AddPoint(quest.questConfig.pointReward);
-            CheckNotiQuest();
-            foreach (var item in lstDailyMileStone)
-            {
-                item.currentPoint = GetDailyPoint();
-                item.rewardState = cachedData.GetDailyMilestoneSate(item.pointRequire);
-            }
-            CheckNotiMileStoneDaily();
-            foreach (var item in lstWeeklyMileStone)
-            {
-                item.currentPoint = GetWeeklyPoint();
-                item.rewardState = cachedData.GetWeeklyMilestoneState(item.pointRequire);
-            }
-            CheckNotiMileStoneWeekly();
-            OnValueChange();
+            return;
         }
+
+        quest.rewardState = ERewardState.Claimed;
+        cachedData.SetClaimDailyQuest(questType);
+        cachedData.AddPoint(quest.questConfig.pointReward);
+
+        PackageResource rewardPackage = new PackageResource();
+        rewardPackage.AddResource(new CommonResource(ECommonResource.Coin, quest.questConfig.pointReward));
+        rewardPackage.ReceiveAndShow(EResourceFrom.DailyQuest);
+
+        CheckNotiQuest();
+        foreach (var item in lstDailyMileStone)
+        {
+            item.currentPoint = GetDailyPoint();
+            item.rewardState = cachedData.GetDailyMilestoneSate(item.pointRequire);
+        }
+        CheckNotiMileStoneDaily();
+        foreach (var item in lstWeeklyMileStone)
+        {
+            item.currentPoint = GetWeeklyPoint();
+            item.rewardState = cachedData.GetWeeklyMilestoneState(item.pointRequire);
+        }
+        CheckNotiMileStoneWeekly();
+        OnValueChange();
     }
 
     public List<QuestMileStone> GetDailyMileStone()
@@ -322,6 +371,9 @@ public class DailyQuestControllerLocal :
         {
             case EAchievementType.Login:
                 break;
+            case EAchievementType.UseBooster:
+                UIManager.Instance.ShowPopupBooster();
+                break;
             case EAchievementType.LevelPlay:
             case EAchievementType.LevelWin:
             case EAchievementType.LevelCompleted:
@@ -356,6 +408,7 @@ public class DailyQuestControllerLocal :
         OnValueChange();
     }
 }
+[System.Serializable]
 public class QuestItem
 {
     public DailyQuestConfig questConfig;
