@@ -3,19 +3,53 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using MahjongOut3D.Managers;
+using Spine.Unity;
 
 public class PopupLoseGame : UIBase
 {
    public  Button btnRestart;
     public Button btnRevive;
    public  TextMeshProUGUI titleText;
+   public SkeletonAnimation skeletonGraphic;
 
     public override void Show()
     {
-        base.Show();
+        DebugCustom.LogColor("Show popup", gameObject.name);
+        if (hackObj != null)
+            hackObj.SetActive(GameManager.Instance.IsTester);
+        if (blockPanel != null)
+            blockPanel.SetActive(false);
+        gameObject.SetActive(true);
+        // if (GameplayManager.Instance != null)
+        // {
+        //     GameplayManager.Instance.SetState(EGamePlayState.Pause);
+        // }
+        if (UIManager.Instance != null)
+        {
+            if (!UIManager.Instance.lstOpenningUI.Contains(this))
+                UIManager.Instance.lstOpenningUI.Add(this);
+        }
+        if (buttonClose != null)
+        {
+            buttonClose.onClick.AddListener(() =>
+            {
+                Hide();
+            });
+        }
+        this.transform.SetAsLastSibling();
         CacheReferences();
         BindButtons();
         RefreshText();
+        PlayOpenThenIdle();
+        
+    }
+    void PlayOpenThenIdle()
+    {
+        if (skeletonGraphic == null || skeletonGraphic.AnimationState == null)
+            return;
+
+        skeletonGraphic.AnimationState.SetAnimation(0, "Open", false);
+        skeletonGraphic.AnimationState.AddAnimation(0, "Idle", true, 0f);
     }
 
     public override void OnDisable()

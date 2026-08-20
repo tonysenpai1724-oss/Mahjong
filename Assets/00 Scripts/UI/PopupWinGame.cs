@@ -3,19 +3,44 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using MahjongOut3D.Managers;
+using Spine.Unity;
 
 public class PopupWinGame : UIBase
 {
    public  Button btnPlay;
     public Button btnAds;
     public TextMeshProUGUI titleText;
+    public SkeletonAnimation skeletonGraphic;
 
     public override void Show()
     {
-        base.Show();
+       DebugCustom.LogColor("Show popup", gameObject.name);
+        if (hackObj != null)
+            hackObj.SetActive(GameManager.Instance.IsTester);
+        if (blockPanel != null)
+            blockPanel.SetActive(false);
+        gameObject.SetActive(true);
+        // if (GameplayManager.Instance != null)
+        // {
+        //     GameplayManager.Instance.SetState(EGamePlayState.Pause);
+        // }
+        if (UIManager.Instance != null)
+        {
+            if (!UIManager.Instance.lstOpenningUI.Contains(this))
+                UIManager.Instance.lstOpenningUI.Add(this);
+        }
+        if (buttonClose != null)
+        {
+            buttonClose.onClick.AddListener(() =>
+            {
+                Hide();
+            });
+        }
+        this.transform.SetAsLastSibling();
         CacheReferences();
         BindButtons();
         RefreshText();
+PlayOpenThenIdle();
     }
 
     public override void OnDisable()
@@ -32,6 +57,17 @@ public class PopupWinGame : UIBase
             btnAds = FindButton("AdsBtn") ?? FindButton("Button (1)");
         if (titleText == null)
             titleText = FindText("Completed");
+        if (skeletonGraphic == null)
+            skeletonGraphic = GetComponentInChildren<SkeletonAnimation>(true);
+    }
+
+    void PlayOpenThenIdle()
+    {
+        if (skeletonGraphic == null || skeletonGraphic.AnimationState == null)
+            return;
+
+        skeletonGraphic.AnimationState.SetAnimation(0, "Open", false);
+        skeletonGraphic.AnimationState.AddAnimation(0, "Idle", true, 0f);
     }
 
     void BindButtons()
