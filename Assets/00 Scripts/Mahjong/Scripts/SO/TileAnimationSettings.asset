@@ -21,7 +21,7 @@ MonoBehaviour:
   <HintDurationSeconds>k__BackingField: 0.7
   <MismatchDelaySeconds>k__BackingField: 0.2
   <TrayMoveDurationSeconds>k__BackingField: 0.22
-  <TrayViewportY>k__BackingField: 0.75
+  <TrayViewportY>k__BackingField: 0.85
   <TrayViewportSlotSpacing>k__BackingField: 0.12
   <TrayDistanceFromCamera>k__BackingField: 8
   <TrayDistancePadding>k__BackingField: 0.75

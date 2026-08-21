@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
 using MahjongOut3D.Gameplay;
+using MahjongOut3D.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,11 +30,11 @@ namespace MahjongOut3D.UI
         [SerializeField] private BoosterHudBinding shuffleBooster;
         [SerializeField] private BoosterHudBinding bombBooster;
         [SerializeField] private BoosterHudBinding xrayBooster;
-        [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
+      //  [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
         [SerializeField] private TMP_Text comboText;
 
         private Action<int> pieceMaterialChangedCallback;
-        private bool suppressPieceMaterialDropdownCallback;
+       // private bool suppressPieceMaterialDropdownCallback;
         private Sequence comboPopupSequence;
 
         /// <summary>
@@ -49,40 +50,40 @@ namespace MahjongOut3D.UI
             BindButton(xrayButton, onXRay);
 
             pieceMaterialChangedCallback = onPieceMaterialChanged;
-            BindPieceMaterialDropdown();
+          //  BindPieceMaterialDropdown();
         }
 
         /// <summary>
         /// Rebuilds the runtime piece-material dropdown options.
         /// </summary>
-        public void SetPieceMaterialOptions(IReadOnlyList<string> optionLabels, int selectedIndex)
-        {
-            TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
-            if (dropdown == null)
-            {
-                return;
-            }
+        // public void SetPieceMaterialOptions(IReadOnlyList<string> optionLabels, int selectedIndex)
+        // {
+        //     TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
+        //     if (dropdown == null)
+        //     {
+        //         return;
+        //     }
 
-            bool hasOptions = optionLabels != null && optionLabels.Count > 0;
-            dropdown.gameObject.SetActive(hasOptions);
-            if (!hasOptions)
-            {
-                return;
-            }
+        //     bool hasOptions = optionLabels != null && optionLabels.Count > 0;
+        //     dropdown.gameObject.SetActive(hasOptions);
+        //     if (!hasOptions)
+        //     {
+        //         return;
+        //     }
 
-            List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>(optionLabels.Count);
-            for (int index = 0; index < optionLabels.Count; index++)
-            {
-                options.Add(new TMP_Dropdown.OptionData(optionLabels[index]));
-            }
+        //     List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>(optionLabels.Count);
+        //     for (int index = 0; index < optionLabels.Count; index++)
+        //     {
+        //         options.Add(new TMP_Dropdown.OptionData(optionLabels[index]));
+        //     }
 
-            suppressPieceMaterialDropdownCallback = true;
-            dropdown.ClearOptions();
-            dropdown.AddOptions(options);
-            dropdown.SetValueWithoutNotify(Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, options.Count - 1)));
-            dropdown.RefreshShownValue();
-            suppressPieceMaterialDropdownCallback = false;
-        }
+        //   //  suppressPieceMaterialDropdownCallback = true;
+        //     dropdown.ClearOptions();
+        //     dropdown.AddOptions(options);
+        //     dropdown.SetValueWithoutNotify(Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, options.Count - 1)));
+        //     dropdown.RefreshShownValue();
+        //    // suppressPieceMaterialDropdownCallback = false;
+        // }
 
         /// <summary>
         /// Updates the visible coin counter.
@@ -128,6 +129,7 @@ namespace MahjongOut3D.UI
         public void SetBoosterCount(PowerUpType powerUpType, int count)
         {
             GetBoosterBinding(powerUpType).SetCount(count);
+            UpdateBoosterButtonInteractable(powerUpType, count);
         }
 
         /// <summary>
@@ -140,6 +142,27 @@ namespace MahjongOut3D.UI
             shuffleBooster.SetCount(shuffleCount);
             bombBooster.SetCount(bombCount);
             xrayBooster.SetCount(xrayCount);
+
+            UpdateBoosterButtonInteractable(PowerUpType.Hint, hintCount);
+            UpdateBoosterButtonInteractable(PowerUpType.Undo, undoCount);
+            UpdateBoosterButtonInteractable(PowerUpType.Shuffle, shuffleCount);
+            UpdateBoosterButtonInteractable(PowerUpType.Bomb, bombCount);
+            UpdateBoosterButtonInteractable(PowerUpType.XRay, xrayCount);
+        }
+
+        public void AddTestBooster()
+        {
+            SaveManager saveManager = UnityEngine.Object.FindAnyObjectByType<SaveManager>();
+            if (saveManager != null)
+            {
+                saveManager.SetPowerUpCount(PowerUpType.Hint, 10);
+                saveManager.SetPowerUpCount(PowerUpType.Undo, 10);
+                saveManager.SetPowerUpCount(PowerUpType.Shuffle, 10);
+                saveManager.SetPowerUpCount(PowerUpType.Bomb, 10);
+                saveManager.SetPowerUpCount(PowerUpType.XRay, 10);
+            }
+
+            SetBoosterCounts(10, 10, 10, 10, 10);
         }
 
         /// <summary>
@@ -206,27 +229,27 @@ namespace MahjongOut3D.UI
             button.onClick.AddListener(() => callback?.Invoke());
         }
 
-        private void BindPieceMaterialDropdown()
-        {
-            TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
-            if (dropdown == null)
-            {
-                return;
-            }
+        // private void BindPieceMaterialDropdown()
+        // {
+        //     TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
+        //     if (dropdown == null)
+        //     {
+        //         return;
+        //     }
 
-            dropdown.onValueChanged.RemoveAllListeners();
-            dropdown.onValueChanged.AddListener(HandlePieceMaterialDropdownValueChanged);
-        }
+        //     dropdown.onValueChanged.RemoveAllListeners();
+        //     dropdown.onValueChanged.AddListener(HandlePieceMaterialDropdownValueChanged);
+        // }
 
-        private void HandlePieceMaterialDropdownValueChanged(int selectedIndex)
-        {
-            if (suppressPieceMaterialDropdownCallback)
-            {
-                return;
-            }
+        // private void HandlePieceMaterialDropdownValueChanged(int selectedIndex)
+        // {
+        //     if (suppressPieceMaterialDropdownCallback)
+        //     {
+        //         return;
+        //     }
 
-            pieceMaterialChangedCallback?.Invoke(selectedIndex);
-        }
+        //     pieceMaterialChangedCallback?.Invoke(selectedIndex);
+        // }
 
         private BoosterHudBinding GetBoosterBinding(PowerUpType powerUpType)
         {
@@ -247,45 +270,73 @@ namespace MahjongOut3D.UI
             }
         }
 
-        private TMP_Dropdown EnsurePieceMaterialDropdown()
+        private void UpdateBoosterButtonInteractable(PowerUpType powerUpType, int count)
         {
-            if (pieceMaterialDropdown != null)
+            Button boosterButton = GetBoosterButton(powerUpType);
+            if (boosterButton != null)
             {
-                return pieceMaterialDropdown;
+                boosterButton.interactable = count > 0;
             }
-
-            RectTransform root = transform as RectTransform;
-            if (root == null)
-            {
-                return null;
-            }
-
-            GameObject dropdownObject = TMP_DefaultControls.CreateDropdown(BuildDropdownResources());
-            dropdownObject.name = "PieceMaterialDropdown";
-
-            RectTransform dropdownRect = dropdownObject.GetComponent<RectTransform>();
-            dropdownRect.SetParent(root, false);
-            dropdownRect.anchorMin = new Vector2(1f, 1f);
-            dropdownRect.anchorMax = new Vector2(1f, 1f);
-            dropdownRect.pivot = new Vector2(1f, 1f);
-            dropdownRect.sizeDelta = new Vector2(280f, 36f);
-            dropdownRect.anchoredPosition = new Vector2(-24f, -120f);
-
-            pieceMaterialDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
-            if (pieceMaterialDropdown?.captionText != null)
-            {
-                pieceMaterialDropdown.captionText.text = "Piece Material";
-                pieceMaterialDropdown.captionText.fontSize = 20f;
-            }
-
-            if (pieceMaterialDropdown?.itemText != null)
-            {
-                pieceMaterialDropdown.itemText.fontSize = 18f;
-            }
-
-            dropdownObject.SetActive(false);
-            return pieceMaterialDropdown;
         }
+
+        private Button GetBoosterButton(PowerUpType powerUpType)
+        {
+            switch (powerUpType)
+            {
+                case PowerUpType.Hint:
+                    return hintButton;
+                case PowerUpType.Undo:
+                    return undoButton;
+                case PowerUpType.Shuffle:
+                    return shuffleButton;
+                case PowerUpType.Bomb:
+                    return bombButton;
+                case PowerUpType.XRay:
+                    return xrayButton;
+                default:
+                    return null;
+            }
+        }
+
+        // private TMP_Dropdown EnsurePieceMaterialDropdown()
+        // {
+        //     if (pieceMaterialDropdown != null)
+        //     {
+        //         return pieceMaterialDropdown;
+        //     }
+
+        //     RectTransform root = transform as RectTransform;
+        //     if (root == null)
+        //     {
+        //         return null;
+        //     }
+
+        //     GameObject dropdownObject = TMP_DefaultControls.CreateDropdown(BuildDropdownResources());
+        //     dropdownObject.name = "PieceMaterialDropdown";
+
+        //     RectTransform dropdownRect = dropdownObject.GetComponent<RectTransform>();
+        //     dropdownRect.SetParent(root, false);
+        //     dropdownRect.anchorMin = new Vector2(1f, 1f);
+        //     dropdownRect.anchorMax = new Vector2(1f, 1f);
+        //     dropdownRect.pivot = new Vector2(1f, 1f);
+        //     dropdownRect.sizeDelta = new Vector2(280f, 36f);
+        //     dropdownRect.anchoredPosition = new Vector2(-24f, -120f);
+
+        //     pieceMaterialDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
+        //     if (pieceMaterialDropdown?.captionText != null)
+        //     {
+        //         pieceMaterialDropdown.captionText.text = "Piece Material";
+        //         pieceMaterialDropdown.captionText.fontSize = 20f;
+        //     }
+
+        //     if (pieceMaterialDropdown?.itemText != null)
+        //     {
+        //         pieceMaterialDropdown.itemText.fontSize = 18f;
+        //     }
+
+        //     dropdownObject.SetActive(false);
+        //     return pieceMaterialDropdown;
+        // }
 
         private TMP_Text EnsureComboText()
         {

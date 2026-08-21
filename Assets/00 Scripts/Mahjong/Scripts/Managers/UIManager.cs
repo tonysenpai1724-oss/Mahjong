@@ -368,7 +368,7 @@ namespace MahjongOut3D.Managers
                 }
             }
 
-            gameplayHudView.SetPieceMaterialOptions(optionLabels, selectedIndex);
+            //gameplayHudView.SetPieceMaterialOptions(optionLabels, selectedIndex);
         }
 
         private void HandlePieceMaterialDropdownChanged(int selectedIndex)
