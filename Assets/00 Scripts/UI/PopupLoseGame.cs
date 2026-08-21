@@ -126,7 +126,11 @@ public class PopupLoseGame : UIBase
     void OnClickReviveAds()
     {
 #if UNITY_EDITOR
-        GameplayManager.Instance.ReviveFromAds();
+ if (GameManager.Instance != null)
+        {
+            GameManager.Instance.GoSceneHome();
+        }
+      //  GameplayManager.Instance.ReviveFromAds();
         Hide();
 #else
         ShowRewardedAdsForRevive();

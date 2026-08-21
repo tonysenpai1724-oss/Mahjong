@@ -1899,13 +1899,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 355325243}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.4694715, y: 0, z: 0, w: 0.8829476}
-  m_LocalPosition: {x: 0, y: 26.64, z: -11}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -11}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 56, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &355325248
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5745,7 +5745,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 880673973}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5754,11 +5754,11 @@ RectTransform:
   - {fileID: 1050816297}
   - {fileID: 1433255381}
   - {fileID: 589436258}
-  m_Father: {fileID: 1896039678}
+  m_Father: {fileID: 1205678298}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -206.44482}
+  m_AnchoredPosition: {x: 30.456999, y: -24.87732}
   m_SizeDelta: {x: 1080, y: 310.53003}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &880673975
@@ -6032,6 +6032,7 @@ RectTransform:
   - {fileID: 742240011}
   - {fileID: 1704802639}
   - {fileID: 1544091991}
+  - {fileID: 1585504728}
   - {fileID: 1608855495}
   - {fileID: 1170632880}
   - {fileID: 1954964770}
@@ -7026,14 +7027,15 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 880673974}
   m_Father: {fileID: 1896039678}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -30.457, y: 664}
-  m_SizeDelta: {x: 666.782, y: 228.865}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -185}
+  m_SizeDelta: {x: 666.782, y: 228.86499}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1205678299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9065,7 +9067,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1526993167}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 15a8ec233d5683633a63e147828da315, type: 3}
   m_Name: 
@@ -9574,13 +9576,13 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1585504727}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 16173952}
-  m_Father: {fileID: 1853129372}
+  m_Father: {fileID: 896279290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -10592,7 +10594,6 @@ GameObject:
   - component: {fileID: 1853129374}
   - component: {fileID: 1853129373}
   - component: {fileID: 1853129375}
-  - component: {fileID: 1853129376}
   m_Layer: 5
   m_Name: CanvasUI
   m_TagString: Untagged
@@ -10677,7 +10678,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 896279290}
-  - {fileID: 1585504728}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -10734,7 +10734,6 @@ MonoBehaviour:
     quantityText: {fileID: 0}
     availableSprite: {fileID: 0}
     emptySprite: {fileID: 0}
-  pieceMaterialDropdown: {fileID: 0}
   comboText: {fileID: 0}
 --- !u!225 &1853129374
 CanvasGroup:
@@ -10760,23 +10759,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3a0cc90ce724e58a4032e24748109e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.UI.MatchUiShardEffect
---- !u!114 &1853129376
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1853129368}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15a8ec233d5683633a63e147828da315, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.UI.TraySlotAnchorProvider
-  traySlotAnchors:
-  - {fileID: 1229477492}
-  - {fileID: 331723070}
-  - {fileID: 543288404}
-  - {fileID: 2131269857}
 --- !u!1 &1896039677
 GameObject:
   m_ObjectHideFlags: 0
@@ -10808,7 +10790,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1205678298}
-  - {fileID: 880673974}
   m_Father: {fileID: 1526993168}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

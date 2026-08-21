@@ -87,14 +87,24 @@ public class DailyQuestCachedData : IControllerCachedData
     }
     public long GetProgressQuest(EAchievementType questType)
     {
-        return dicQuestProgress[questType.ToString()];
+        string key = questType.ToString();
+        if (!dicQuestProgress.ContainsKey(key))
+        {
+            dicQuestProgress[key] = 0;
+        }
+        return dicQuestProgress[key];
     }
     public void UpdateQuestProgress(EAchievementType questType, long val = 1, bool replace = false)
     {
+        string key = questType.ToString();
+        if (!dicQuestProgress.ContainsKey(key))
+        {
+            dicQuestProgress[key] = 0;
+        }
         if (!replace)
-            dicQuestProgress[questType.ToString()] += val;
+            dicQuestProgress[key] += val;
         else
-            dicQuestProgress[questType.ToString()] = val;
+            dicQuestProgress[key] = val;
     }
     public void SetClaimDailyQuest(EAchievementType questType)
     {
@@ -174,7 +184,7 @@ public class DailyQuestControllerLocal :
             }
         }
 
-        if (!cachedData.dicQuestProgress.ContainsKey(EAchievementType.Login.ToString()) || cachedData.GetProgressQuest(EAchievementType.Login) <= 0)
+        if (!cachedData.dicQuestProgress.ContainsKey(EAchievementType.Login.ToString()) || cachedData.GetProgressQuest(EAchievementType.Login) < 1)
         {
             cachedData.UpdateQuestProgress(EAchievementType.Login, 1, true);
         }

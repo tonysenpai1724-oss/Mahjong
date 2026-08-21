@@ -1,5 +1,7 @@
 using DG.Tweening;
+using MahjongOut3D.Managers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -72,6 +74,10 @@ public class PopupSetting : UIBase
 
     [SerializeField] private List<SettingToggleItem> settingItems = new List<SettingToggleItem>();
 
+    public Button homeBtn;
+    public Button restartBtn;
+
+
     private void Reset()
     {
         CacheAllPositions();
@@ -88,7 +94,78 @@ public class PopupSetting : UIBase
     private void OnEnable()
     {
         TigerForge.EventManager.StartListening(Constant.EVENT_ON_GAME_SETTING_CHANGE, RefreshAll);
+        RefreshGameplayButtons();
         RefreshAll();
+    }
+
+    private void RefreshGameplayButtons()
+    {
+        bool isGameplayActive = GameplayManager.Instance != null &&
+            (GameplayManager.Instance.State == EGamePlayState.Running ||
+             GameplayManager.Instance.State == EGamePlayState.Cinematic ||
+             GameplayManager.Instance.State == EGamePlayState.Pause);
+
+        if (homeBtn != null)
+            homeBtn.gameObject.SetActive(isGameplayActive);
+
+        if (restartBtn != null)
+            restartBtn.gameObject.SetActive(isGameplayActive);
+    }
+
+    public override void Show()
+    {
+        DebugCustom.LogColor("Show popup", gameObject.name);
+        if (hackObj != null)
+            hackObj.SetActive(GameManager.Instance.IsTester);
+        if (blockPanel != null)
+            blockPanel.SetActive(false);
+        RefreshGameplayButtons();
+        gameObject.SetActive(true);
+        // if (GameplayManager.Instance != null)
+        // {
+        //     GameplayManager.Instance.SetState(EGamePlayState.Pause);
+        // }
+        if (UIManager.Instance != null)
+        {
+            if (!UIManager.Instance.lstOpenningUI.Contains(this))
+                UIManager.Instance.lstOpenningUI.Add(this);
+        }
+        if (buttonClose != null)
+        {
+            buttonClose.onClick.AddListener(() =>
+            {
+                Hide();
+            });
+        }
+        this.transform.SetAsLastSibling();
+    }
+    public void GoSceneHome()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.GoSceneHome();
+        }
+    }
+    public void Replay()
+    {
+         GameplayManager.Instance.ClaimCurrentReward(1, EResourceFrom.ReviveIngame);
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartCoroutine(IERestartLevel());
+    }
+     IEnumerator IERestartLevel()
+    {
+        Hide();
+        yield return new WaitForSecondsRealtime(0.25f);
+        yield return null;
+
+        LevelManager levelManager = FindObjectOfType<LevelManager>();
+        if (GameManager.Instance.GameType == EGameType.Campaign && levelManager != null)
+        {
+            levelManager.ReloadCurrentLevel();
+            yield break;
+        }
+
+        GameManager.Instance.PlayGame(GameManager.Instance.GameType);
     }
 
     public override void OnDisable()

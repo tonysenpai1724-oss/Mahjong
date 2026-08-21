@@ -35,7 +35,19 @@ public class AchievementController :
 
     public void UpdateAchievementProgress(EAchievementType achievementType, long val = 1, bool replace = false)
     {
-        cachedData.dicAchivementProgress[achievementType.ToString()] += val;
+        string key = achievementType.ToString();
+        if (!cachedData.dicAchivementProgress.ContainsKey(key))
+        {
+            cachedData.dicAchivementProgress[key] = 0;
+        }
+        if (!replace)
+        {
+            cachedData.dicAchivementProgress[key] += val;
+        }
+        else
+        {
+            cachedData.dicAchivementProgress[key] = val;
+        }
         IDailyQuestController.Instance.UpdateQuestProgress(achievementType, val, replace);
         OnValueChange();
     }
@@ -58,13 +70,23 @@ public class AchievementCachedData : IControllerCachedData
     }
     public long GetAchievementProgress(EAchievementType achievementType)
     {
-        return dicAchivementProgress[achievementType.ToString()];
+        string key = achievementType.ToString();
+        if (!dicAchivementProgress.ContainsKey(key))
+        {
+            dicAchivementProgress[key] = 0;
+        }
+        return dicAchivementProgress[key];
     }
     public void UpdateAchievementProgress(EAchievementType achievementType, long val = 1, bool replace = false)
     {
+        string key = achievementType.ToString();
+        if (!dicAchivementProgress.ContainsKey(key))
+        {
+            dicAchivementProgress[key] = 0;
+        }
         if (!replace)
-            dicAchivementProgress[achievementType.ToString()] += val;
+            dicAchivementProgress[key] += val;
         else
-            dicAchivementProgress[achievementType.ToString()] = val;
+            dicAchivementProgress[key] = val;
     }
 }
