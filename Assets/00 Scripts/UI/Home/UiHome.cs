@@ -32,8 +32,4 @@ public class UiHome : MonoBehaviour
         }
     }
 
-    public void OnClickHomeButton(BottomNavButton button)
-    {
-        OnClickHomeButton((HomeToggleButton)button);
-    }
 }

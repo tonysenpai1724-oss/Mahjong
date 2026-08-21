@@ -45,6 +45,14 @@ namespace MahjongOut3D.Managers
         public int SelectedTileCount => selectedTiles.Count;
 
         /// <summary>
+        /// Gets the saved quantity available for a power-up.
+        /// </summary>
+        public int GetPowerUpAvailableCount(PowerUpType powerUpType)
+        {
+            return GetSaveManager()?.GetPowerUpCount(powerUpType) ?? 0;
+        }
+
+        /// <summary>
         /// Gets the bootstrap order for the match manager.
         /// </summary>
         public override int InitializationOrder => 30;
@@ -178,7 +186,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            if (!TryUsePowerUp(PowerUpType.Hint, GetHintCost()))
+            if (!TryUsePowerUp(PowerUpType.Hint))
             {
                 return false;
             }
@@ -197,7 +205,7 @@ namespace MahjongOut3D.Managers
         /// <returns>True when Undo succeeds; otherwise false.</returns>
         public bool UseUndo()
         {
-            if (!HasSelectionHistoryRecord() || !TryUsePowerUp(PowerUpType.Undo, GetUndoCost()))
+            if (!HasSelectionHistoryRecord() || !TryUsePowerUp(PowerUpType.Undo))
             {
                 return false;
             }
@@ -235,7 +243,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            if (!TryUsePowerUp(PowerUpType.Shuffle, GetShuffleCost()))
+            if (!TryUsePowerUp(PowerUpType.Shuffle))
             {
                 return false;
             }
@@ -272,7 +280,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            if (!TryUsePowerUp(PowerUpType.Bomb, GetBombCost()))
+            if (!TryUsePowerUp(PowerUpType.Bomb))
             {
                 return false;
             }
@@ -311,7 +319,7 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
-            if (!TryUsePowerUp(PowerUpType.XRay, GetXRayCost()))
+            if (!TryUsePowerUp(PowerUpType.XRay))
             {
                 return false;
             }
@@ -377,10 +385,20 @@ namespace MahjongOut3D.Managers
             MahjongTile trayMatchTile = FindMatchingTrayTile(tappedTile);
             if (selectedTiles.Count >= SelectionTrayCapacity && trayMatchTile == null)
             {
-                GetAudioManager()?.PlayLose();
-                gameManager.LoseGameplay();
-                return;
+                TryStartFirstMatchingPairInSelectionTray(true);
+                trayMatchTile = FindMatchingTrayTile(tappedTile);
+                if (selectedTiles.Count >= SelectionTrayCapacity && trayMatchTile == null)
+                {
+                    GetAudioManager()?.PlayLose();
+                    gameManager.LoseGameplay();
+                    return;
+                }
             }
+
+            int trayMatchSlotIndex = trayMatchTile != null ? selectedTiles.IndexOf(trayMatchTile) : -1;
+            int targetTraySlotIndex = trayMatchTile != null && selectedTiles.Count < SelectionTrayCapacity
+                ? selectedTiles.Count
+                : trayMatchSlotIndex;
 
             if (!tappedTile.TrySelect())
             {
@@ -388,13 +406,18 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            StartCoroutine(HandleTrayModeTileTapped(tappedTile, trayMatchTile));
+            if (trayMatchTile != null)
+            {
+                ReservePairForMatchResolution(trayMatchTile, tappedTile);
+            }
+
+            StartCoroutine(HandleTrayModeTileTapped(tappedTile, trayMatchTile, targetTraySlotIndex));
         }
 
-        private IEnumerator HandleTrayModeTileTapped(MahjongTile tappedTile, MahjongTile matchingTrayTile)
+        private IEnumerator HandleTrayModeTileTapped(MahjongTile tappedTile, MahjongTile matchingTrayTile, int targetTraySlotIndex)
         {
             yield return CollapsePreviewedFaceDownTiles(tappedTile);
-            yield return MoveTileIntoSelectionTray(tappedTile, matchingTrayTile);
+            yield return MoveTileIntoSelectionTray(tappedTile, matchingTrayTile, targetTraySlotIndex);
         }
 
         private IEnumerator HandleFaceDownPreviewTileTapped(MahjongTile tappedTile)
@@ -409,9 +432,14 @@ namespace MahjongOut3D.Managers
                 MahjongTile matchingTrayTile = FindMatchingTrayTile(tappedTile);
                 if (selectedTiles.Count >= SelectionTrayCapacity && matchingTrayTile == null)
                 {
-                    GetAudioManager()?.PlayLose();
-                    GetGameManager()?.LoseGameplay();
-                    yield break;
+                    TryStartFirstMatchingPairInSelectionTray(true);
+                    matchingTrayTile = FindMatchingTrayTile(tappedTile);
+                    if (selectedTiles.Count >= SelectionTrayCapacity && matchingTrayTile == null)
+                    {
+                        GetAudioManager()?.PlayLose();
+                        GetGameManager()?.LoseGameplay();
+                        yield break;
+                    }
                 }
 
                 memorySelectedTiles.Remove(tappedTile);
@@ -1734,7 +1762,7 @@ namespace MahjongOut3D.Managers
         /// <summary>
         /// Moves a tapped tile into the temporary 4-slot tray and resolves a match when possible.
         /// </summary>
-        private IEnumerator MoveTileIntoSelectionTray(MahjongTile tappedTile, MahjongTile matchingTrayTile)
+        private IEnumerator MoveTileIntoSelectionTray(MahjongTile tappedTile, MahjongTile matchingTrayTile, int targetTraySlotIndex = -1)
         {
             if (tappedTile == null)
             {
@@ -1761,8 +1789,20 @@ namespace MahjongOut3D.Managers
             CommitTileToSelectionTray(tappedTile);
 
             bool usesNewTraySlot = matchingTrayTile == null || selectedTiles.Count < SelectionTrayCapacity;
-            int targetSlotIndex = usesNewTraySlot ? Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 1) : Mathf.Max(0, selectedTiles.IndexOf(matchingTrayTile));
-            if (usesNewTraySlot)
+            int targetSlotIndex = targetTraySlotIndex >= 0
+                ? Mathf.Clamp(targetTraySlotIndex, 0, SelectionTrayCapacity - 1)
+                : usesNewTraySlot
+                    ? Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 1)
+                    : Mathf.Max(0, selectedTiles.IndexOf(matchingTrayTile));
+
+            if (matchingTrayTile != null)
+            {
+                if (!IsTilePendingMatch(matchingTrayTile) || !IsTilePendingMatch(tappedTile))
+                {
+                    ReservePairForMatchResolution(matchingTrayTile, tappedTile);
+                }
+            }
+            else
             {
                 selectedTiles.Add(tappedTile);
             }
@@ -1789,12 +1829,17 @@ namespace MahjongOut3D.Managers
 
             if (matchingTrayTile != null)
             {
-                QueueMatchedPairForResolution(matchingTrayTile, tappedTile, true);
+                StartOrQueueMatchedPairResolution(matchingTrayTile, tappedTile, true);
                 yield break;
             }
 
             if (selectedTiles.Count >= SelectionTrayCapacity)
             {
+                if (TryStartFirstMatchingPairInSelectionTray(true))
+                {
+                    yield break;
+                }
+
                 GetAudioManager()?.PlayLose();
                 GetGameManager()?.LoseGameplay();
             }
@@ -1808,6 +1853,16 @@ namespace MahjongOut3D.Managers
             }
 
             ReservePairForMatchResolution(firstTile, secondTile);
+
+            StartOrQueueMatchedPairResolution(firstTile, secondTile, rewardCoins);
+        }
+
+        private void StartOrQueueMatchedPairResolution(MahjongTile firstTile, MahjongTile secondTile, bool rewardCoins)
+        {
+            if (firstTile == null || secondTile == null)
+            {
+                return;
+            }
 
             PendingMatchResolution pendingResolution = new PendingMatchResolution(firstTile, secondTile, rewardCoins);
             if (IsResolvingMatch)
@@ -2018,13 +2073,45 @@ namespace MahjongOut3D.Managers
             for (int index = 0; index < selectedTiles.Count; index++)
             {
                 MahjongTile tile = selectedTiles[index];
-                if (tile != null && !tile.IsRemoved && tile.HasSameVisualIdentity(sourceTile))
+                if (IsAvailableTrayMatchCandidate(tile) && tile.HasSameVisualIdentity(sourceTile))
                 {
                     return tile;
                 }
             }
 
             return null;
+        }
+
+        private bool TryStartFirstMatchingPairInSelectionTray(bool rewardCoins)
+        {
+            for (int firstIndex = 0; firstIndex < selectedTiles.Count; firstIndex++)
+            {
+                MahjongTile firstTile = selectedTiles[firstIndex];
+                if (!IsAvailableTrayMatchCandidate(firstTile))
+                {
+                    continue;
+                }
+
+                for (int secondIndex = firstIndex + 1; secondIndex < selectedTiles.Count; secondIndex++)
+                {
+                    MahjongTile secondTile = selectedTiles[secondIndex];
+                    if (IsAvailableTrayMatchCandidate(secondTile) && firstTile.HasSameVisualIdentity(secondTile))
+                    {
+                        QueueMatchedPairForResolution(firstTile, secondTile, rewardCoins);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsAvailableTrayMatchCandidate(MahjongTile tile)
+        {
+            return tile != null
+                && !tile.IsRemoved
+                && !tile.IsMatched
+                && !IsTilePendingMatch(tile);
         }
 
         /// <summary>
@@ -2177,11 +2264,11 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Consumes power-up currency cost when possible.
+        /// Consumes one saved power-up booster when possible.
         /// </summary>
-        private bool TryUsePowerUp(PowerUpType powerUpType, int cost)
+        private bool TryUsePowerUp(PowerUpType powerUpType)
         {
-            return GetSaveManager()?.TrySpendCoins(cost) ?? false;
+            return GetSaveManager()?.TrySpendPowerUp(powerUpType) ?? false;
         }
 
         private int GetMatchScoreValue(MahjongTile firstTile, MahjongTile secondTile)
@@ -2197,11 +2284,6 @@ namespace MahjongOut3D.Managers
 
         private int GetCoinsPerMatch() => powerUpSettings != null ? powerUpSettings.CoinsPerMatch : 2;
         private int GetCoinsPerLevelWin() => powerUpSettings != null ? powerUpSettings.CoinsPerLevelWin : 30;
-        private int GetHintCost() => powerUpSettings != null ? powerUpSettings.HintCost : 10;
-        private int GetUndoCost() => powerUpSettings != null ? powerUpSettings.UndoCost : 15;
-        private int GetShuffleCost() => powerUpSettings != null ? powerUpSettings.ShuffleCost : 20;
-        private int GetBombCost() => powerUpSettings != null ? powerUpSettings.BombCost : 25;
-        private int GetXRayCost() => powerUpSettings != null ? powerUpSettings.XRayCost : 18;
         private float GetXRayDurationSeconds() => 5f;
         private int GetXRayRevealDepth() => 1;
 

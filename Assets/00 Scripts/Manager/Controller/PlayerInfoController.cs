@@ -183,7 +183,6 @@ public class PlayerInfoController :
     protected override void OnNextDay()
     {
         cachedData.showStreakAnim = true;
-        cachedData.streakCount = 0;
         OnValueChange();
     }
 }

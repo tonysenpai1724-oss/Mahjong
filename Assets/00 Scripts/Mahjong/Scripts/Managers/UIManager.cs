@@ -58,6 +58,7 @@ namespace MahjongOut3D.Managers
             EventManager.StartListening(Constant.ON_PLAYER_RESOURCE_UPDATE, HandlePlayerResourceChanged);
             RefreshScreenState();
             RefreshCoinDisplays();
+            RefreshBoosterDisplays();
             UpdateLevelSelectInfo();
             RefreshPieceMaterialDropdown();
         }
@@ -250,6 +251,21 @@ namespace MahjongOut3D.Managers
             UpdateCoinDisplays(clampedCoins > int.MaxValue ? int.MaxValue : (int)clampedCoins);
         }
 
+        private void RefreshBoosterDisplays()
+        {
+            if (gameplayHudView == null || !Context.Services.TryGet(out MatchManager matchManager))
+            {
+                return;
+            }
+
+            gameplayHudView.SetBoosterCounts(
+                matchManager.GetPowerUpAvailableCount(PowerUpType.Hint),
+                matchManager.GetPowerUpAvailableCount(PowerUpType.Undo),
+                matchManager.GetPowerUpAvailableCount(PowerUpType.Shuffle),
+                matchManager.GetPowerUpAvailableCount(PowerUpType.Bomb),
+                matchManager.GetPowerUpAvailableCount(PowerUpType.XRay));
+        }
+
         private void UpdateGameplayHudInfo()
         {
             if (gameplayHudView == null || !Context.Services.TryGet(out LevelManager levelManager))
@@ -258,6 +274,7 @@ namespace MahjongOut3D.Managers
             }
 
             gameplayHudView.SetLevel(levelManager.CurrentLevelIndex);
+            RefreshBoosterDisplays();
             RefreshPieceMaterialDropdown();
         }
 
@@ -286,6 +303,7 @@ namespace MahjongOut3D.Managers
         private void HandlePlayerResourceChanged()
         {
             RefreshCoinDisplays();
+            RefreshBoosterDisplays();
         }
 
         private void HandleProgressChanged(GameplayProgressChangedEvent eventData)
@@ -293,6 +311,7 @@ namespace MahjongOut3D.Managers
             gameplayHudView?.SetProgress(eventData.RemainingTiles, eventData.TotalTiles, eventData.CompletionRatio);
             UpdateGameplayHudInfo();
             RefreshCoinDisplays();
+            RefreshBoosterDisplays();
         }
 
         private void HandleLevelGenerated(LevelGeneratedEvent eventData)

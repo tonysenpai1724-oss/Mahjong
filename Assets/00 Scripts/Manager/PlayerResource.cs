@@ -18,6 +18,10 @@ public interface IPlayerResource : IController<PlayerResourceLocal>
             bool updateSever = false, System.Action actionSuccess = null, System.Action actionError = null);
     public long GetCommonResource(ECommonResource resourceType);
     public long GetExpireableResource(EExpireableResource resourceType);
+    public int GetItemCount(string itemKey);
+    public void SetItemCount(string itemKey, int count);
+    public void AddItemCount(string itemKey, int amount);
+    public bool TrySpendItem(string itemKey, int amount = 1);
     public bool GetContentResource(EContentActiveResource resourceType);
     public List<ItemResource> GetVisualResources();
 
@@ -79,6 +83,44 @@ public class PlayerResourceLocal :
     public long GetExpireableResource(EExpireableResource resourceType)
     {
         return cachedData.GetExpireableResource(resourceType);
+    }
+
+    public int GetItemCount(string itemKey)
+    {
+        return cachedData.GetItemCount(itemKey);
+    }
+
+    public void SetItemCount(string itemKey, int count)
+    {
+        cachedData.SetItemCount(itemKey, count);
+        OnValueChange();
+    }
+
+    public void AddItemCount(string itemKey, int amount)
+    {
+        if (amount == 0)
+        {
+            return;
+        }
+
+        SetItemCount(itemKey, GetItemCount(itemKey) + amount);
+    }
+
+    public bool TrySpendItem(string itemKey, int amount = 1)
+    {
+        if (amount <= 0)
+        {
+            return true;
+        }
+
+        int currentCount = GetItemCount(itemKey);
+        if (currentCount < amount)
+        {
+            return false;
+        }
+
+        SetItemCount(itemKey, currentCount - amount);
+        return true;
     }
 
 
@@ -238,6 +280,30 @@ public class PlayerResourceLocalData : IControllerCachedData
         return _expireableResources[resourceType];
     }
 
+    public int GetItemCount(string itemKey)
+    {
+        EnsureItemResourceDictionary();
+        string key = NormalizeItemKey(itemKey);
+        if (!dicItemResource.TryGetValue(key, out long count))
+        {
+            dicItemResource[key] = 0L;
+            return 0;
+        }
+
+        if (count <= 0L)
+        {
+            return 0;
+        }
+
+        return count > int.MaxValue ? int.MaxValue : (int)count;
+    }
+
+    public void SetItemCount(string itemKey, int count)
+    {
+        EnsureItemResourceDictionary();
+        dicItemResource[NormalizeItemKey(itemKey)] = Mathf.Max(0, count);
+    }
+
     public bool GetContentActive(EContentActiveResource resourceType)
     {
         return _contentActiveResources[resourceType];
@@ -246,6 +312,19 @@ public class PlayerResourceLocalData : IControllerCachedData
     public List<ItemResource> GetListVisual()
     {
         return lstVisuals;
+    }
+
+    private void EnsureItemResourceDictionary()
+    {
+        if (dicItemResource == null)
+        {
+            dicItemResource = new Dictionary<string, long>();
+        }
+    }
+
+    private static string NormalizeItemKey(string itemKey)
+    {
+        return string.IsNullOrWhiteSpace(itemKey) ? "unknown" : itemKey.Trim();
     }
 
 }

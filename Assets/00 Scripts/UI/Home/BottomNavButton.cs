@@ -3,96 +3,90 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class BottomNavButton : HomeToggleButton
+public class BottomNavButton : MonoBehaviour
 {
-    [Header("Shared Active Visual")]
-    public RectTransform activeVisual;
-    public CanvasGroup activeVisualGroup;
+    private TextMeshProUGUI txtName;
+    private RectTransform iconRoot;
+    private Button button;
+    private float iconStartY;
 
-    [Header("Button Visual")]
-    public RectTransform iconRoot;
-    public CanvasGroup txtNameGroup;
-
-    [Header("Position")]
-    public float iconOnY = 70f;
-    public float iconOffY = 10f;
-    public float activeVisualOnY = 38f;
-
-    [Header("Animation")]
+    public float selectedIconOffsetY = 35f;
     public float duration = 0.2f;
-    public Ease moveEase = Ease.OutBack;
-    public Ease fadeEase = Ease.OutQuad;
+
+    private BottomNavBar bar;
+
+    public RectTransform RectTransform => transform as RectTransform;
 
 #if UNITY_EDITOR
-    protected override void OnValidate()
+    private void OnValidate()
     {
-        base.OnValidate();
-
-        if (iconRoot == null && icon != null)
-            iconRoot = icon.rectTransform;
-
-        if (txtNameGroup == null && txtName != null)
-            txtNameGroup = txtName.GetComponent<CanvasGroup>();
+        AutoWire();
     }
 #endif
 
-    public override void SetActive(bool isOn)
+    private void Awake()
     {
-        if (deactivateButton && button != null)
+        AutoWire();
+
+        if (iconRoot != null)
+            iconStartY = iconRoot.anchoredPosition.y;
+    }
+
+    private void AutoWire()
+    {
+        if (iconRoot == null)
+        {
+            Transform iconTransform = transform.Find("Icon") ?? transform.Find("icon") ?? transform.Find("Image");
+            if (iconTransform != null)
+                iconRoot = iconTransform as RectTransform;
+        }
+
+        if (iconRoot == null)
+            iconRoot = transform as RectTransform;
+
+        if (txtName == null)
+        {
+            Transform textTransform = transform.Find("Text (TMP)") ?? transform.Find("Text") ?? transform.Find("Name");
+            if (textTransform != null)
+                txtName = textTransform.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (button == null)
+            button = GetComponent<Button>();
+    }
+
+    public void Bind(BottomNavBar owner)
+    {
+        bar = owner;
+
+        if (button != null)
+        {
+            button.onClick.RemoveListener(HandleClick);
+            button.onClick.AddListener(HandleClick);
+        }
+    }
+
+    private void HandleClick()
+    {
+        bar?.Select(this);
+    }
+
+    public void SetSelected(bool isOn)
+    {
+        if (button != null)
             button.interactable = !isOn;
 
-        RectTransform targetIcon = iconRoot != null ? iconRoot : icon != null ? icon.rectTransform : null;
+        RectTransform targetIcon = iconRoot;
         if (targetIcon != null)
         {
             targetIcon.DOKill();
-            targetIcon.DOAnchorPosY(isOn ? iconOnY : iconOffY, duration).SetEase(moveEase);
+            targetIcon.DOAnchorPosY(iconStartY + (isOn ? selectedIconOffsetY : 0f), duration).SetEase(Ease.OutBack);
         }
 
-        if (txtNameGroup != null)
-        {
-            txtNameGroup.DOKill();
-            txtNameGroup.DOFade(isOn ? 1f : 0f, duration).SetEase(fadeEase);
-        }
-        else if (txtName != null)
+        if (txtName != null)
         {
             txtName.DOKill();
-            txtName.DOFade(isOn ? 1f : 0f, duration).SetEase(fadeEase);
+            txtName.DOFade(isOn ? 1f : 0f, duration);
         }
-
-        if (isOn)
-            MoveActiveVisualToThisButton();
-    }
-
-    private void MoveActiveVisualToThisButton()
-    {
-        if (activeVisual == null)
-            return;
-
-        Vector2 targetPosition = activeVisual.anchoredPosition;
-        targetPosition.x = GetTargetXInActiveVisualParent();
-        targetPosition.y = activeVisualOnY;
-
-        activeVisual.gameObject.SetActive(true);
-        activeVisual.DOKill();
-        activeVisual.DOAnchorPos(targetPosition, duration).SetEase(moveEase);
-
-        if (activeVisualGroup != null)
-        {
-            activeVisualGroup.DOKill();
-            activeVisualGroup.DOFade(1f, duration).SetEase(fadeEase);
-        }
-    }
-
-    private float GetTargetXInActiveVisualParent()
-    {
-        RectTransform buttonRect = transform as RectTransform;
-        RectTransform activeParent = activeVisual.parent as RectTransform;
-
-        if (buttonRect == null || activeParent == null)
-            return activeVisual.anchoredPosition.x;
-
-        Vector3 worldCenter = buttonRect.TransformPoint(buttonRect.rect.center);
-        Vector3 localCenter = activeParent.InverseTransformPoint(worldCenter);
-        return localCenter.x;
     }
 }

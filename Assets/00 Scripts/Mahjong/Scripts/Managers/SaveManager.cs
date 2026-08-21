@@ -1,5 +1,5 @@
 using MahjongOut3D.Core;
-using MahjongOut3D.Data;
+using MahjongOut3D.Gameplay;
 using MahjongOut3D.Utilities;
 using UnityEngine;
 
@@ -11,16 +11,12 @@ namespace MahjongOut3D.Managers
     public sealed class SaveManager : ManagerBehaviour
     {
         private const string SelectedSkinKey = "mahjong_selected_skin";
+        private const string PowerUpItemKeyPrefix = "mahjongPowerUp";
 
         /// <summary>
         /// Gets a value indicating whether the player profile has been loaded.
         /// </summary>
         public bool HasLoadedProfile { get; private set; }
-
-        /// <summary>
-        /// Gets the currently loaded save data.
-        /// </summary>
-        public PlayerSaveData CurrentSave { get; private set; }
 
         /// <summary>
         /// Gets the bootstrap order for the save manager.
@@ -44,20 +40,18 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Loads the player save file or creates a new one when none exists.
+        /// Marks the shared player save as available for Mahjong runtime calls.
         /// </summary>
         public void LoadProfile()
         {
-            RefreshSnapshot();
             HasLoadedProfile = true;
         }
 
         /// <summary>
-        /// Writes the current save data to disk as JSON.
+        /// Kept for compatibility; Mahjong now writes directly to the shared save systems.
         /// </summary>
         public void SaveProfile()
         {
-            RefreshSnapshot();
         }
 
         /// <summary>
@@ -119,20 +113,54 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
+        /// Gets the saved quantity for a gameplay power-up booster.
+        /// </summary>
+        public int GetPowerUpCount(PowerUpType powerUpType)
+        {
+            return IPlayerResource.Instance?.GetItemCount(GetPowerUpItemKey(powerUpType)) ?? 0;
+        }
+
+        /// <summary>
+        /// Saves an absolute quantity for a gameplay power-up booster.
+        /// </summary>
+        public void SetPowerUpCount(PowerUpType powerUpType, int count)
+        {
+            IPlayerResource.Instance?.SetItemCount(GetPowerUpItemKey(powerUpType), count);
+        }
+
+        /// <summary>
+        /// Adds to a gameplay power-up booster count and saves the result.
+        /// </summary>
+        public void AddPowerUpCount(PowerUpType powerUpType, int amount)
+        {
+            IPlayerResource.Instance?.AddItemCount(GetPowerUpItemKey(powerUpType), amount);
+        }
+
+        /// <summary>
+        /// Attempts to consume one or more saved gameplay power-up boosters.
+        /// </summary>
+        public bool TrySpendPowerUp(PowerUpType powerUpType, int amount = 1)
+        {
+            if (amount <= 0)
+            {
+                return true;
+            }
+
+            return IPlayerResource.Instance?.TrySpendItem(GetPowerUpItemKey(powerUpType), amount) ?? false;
+        }
+
+        /// <summary>
         /// Updates the selected skin id and saves the change.
         /// </summary>
         /// <param name="skinId">Selected skin identifier.</param>
         public void SetSkin(string skinId)
         {
-            EnsureSaveData();
-            CurrentSave.selectedSkin = string.IsNullOrWhiteSpace(skinId) ? "Default" : skinId;
+            string selectedSkin = string.IsNullOrWhiteSpace(skinId) ? "Default" : skinId;
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.SaveLocalData(SelectedSkinKey, CurrentSave.selectedSkin);
+                GameManager.Instance.SaveLocalData(SelectedSkinKey, selectedSkin);
             }
-
-            SaveProfile();
         }
 
         /// <summary>
@@ -142,17 +170,11 @@ namespace MahjongOut3D.Managers
         /// <param name="soundEnabled">True when sound is enabled.</param>
         public void SetSettings(bool musicEnabled, bool soundEnabled)
         {
-            EnsureSaveData();
-            CurrentSave.musicEnabled = musicEnabled;
-            CurrentSave.soundEnabled = soundEnabled;
-
             if (IGameSettingController.Instance != null)
             {
                 ApplyLegacySetting(EGameSetting.Music, musicEnabled);
                 ApplyLegacySetting(EGameSetting.Sound, soundEnabled);
             }
-
-            SaveProfile();
         }
 
         /// <summary>
@@ -161,47 +183,11 @@ namespace MahjongOut3D.Managers
         protected override void OnShutdown()
         {
             HasLoadedProfile = false;
-            CurrentSave = null;
         }
 
-        /// <summary>
-        /// Ensures a valid in-memory save object exists.
-        /// </summary>
-        private void EnsureSaveData()
+        private static string GetPowerUpItemKey(PowerUpType powerUpType)
         {
-            if (CurrentSave == null)
-            {
-                RefreshSnapshot();
-            }
-        }
-
-        private void RefreshSnapshot()
-        {
-            if (CurrentSave == null)
-            {
-                CurrentSave = new PlayerSaveData();
-            }
-
-            long coins = IPlayerResource.Instance != null
-                ? IPlayerResource.Instance.GetCommonResource(ECommonResource.Coin)
-                : 0;
-
-            long clampedCoins = coins < 0L ? 0L : coins;
-            CurrentSave.coins = clampedCoins > int.MaxValue ? int.MaxValue : (int)clampedCoins;
-            CurrentSave.musicEnabled = IGameSettingController.Instance == null || IGameSettingController.Instance.GetSetting(EGameSetting.Music);
-            CurrentSave.soundEnabled = IGameSettingController.Instance == null || IGameSettingController.Instance.GetSetting(EGameSetting.Sound);
-            CurrentSave.selectedSkin = ReadSelectedSkin();
-        }
-
-        private static string ReadSelectedSkin()
-        {
-            if (GameManager.Instance == null)
-            {
-                return "Default";
-            }
-
-            string skinId = GameManager.Instance.GetLocalData(SelectedSkinKey);
-            return string.IsNullOrWhiteSpace(skinId) ? "Default" : skinId;
+            return $"{PowerUpItemKeyPrefix}{powerUpType}";
         }
 
         private static void ApplyLegacySetting(EGameSetting setting, bool enabled)

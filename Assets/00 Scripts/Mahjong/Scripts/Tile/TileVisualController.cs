@@ -300,11 +300,7 @@ namespace MahjongOut3D.TileSystem
         private Vector3 GetTargetScale(TileState state)
         {
             float scaleMultiplier = GetVisibleScaleMultiplier();
-            if (state == TileState.Selected)
-            {
-                scaleMultiplier = GetSelectedScaleMultiplier();
-            }
-            else if (state == TileState.Matched)
+            if (state == TileState.Matched)
             {
                 scaleMultiplier = GetMatchedScaleMultiplier();
             }
@@ -343,11 +339,7 @@ namespace MahjongOut3D.TileSystem
                     SetColorPropertyOnCurrentBlock(renderer.sharedMaterial, GetSecondaryBaseColorProperty(), secondaryTintColor);
                 }
 
-                if (state == TileState.Selected)
-                {
-                    emissionColor = GetSelectedEmissionColor() * GetSelectedEmissionIntensity();
-                }
-                else if (isHintHighlighted)
+                if (isHintHighlighted)
                 {
                     emissionColor = GetHintEmissionColor() * GetHintEmissionIntensity();
                 }
@@ -454,11 +446,6 @@ namespace MahjongOut3D.TileSystem
         /// </summary>
         private Color ResolveTintColor(Color baseColor, TileState state)
         {
-            if (state == TileState.Selected)
-            {
-                return Color.Lerp(baseColor, GetSelectedTintColor(), GetSelectedTintStrength());
-            }
-
             if (isHintHighlighted)
             {
                 return Color.Lerp(baseColor, GetHintTintColor(), GetHintTintStrength());

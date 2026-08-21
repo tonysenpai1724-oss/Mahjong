@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
+using MahjongOut3D.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,6 +24,11 @@ namespace MahjongOut3D.UI
         [SerializeField] private Button shuffleButton;
         [SerializeField] private Button bombButton;
         [SerializeField] private Button xrayButton;
+        [SerializeField] private BoosterHudBinding hintBooster;
+        [SerializeField] private BoosterHudBinding undoBooster;
+        [SerializeField] private BoosterHudBinding shuffleBooster;
+        [SerializeField] private BoosterHudBinding bombBooster;
+        [SerializeField] private BoosterHudBinding xrayBooster;
         [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
         [SerializeField] private TMP_Text comboText;
 
@@ -117,6 +123,26 @@ namespace MahjongOut3D.UI
         }
 
         /// <summary>
+        /// Updates the quantity and icon state for one gameplay booster.
+        /// </summary>
+        public void SetBoosterCount(PowerUpType powerUpType, int count)
+        {
+            GetBoosterBinding(powerUpType).SetCount(count);
+        }
+
+        /// <summary>
+        /// Updates every gameplay booster quantity shown in the HUD.
+        /// </summary>
+        public void SetBoosterCounts(int hintCount, int undoCount, int shuffleCount, int bombCount, int xrayCount)
+        {
+            hintBooster.SetCount(hintCount);
+            undoBooster.SetCount(undoCount);
+            shuffleBooster.SetCount(shuffleCount);
+            bombBooster.SetCount(bombCount);
+            xrayBooster.SetCount(xrayCount);
+        }
+
+        /// <summary>
         /// Shows a floating combo popup. If no combo text is assigned, it creates one automatically.
         /// </summary>
         public void ShowComboText(int combo)
@@ -200,6 +226,25 @@ namespace MahjongOut3D.UI
             }
 
             pieceMaterialChangedCallback?.Invoke(selectedIndex);
+        }
+
+        private BoosterHudBinding GetBoosterBinding(PowerUpType powerUpType)
+        {
+            switch (powerUpType)
+            {
+                case PowerUpType.Hint:
+                    return hintBooster;
+                case PowerUpType.Undo:
+                    return undoBooster;
+                case PowerUpType.Shuffle:
+                    return shuffleBooster;
+                case PowerUpType.Bomb:
+                    return bombBooster;
+                case PowerUpType.XRay:
+                    return xrayBooster;
+                default:
+                    return default;
+            }
         }
 
         private TMP_Dropdown EnsurePieceMaterialDropdown()
@@ -291,6 +336,35 @@ namespace MahjongOut3D.UI
                 dropdown = Resources.GetBuiltinResource<Sprite>("UI/Skin/DropdownArrow.psd"),
                 mask = Resources.GetBuiltinResource<Sprite>("UI/Skin/UIMask.psd"),
             };
+        }
+
+        [Serializable]
+        private struct BoosterHudBinding
+        {
+            [SerializeField] private Image iconImage;
+            [SerializeField] private TMP_Text quantityText;
+            [SerializeField] private Sprite availableSprite;
+            [SerializeField] private Sprite emptySprite;
+
+            public void SetCount(int count)
+            {
+                int safeCount = Mathf.Max(0, count);
+                bool hasBooster = safeCount > 0;
+
+                if (quantityText != null)
+                {
+                    quantityText.text = count == int.MaxValue ? "∞" : safeCount.ToString();
+                }
+
+                if (iconImage != null)
+                {
+                    Sprite targetSprite = hasBooster ? availableSprite : emptySprite;
+                    if (targetSprite != null)
+                    {
+                        iconImage.sprite = targetSprite;
+                    }
+                }
+            }
         }
     }
 }
