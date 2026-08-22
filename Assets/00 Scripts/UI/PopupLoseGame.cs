@@ -18,12 +18,17 @@ public class PopupLoseGame : UIBase
         if (gameObject.activeSelf)
             return;
 
+        isTransitioning = false;
         DebugCustom.LogColor("Show popup", gameObject.name);
         if (hackObj != null)
             hackObj.SetActive(GameManager.Instance.IsTester);
         if (blockPanel != null)
             blockPanel.SetActive(false);
         gameObject.SetActive(true);
+        if (btnRestart != null)
+            btnRestart.interactable = true;
+        if (btnRevive != null)
+            btnRevive.interactable = true;
         // if (GameplayManager.Instance != null)
         // {
         //     GameplayManager.Instance.SetState(EGamePlayState.Pause);
@@ -58,6 +63,11 @@ public class PopupLoseGame : UIBase
 
     public override void OnDisable()
     {
+        isTransitioning = false;
+        if (btnRestart != null)
+            btnRestart.interactable = true;
+        if (btnRevive != null)
+            btnRevive.interactable = true;
         UnbindButtons();
         base.OnDisable();
     }

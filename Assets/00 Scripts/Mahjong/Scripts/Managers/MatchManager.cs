@@ -664,7 +664,7 @@ namespace MahjongOut3D.Managers
             AssignDifficultyComboTiles();
             if (GameplayManager.Instance != null)
             {
-                GameplayManager.Instance.SetState(EGamePlayState.Running);
+                GameplayManager.Instance.StartGame();
             }
             GetGameManager()?.StartGameplay();
             PublishProgress();
@@ -1431,15 +1431,7 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            int remainingTileCount = 0;
-            foreach (MahjongTile tile in tileManager.GetRemainingTiles())
-            {
-                if (tile != null && !tile.IsRemoved)
-                {
-                    remainingTileCount++;
-                }
-            }
-
+            int remainingTileCount = CountRemainingBoardTiles(tileManager);
             Context.EventBus.Publish(new GameplayProgressChangedEvent(remainingTileCount, totalTiles));
         }
 
@@ -1455,16 +1447,10 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            int remainingTileCount = 0;
-            foreach (MahjongTile tile in tileManager.GetRemainingTiles())
-            {
-                if (tile != null && !tile.IsRemoved)
-                {
-                    remainingTileCount++;
-                }
-            }
+            int remainingTileCount = CountRemainingBoardTiles(tileManager);
+            bool allBoardTilesResolved = AreAllBoardTilesResolved(tileManager);
 
-            if (remainingTileCount == 0)
+            if (remainingTileCount == 0 || allBoardTilesResolved)
             {
                 GetSaveManager()?.AddCoins(GetCoinsPerLevelWin());
                 GetAudioManager()?.PlayWin();
@@ -1477,12 +1463,104 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
+            // Strict fallback: some board configurations can produce false-positives
+            // in TryFindAnyBoardPair. As a last-resort, group remaining tiles by
+            // visual key and ensure at least one group contains >= 2 truly
+            // available tiles. If none do, trigger a loss.
+            int strictPairCount = 0;
+            var groups = new System.Collections.Generic.Dictionary<string, int>();
+            foreach (MahjongTile t in tileManager.GetRemainingTiles())
+            {
+                if (t == null || !IsTileAvailableForBoardPair(tileManager, t))
+                    continue;
+
+                string key = t.VisualMatchKey ?? string.Empty;
+                if (groups.TryGetValue(key, out int c))
+                    groups[key] = c + 1;
+                else
+                    groups[key] = 1;
+            }
+
+            foreach (var kv in groups)
+            {
+                if (kv.Value >= 2)
+                {
+                    strictPairCount = 1;
+                    break;
+                }
+            }
+
+            if (remainingTileCount > 0 && strictPairCount == 0)
+            {
+                MahjongRuntimeLogger.Log($"[Mahjong] No valid pairs (strict) detected. Remaining={remainingTileCount}");
+                Context.EventBus.Publish(new NoMovesRemainingEvent());
+                GetAudioManager()?.PlayLose();
+                gameManager.LoseGameplay();
+                return;
+            }
+
             if (!TryFindAnyBoardPair(out _, out _))
             {
                 Context.EventBus.Publish(new NoMovesRemainingEvent());
                 GetAudioManager()?.PlayLose();
                 gameManager.LoseGameplay();
             }
+        }
+
+        private int CountRemainingBoardTiles(TileManager tileManager)
+        {
+            if (tileManager == null)
+            {
+                return 0;
+            }
+
+            int remainingCount = 0;
+            foreach (MahjongTile tile in tileManager.GetAllTiles())
+            {
+                if (tile == null || tile.IsRemoved || tile.IsMatched || tile.IsBufferedSelection)
+                {
+                    continue;
+                }
+
+                if (tile.State == TileState.Hidden || tile.State == TileState.Visible || tile.State == TileState.Selected)
+                {
+                    remainingCount++;
+                }
+            }
+
+            return remainingCount;
+        }
+
+        private bool AreAllBoardTilesResolved(TileManager tileManager)
+        {
+            if (tileManager == null)
+            {
+                return false;
+            }
+
+            int resolvedCount = 0;
+            foreach (MahjongTile tile in tileManager.GetAllTiles())
+            {
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                if (tile.IsRemoved || tile.IsMatched)
+                {
+                    resolvedCount++;
+                    continue;
+                }
+
+                if (tile.IsBufferedSelection)
+                {
+                    continue;
+                }
+
+                return false;
+            }
+
+            return totalTiles > 0 && resolvedCount >= totalTiles;
         }
 
         /// <summary>
@@ -1550,18 +1628,17 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private bool IsTileAvailableForBoardPair(TileManager tileManager, MahjongTile tile)
         {
-            if (tileManager == null || tile == null || !tile.IsInteractable || tile.IsBufferedSelection)
+            if (tileManager == null || tile == null || tile.IsRemoved || tile.IsMatched || !tile.IsInteractable || tile.IsBufferedSelection)
             {
                 return false;
             }
 
-            bool useSurfaceRules = Context.Services.TryGet(out LevelManager levelManager) && levelManager.ActiveUsesSurfaceTilePlacement;
-            if (useSurfaceRules)
+            if (tile.State == TileState.Hidden && !UsesMemoryFlipSelectionMode())
             {
-                return tileManager.IsTileExposed(tile);
+                return false;
             }
 
-            return tileManager.IsTileExposed(tile);
+            return tileManager.IsTileHintSelectable(tile);
         }
 
         /// <summary>
@@ -1868,25 +1945,26 @@ namespace MahjongOut3D.Managers
             }
 
             if (selectedTiles.Count >= SelectionTrayCapacity)
-            {
-                if (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0)
-                {
-                    yield break;
-                }
+{
+    // Click liên tục / đang xử lý match thì chưa được kết luận thua.
+    if (IsResolvingMatch ||
+        pendingMatchedTiles.Count > 0 ||
+        pendingMatchQueue.Count > 0)
+    {
+        yield break;
+    }
 
-                if (TryStartFirstMatchingPairInSelectionTray(true))
-                {
-                    yield break;
-                }
+    // Chỉ tìm pair nằm trong tray.
+    // Nếu có pair thì bắt đầu resolve và không lose.
+    if (TryStartFirstMatchingPairInSelectionTray(true))
+    {
+        yield break;
+    }
 
-                if (TryFindAnyBoardPair(out _, out _))
-                {
-                    yield break;
-                }
-
-                GetAudioManager()?.PlayLose();
-                GetGameManager()?.LoseGameplay();
-            }
+    // Tray full + không có pair trong tray => lose.
+    GetAudioManager()?.PlayLose();
+    GetGameManager()?.LoseGameplay();
+}
         }
 
         private void QueueMatchedPairForResolution(MahjongTile firstTile, MahjongTile secondTile, bool rewardCoins)

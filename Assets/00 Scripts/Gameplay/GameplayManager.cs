@@ -61,6 +61,7 @@ public class GameplayManager : Singleton<GameplayManager>
     public void StartGame()
     {
         hasRoundEnded = false;
+        winGame = false;
         ResetCombo();
         SetState(EGamePlayState.Running);
     }

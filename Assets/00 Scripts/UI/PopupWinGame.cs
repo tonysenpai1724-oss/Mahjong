@@ -18,12 +18,17 @@ public class PopupWinGame : UIBase
         if (gameObject.activeSelf)
             return;
 
-       DebugCustom.LogColor("Show popup", gameObject.name);
+        isTransitioning = false;
+        DebugCustom.LogColor("Show popup", gameObject.name);
         if (hackObj != null)
             hackObj.SetActive(GameManager.Instance.IsTester);
         if (blockPanel != null)
             blockPanel.SetActive(false);
         gameObject.SetActive(true);
+        if (btnPlay != null)
+            btnPlay.interactable = true;
+        if (btnAds != null)
+            btnAds.interactable = true;
         // if (GameplayManager.Instance != null)
         // {
         //     GameplayManager.Instance.SetState(EGamePlayState.Pause);
@@ -49,6 +54,11 @@ PlayOpenThenIdle();
 
     public override void OnDisable()
     {
+        isTransitioning = false;
+        if (btnPlay != null)
+            btnPlay.interactable = true;
+        if (btnAds != null)
+            btnAds.interactable = true;
         UnbindButtons();
         base.OnDisable();
     }

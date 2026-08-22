@@ -20,7 +20,7 @@ MonoBehaviour:
   <LayoutOverride>k__BackingField: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
   <Shape>k__BackingField: 0
   <UseSurfaceTilePlacement>k__BackingField: 1
-  <BlockCount>k__BackingField: 2
+  <BlockCount>k__BackingField: 1
   <BlockSpacingCells>k__BackingField: 1
   <LayerCount>k__BackingField: 1
   <Difficulty>k__BackingField: 1

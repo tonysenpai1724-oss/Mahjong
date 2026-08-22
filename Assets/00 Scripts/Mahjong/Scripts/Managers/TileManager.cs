@@ -189,7 +189,7 @@ namespace MahjongOut3D.Managers
         {
             foreach (MahjongTile tile in tilesById.Values)
             {
-                if (tile != null && !tile.IsRemoved)
+                if (tile != null && !tile.IsRemoved && !tile.IsMatched && !tile.IsBufferedSelection)
                 {
                     yield return tile;
                 }
@@ -204,7 +204,7 @@ namespace MahjongOut3D.Managers
         {
             foreach (MahjongTile tile in tilesById.Values)
             {
-                if (tile != null && IsTileExposed(tile))
+                if (tile != null && !tile.IsRemoved && !tile.IsMatched && !tile.IsBufferedSelection && IsTileExposed(tile))
                 {
                     yield return tile;
                 }
