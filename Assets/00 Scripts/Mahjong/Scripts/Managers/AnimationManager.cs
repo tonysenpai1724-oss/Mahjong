@@ -542,6 +542,11 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private void PlayCameraShake()
         {
+            if (IGameSettingController.Instance != null && !IGameSettingController.Instance.GetSetting(EGameSetting.Vibration))
+            {
+                return;
+            }
+
             if (!Context.Services.TryGet(out CameraManager cameraManager))
             {
                 return;

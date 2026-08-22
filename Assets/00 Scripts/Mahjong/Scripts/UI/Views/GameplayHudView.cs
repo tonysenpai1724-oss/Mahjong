@@ -32,10 +32,12 @@ namespace MahjongOut3D.UI
         [SerializeField] private BoosterHudBinding xrayBooster;
       //  [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
         [SerializeField] private TMP_Text comboText;
+        [SerializeField] private Image comboImage;
 
         private Action<int> pieceMaterialChangedCallback;
        // private bool suppressPieceMaterialDropdownCallback;
         private Sequence comboPopupSequence;
+        private Sequence comboImageSequence;
 
         /// <summary>
         /// Binds HUD buttons to runtime callbacks.
@@ -179,6 +181,7 @@ namespace MahjongOut3D.UI
             if (combo <= 1)
             {
                 targetText.gameObject.SetActive(false);
+                HideComboBurstImage();
                 return;
             }
 
@@ -213,6 +216,96 @@ namespace MahjongOut3D.UI
                 targetText.rectTransform.localScale = Vector3.one;
                 comboPopupSequence = null;
             });
+
+            if (combo % 5 == 0)
+            {
+                ShowComboBurstImage();
+            }
+            else
+            {
+                HideComboBurstImage();
+            }
+        }
+
+private void ShowComboBurstImage()
+{
+    if (comboImage == null)
+    {
+        return;
+    }
+
+    if (comboImageSequence != null)
+    {
+        comboImageSequence.Kill(true);
+        comboImageSequence = null;
+    }
+
+    comboImage.gameObject.SetActive(true);
+
+    // Reset alpha
+    Color color = comboImage.color;
+    color.a = 0f;
+    comboImage.color = color;
+
+    comboImageSequence = DOTween.Sequence();
+
+    // =========================
+    // FADE IN - 0.15s
+    // =========================
+
+    comboImageSequence.Append(
+        comboImage
+            .DOFade(1f, 0.15f)
+            .SetEase(Ease.OutQuad)
+    );
+
+    // =========================
+    // GIỮ - 1.1s
+    // =========================
+
+    comboImageSequence.AppendInterval(1.1f);
+
+    // =========================
+    // FADE OUT - 0.75s
+    // =========================
+
+    comboImageSequence.Append(
+        comboImage
+            .DOFade(0f, 0.75f)
+            .SetEase(Ease.InOutQuad)
+    );
+
+    // =========================
+    // TẮT
+    // =========================
+
+    comboImageSequence.OnComplete(() =>
+    {
+        comboImage.gameObject.SetActive(false);
+
+        Color resetColor = comboImage.color;
+        resetColor.a = 1f;
+        comboImage.color = resetColor;
+
+        comboImageSequence = null;
+    });
+}
+        private void HideComboBurstImage()
+        {
+            if (comboImageSequence != null)
+            {
+                comboImageSequence.Kill(true);
+                comboImageSequence = null;
+            }
+
+            if (comboImage != null)
+            {
+                comboImage.gameObject.SetActive(false);
+                Color color = comboImage.color;
+                color.a = 1f;
+                comboImage.color = color;
+                comboImage.rectTransform.localScale = Vector3.one;
+            }
         }
 
         /// <summary>
