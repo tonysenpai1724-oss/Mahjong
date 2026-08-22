@@ -48,7 +48,12 @@ public class AchievementController :
         {
             cachedData.dicAchivementProgress[key] = val;
         }
-        IDailyQuestController.Instance.UpdateQuestProgress(achievementType, val, replace);
+
+        if (IDailyQuestController.Instance != null)
+        {
+            IDailyQuestController.Instance.UpdateQuestProgress(achievementType, val, replace);
+        }
+
         OnValueChange();
     }
 }

@@ -184,7 +184,7 @@ public class DailyQuestControllerLocal :
             }
         }
 
-        if (!cachedData.dicQuestProgress.ContainsKey(EAchievementType.Login.ToString()) || cachedData.GetProgressQuest(EAchievementType.Login) < 1)
+        if (cachedData.GetProgressQuest(EAchievementType.Login) < 1)
         {
             cachedData.UpdateQuestProgress(EAchievementType.Login, 1, true);
         }
@@ -269,7 +269,13 @@ public class DailyQuestControllerLocal :
     protected override void OnNextDay()
     {
         base.OnNextDay();
+        if (cachedData == null)
+        {
+            return;
+        }
+
         cachedData.OnNewDay();
+        EnsureDefaultQuestProgress();
         NewQuestList();
     }
     protected override void OnNextWeek()
@@ -407,7 +413,18 @@ public class DailyQuestControllerLocal :
 
     public void UpdateQuestProgress(EAchievementType questType, long val = 1, bool replace = false)
     {
+        if (cachedData == null)
+        {
+            return;
+        }
+
         cachedData.UpdateQuestProgress(questType, val, replace);
+
+        if (lstQuest == null)
+        {
+            return;
+        }
+
         QuestItem quest = lstQuest.Find(q => q.questConfig.questType == questType);
         if (quest != null)
         {

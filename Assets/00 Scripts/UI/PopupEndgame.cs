@@ -76,7 +76,7 @@ public class PopupEndgame : UIBase
         if (GameManager.Instance.GameType == EGameType.Campaign && levelManager != null)
         {
             int currentIndex = levelManager.CurrentLevelIndex;
-            int targetIndex = GameplayManager.Instance.winGame ? Mathf.Max(0, IPlayerInfoController.Instance.CurrentLevel() - 1) : currentIndex;
+            int targetIndex = GameplayManager.Instance.winGame ? Mathf.Max(0, currentIndex + 1) : currentIndex;
             Debug.Log($"[Mahjong] PopupEndgame trying level load. Current={currentIndex}, Target={targetIndex}");
 
             if (GameplayManager.Instance.winGame)

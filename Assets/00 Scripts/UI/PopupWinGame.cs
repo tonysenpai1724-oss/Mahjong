@@ -11,9 +11,13 @@ public class PopupWinGame : UIBase
     public Button btnAds;
     public TextMeshProUGUI titleText;
     public SkeletonAnimation skeletonGraphic;
+    private bool isTransitioning;
 
     public override void Show()
     {
+        if (gameObject.activeSelf)
+            return;
+
        DebugCustom.LogColor("Show popup", gameObject.name);
         if (hackObj != null)
             hackObj.SetActive(GameManager.Instance.IsTester);
@@ -120,6 +124,15 @@ PlayOpenThenIdle();
 
     void OnClickNextLevel()
     {
+        if (isTransitioning || GameplayManager.Instance == null)
+            return;
+
+        isTransitioning = true;
+        if (btnPlay != null)
+            btnPlay.interactable = false;
+        if (btnAds != null)
+            btnAds.interactable = false;
+
         GameplayManager.Instance.ClaimCurrentReward(1, EResourceFrom.ReviveIngame);
         if (GameManager.Instance != null)
             GameManager.Instance.StartCoroutine(IEGoNextLevel());
@@ -127,6 +140,15 @@ PlayOpenThenIdle();
 
     void OnClickAdsX2Reward()
     {
+        if (isTransitioning || GameplayManager.Instance == null)
+            return;
+
+        isTransitioning = true;
+        if (btnPlay != null)
+            btnPlay.interactable = false;
+        if (btnAds != null)
+            btnAds.interactable = false;
+
 #if UNITY_EDITOR
         GameplayManager.Instance.ClaimCurrentReward(2, EResourceFrom.AdsReward);
         if (GameManager.Instance != null)
@@ -142,10 +164,10 @@ PlayOpenThenIdle();
         yield return new WaitForSecondsRealtime(0.25f);
         yield return null;
 
-        LevelManager levelManager = FindObjectOfType<LevelManager>();
+        LevelManager levelManager = UnityEngine.Object.FindAnyObjectByType<LevelManager>();
         if (GameManager.Instance.GameType == EGameType.Campaign && levelManager != null)
         {
-            int targetIndex = Mathf.Max(0, IPlayerInfoController.Instance.CurrentLevel() - 1);
+            int targetIndex = Mathf.Clamp(levelManager.CurrentLevelIndex + 1, 0, int.MaxValue);
             if (!levelManager.LoadLevel(targetIndex))
                 levelManager.ReloadCurrentLevel();
             yield break;

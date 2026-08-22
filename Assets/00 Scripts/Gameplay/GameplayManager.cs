@@ -16,6 +16,7 @@ public class GameplayManager : Singleton<GameplayManager>
     public bool winGame { get; private set; }
     public int CurrentLevel { get; set; }
     public int LevelTime { get; private set; }
+    private bool hasRoundEnded;
     public int Score { get; private set; }
     public int CurrentCombo { get; private set; }
     public PackageResource PackReward { get; private set; }
@@ -59,6 +60,7 @@ public class GameplayManager : Singleton<GameplayManager>
     }
     public void StartGame()
     {
+        hasRoundEnded = false;
         ResetCombo();
         SetState(EGamePlayState.Running);
     }
@@ -100,6 +102,10 @@ public class GameplayManager : Singleton<GameplayManager>
 
     public void EndGame(bool win)
     {
+        if (hasRoundEnded || state == EGamePlayState.GameOver)
+            return;
+
+        hasRoundEnded = true;
         DebugCustom.LogColor("End Game");
         SetGameOver(win);
         if (winGame)
@@ -126,6 +132,9 @@ public class GameplayManager : Singleton<GameplayManager>
     }
     public void SetGameOver(bool win)
     {
+        if (state == EGamePlayState.GameOver && winGame == win)
+            return;
+
         winGame = win;
         ResetCombo();
         SetState(EGamePlayState.GameOver);

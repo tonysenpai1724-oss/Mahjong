@@ -32,6 +32,9 @@ public class UIBase : MonoBehaviour
     }
     public virtual void Show()
     {
+        if (gameObject.activeSelf)
+            return;
+
         DebugCustom.LogColor("Show popup", gameObject.name);
         if (hackObj != null)
             hackObj.SetActive(GameManager.Instance.IsTester);

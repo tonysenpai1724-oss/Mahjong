@@ -271,12 +271,16 @@ public class UIManager : Singleton<UIManager>
     public void ShowPopupWinGame()
     {
         UIBase ui = GetUI("Popup Win");
-        ui.Show();
+        if (ui != null && ui.gameObject.activeSelf)
+            return;
+        ui?.Show();
     }
     public void ShowPopupLoseGame()
     {
         UIBase ui = GetUI("Popup Loss");
-        ui.Show();
+        if (ui != null && ui.gameObject.activeSelf)
+            return;
+        ui?.Show();
     }
     public void ShowPopupBooster()
     {

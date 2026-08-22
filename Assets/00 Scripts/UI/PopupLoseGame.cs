@@ -11,9 +11,13 @@ public class PopupLoseGame : UIBase
     public Button btnRevive;
    public  TextMeshProUGUI titleText;
    public SkeletonAnimation skeletonGraphic;
+    private bool isTransitioning;
 
     public override void Show()
     {
+        if (gameObject.activeSelf)
+            return;
+
         DebugCustom.LogColor("Show popup", gameObject.name);
         if (hackObj != null)
             hackObj.SetActive(GameManager.Instance.IsTester);
@@ -118,6 +122,15 @@ public class PopupLoseGame : UIBase
 
     void OnClickRestart()
     {
+        if (isTransitioning || GameplayManager.Instance == null)
+            return;
+
+        isTransitioning = true;
+        if (btnRestart != null)
+            btnRestart.interactable = false;
+        if (btnRevive != null)
+            btnRevive.interactable = false;
+
         GameplayManager.Instance.ClaimCurrentReward(1, EResourceFrom.ReviveIngame);
         if (GameManager.Instance != null)
             GameManager.Instance.StartCoroutine(IERestartLevel());
@@ -125,6 +138,15 @@ public class PopupLoseGame : UIBase
 
     void OnClickReviveAds()
     {
+        if (isTransitioning)
+            return;
+
+        isTransitioning = true;
+        if (btnRestart != null)
+            btnRestart.interactable = false;
+        if (btnRevive != null)
+            btnRevive.interactable = false;
+
 #if UNITY_EDITOR
  if (GameManager.Instance != null)
         {
@@ -143,7 +165,7 @@ public class PopupLoseGame : UIBase
         yield return new WaitForSecondsRealtime(0.25f);
         yield return null;
 
-        LevelManager levelManager = FindObjectOfType<LevelManager>();
+        LevelManager levelManager = UnityEngine.Object.FindAnyObjectByType<LevelManager>();
         if (GameManager.Instance.GameType == EGameType.Campaign && levelManager != null)
         {
             levelManager.ReloadCurrentLevel();

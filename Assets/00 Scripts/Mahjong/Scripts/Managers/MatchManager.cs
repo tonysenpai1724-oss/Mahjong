@@ -385,10 +385,25 @@ namespace MahjongOut3D.Managers
             MahjongTile trayMatchTile = FindMatchingTrayTile(tappedTile);
             if (selectedTiles.Count >= SelectionTrayCapacity && trayMatchTile == null)
             {
+                if (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0)
+                {
+                    return;
+                }
+
                 TryStartFirstMatchingPairInSelectionTray(true);
                 trayMatchTile = FindMatchingTrayTile(tappedTile);
                 if (selectedTiles.Count >= SelectionTrayCapacity && trayMatchTile == null)
                 {
+                    if (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0)
+                    {
+                        return;
+                    }
+
+                    if (TryFindAnyBoardPair(out _, out _))
+                    {
+                        return;
+                    }
+
                     GetAudioManager()?.PlayLose();
                     gameManager.LoseGameplay();
                     return;
@@ -432,10 +447,25 @@ namespace MahjongOut3D.Managers
                 MahjongTile matchingTrayTile = FindMatchingTrayTile(tappedTile);
                 if (selectedTiles.Count >= SelectionTrayCapacity && matchingTrayTile == null)
                 {
+                    if (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0)
+                    {
+                        yield break;
+                    }
+
                     TryStartFirstMatchingPairInSelectionTray(true);
                     matchingTrayTile = FindMatchingTrayTile(tappedTile);
                     if (selectedTiles.Count >= SelectionTrayCapacity && matchingTrayTile == null)
                     {
+                        if (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0)
+                        {
+                            yield break;
+                        }
+
+                        if (TryFindAnyBoardPair(out _, out _))
+                        {
+                            yield break;
+                        }
+
                         GetAudioManager()?.PlayLose();
                         GetGameManager()?.LoseGameplay();
                         yield break;
@@ -1437,9 +1467,13 @@ namespace MahjongOut3D.Managers
             if (remainingTileCount == 0)
             {
                 GetSaveManager()?.AddCoins(GetCoinsPerLevelWin());
-                IPlayerInfoController.Instance.WinLevel();
                 GetAudioManager()?.PlayWin();
                 gameManager.WinGameplay();
+                return;
+            }
+
+            if (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0)
+            {
                 return;
             }
 
@@ -1835,7 +1869,17 @@ namespace MahjongOut3D.Managers
 
             if (selectedTiles.Count >= SelectionTrayCapacity)
             {
+                if (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0)
+                {
+                    yield break;
+                }
+
                 if (TryStartFirstMatchingPairInSelectionTray(true))
+                {
+                    yield break;
+                }
+
+                if (TryFindAnyBoardPair(out _, out _))
                 {
                     yield break;
                 }
