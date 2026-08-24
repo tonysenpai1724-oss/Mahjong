@@ -134,6 +134,7 @@ namespace MahjongOut3D.Managers
         {
             StopAllCoroutines();
             CancelMemoryRevealTimeout();
+            GetAnimationManager()?.ClearTrayPreviews();
 
             for (int index = 0; index < selectedTiles.Count; index++)
             {
@@ -148,6 +149,7 @@ namespace MahjongOut3D.Managers
                 tile.RestoreBoardPose();
                 tile.StopFaceFlipAnimation(false);
                 tile.Deselect();
+                GetAnimationManager()?.SetTrayBoardTileVisible(tile, true);
                 if (tile.TileCollider != null)
                 {
                     tile.TileCollider.enabled = !tile.IsRemoved && !tile.IsMatched;
@@ -756,10 +758,8 @@ namespace MahjongOut3D.Managers
             try
             {
                 bool triggersCombo = IsComboTriggerPair(firstTile, secondTile);
-                firstTile.SetBufferedSelection(false);
-                secondTile.SetBufferedSelection(false);
-                firstTile.Deselect();
-                secondTile.Deselect();
+                firstTile.MarkMatched();
+                secondTile.MarkMatched();
                 GetAudioManager()?.PlayMatch();
 
                 bool completed = false;
@@ -795,6 +795,10 @@ namespace MahjongOut3D.Managers
 
                 pendingMatchedTiles.Remove(firstTile);
                 pendingMatchedTiles.Remove(secondTile);
+                GetAnimationManager()?.ClearTrayTile(firstTile);
+                GetAnimationManager()?.ClearTrayTile(secondTile);
+                firstTile.SetBufferedSelection(false);
+                secondTile.SetBufferedSelection(false);
                 firstTile.MarkRemoved();
                 secondTile.MarkRemoved();
                 RemoveTrayTileReference(firstTile);
@@ -1822,6 +1826,7 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
+                GetAnimationManager()?.ClearTrayTile(tile);
                 RemoveTrayTileReference(tile);
                 levelManager.ActiveGrid.RemoveTile(snapshot.tileId);
 
@@ -1846,6 +1851,8 @@ namespace MahjongOut3D.Managers
                 {
                     tile.TileCollider.enabled = !tile.IsRemoved && !tile.IsMatched;
                 }
+
+                GetAnimationManager()?.SetTrayBoardTileVisible(tile, true);
             }
 
             ReflowSelectionTray();
@@ -1869,6 +1876,7 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
+                GetAnimationManager()?.ClearTrayTile(tile);
                 RemoveTrayTileReference(tile);
                 tile.StopFaceFlipAnimation(false);
                 bool restoreFaceDown = snapshot.isFaceDown;
@@ -1953,6 +1961,7 @@ namespace MahjongOut3D.Managers
                     yield return null;
                 }
 
+                animationManager?.SetTrayBoardTileVisible(tappedTile, false);
                 movingToSelectionTrayTiles.Remove(tappedTile);
 
                 if (matchingTrayTile != null)

@@ -71,7 +71,9 @@ namespace MahjongOut3D.TileSystem
         {
             EnsureInitialized();
 
-            bool shouldRender = state != TileState.Hidden && state != TileState.Removed;
+            MahjongTile mahjongTile = GetComponent<MahjongTile>();
+            bool isBuffered = mahjongTile != null && mahjongTile.IsBufferedSelection;
+            bool shouldRender = state != TileState.Hidden && state != TileState.Removed && state != TileState.Matched && !isBuffered;
             SetRenderersVisible(shouldRender);
             SetOutlineVisible(shouldRender);
 

@@ -6,7 +6,9 @@ using MahjongOut3D.UI;
 using MahjongOut3D.Utilities;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MahjongOut3D.Managers
 {
@@ -15,11 +17,17 @@ namespace MahjongOut3D.Managers
     /// </summary>
     public sealed class AnimationManager : ManagerBehaviour
     {
+        private const int TrayOverlaySortingOrder = 450;
+
         [SerializeField] private TileAnimationSettings animationSettings;
         [SerializeField] private TraySlotAnchorProvider traySlotAnchorProvider;
+        [SerializeField, Min(0.1f)] private float inventoryItemPreviewScale = 1f;
 
+        private readonly Dictionary<MahjongTile, RuntimeTrayPreview> trayPreviewsByTile = new Dictionary<MahjongTile, RuntimeTrayPreview>();
         private ComponentPool<ParticleSystem> particlePool;
         private MatchUiShardEffect matchUiShardEffect;
+        private RectTransform trayOverlayRoot;
+        private Canvas trayOverlayCanvas;
         private MahjongTile activeHintFirstTile;
         private MahjongTile activeHintSecondTile;
 
@@ -48,6 +56,8 @@ namespace MahjongOut3D.Managers
                 matchUiShardEffect = MatchUiShardEffect.Create(transform);
                 matchUiShardEffect?.Prewarm();
             }
+
+            EnsureTrayOverlay();
         }
 
         /// <summary>
@@ -63,6 +73,14 @@ namespace MahjongOut3D.Managers
                 matchUiShardEffect.Clear();
                 Destroy(matchUiShardEffect.gameObject);
                 matchUiShardEffect = null;
+            }
+
+            ClearTrayPreviews();
+            if (trayOverlayRoot != null)
+            {
+                Destroy(trayOverlayRoot.gameObject);
+                trayOverlayRoot = null;
+                trayOverlayCanvas = null;
             }
         }
 
@@ -112,14 +130,56 @@ namespace MahjongOut3D.Managers
         /// </summary>
         public bool SnapToTray(MahjongTile tile, int slotIndex)
         {
-            if (tile == null || !TryGetTraySlotPose(tile, slotIndex, out Vector3 position, out Quaternion rotation))
+            if (tile == null || !trayPreviewsByTile.TryGetValue(tile, out RuntimeTrayPreview preview) || preview?.RectTransform == null)
             {
                 return false;
             }
 
-            tile.transform.SetParent(GetTrayParentTransform(), true);
-            tile.transform.SetPositionAndRotation(position, rotation);
+            if (preview.AnimationRoutine != null)
+            {
+                StopCoroutine(preview.AnimationRoutine);
+                preview.AnimationRoutine = null;
+            }
+
+            preview.RectTransform.anchoredPosition = ResolveTrayAnchoredPosition(slotIndex);
+            preview.RectTransform.sizeDelta = ResolveTraySlotSize(slotIndex, preview.RectTransform.sizeDelta);
+            preview.RectTransform.localScale = Vector3.one;
             return true;
+        }
+
+        /// <summary>
+        /// Removes the UI tray preview associated with a tile.
+        /// </summary>
+        public void ClearTrayTile(MahjongTile tile)
+        {
+            if (tile == null || !trayPreviewsByTile.TryGetValue(tile, out RuntimeTrayPreview preview))
+            {
+                return;
+            }
+
+            DestroyTrayPreview(preview);
+            trayPreviewsByTile.Remove(tile);
+        }
+
+        /// <summary>
+        /// Clears every UI tray preview.
+        /// </summary>
+        public void ClearTrayPreviews()
+        {
+            foreach (RuntimeTrayPreview preview in trayPreviewsByTile.Values)
+            {
+                DestroyTrayPreview(preview);
+            }
+
+            trayPreviewsByTile.Clear();
+        }
+
+        /// <summary>
+        /// Shows or hides the original 3D tile renderers while an overlay preview represents the tile.
+        /// </summary>
+        public void SetTrayBoardTileVisible(MahjongTile tile, bool isVisible)
+        {
+            SetTileRenderersVisible(tile, isVisible);
         }
 
         /// <summary>
@@ -138,6 +198,7 @@ namespace MahjongOut3D.Managers
         {
             StopAllCoroutines();
             ClearHintHighlight();
+            ClearTrayPreviews();
             SetAnimationLock(false);
         }
 
@@ -152,6 +213,31 @@ namespace MahjongOut3D.Managers
             }
 
             SetAnimationLock(true);
+
+            Camera activeCamera = null;
+            if (Context.Services.TryGet(out CameraManager cameraManager))
+            {
+                activeCamera = cameraManager.ActiveCamera;
+            }
+
+            if (!trayPreviewsByTile.TryGetValue(firstTile, out RuntimeTrayPreview firstPreview) && firstTile != null)
+            {
+                TryCreateTrayPreview(firstTile, activeCamera, -1, out firstPreview);
+            }
+
+            if (!trayPreviewsByTile.TryGetValue(secondTile, out RuntimeTrayPreview secondPreview) && secondTile != null)
+            {
+                TryCreateTrayPreview(secondTile, activeCamera, -1, out secondPreview);
+            }
+
+            if (firstPreview != null || secondPreview != null)
+            {
+                yield return PlayTrayPreviewMatchSequenceRoutine(firstTile, secondTile, firstPreview, secondPreview);
+                PlayCameraShake();
+                onCompleted?.Invoke();
+                SetAnimationLock(false);
+                yield break;
+            }
 
             Vector3 firstStart = firstTile.transform.position;
             Vector3 secondStart = secondTile.transform.position;
@@ -302,7 +388,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         private IEnumerator PlayMoveToTrayRoutine(MahjongTile tile, int slotIndex, Action onCompleted)
         {
-            if (tile == null || !TryGetTraySlotPose(tile, slotIndex, out Vector3 targetPosition, out Quaternion targetRotation))
+            if (tile == null)
             {
                 onCompleted?.Invoke();
                 yield break;
@@ -310,9 +396,26 @@ namespace MahjongOut3D.Managers
 
             SetAnimationLock(true);
 
-            Vector3 startPosition = tile.transform.position;
-            Quaternion startRotation = tile.transform.rotation;
+            Camera activeCamera = null;
+            if (Context.Services.TryGet(out CameraManager cameraManager))
+            {
+                activeCamera = cameraManager.ActiveCamera;
+            }
+
+            bool startedUiMove = TryCreateTrayPreview(tile, activeCamera, slotIndex, out RuntimeTrayPreview preview);
+            SetTileRenderersVisible(tile, false);
+            if (!startedUiMove)
+            {
+                onCompleted?.Invoke();
+                SetAnimationLock(false);
+                yield break;
+            }
+
             float duration = GetTrayMoveDurationSeconds();
+            Vector2 startPosition = preview.RectTransform.anchoredPosition;
+            Vector2 startSize = preview.RectTransform.sizeDelta;
+            Vector2 targetPosition = ResolveTrayAnchoredPosition(slotIndex);
+            Vector2 targetSize = ResolveTraySlotSize(slotIndex, startSize);
             float elapsed = 0f;
 
             while (elapsed < duration)
@@ -320,16 +423,112 @@ namespace MahjongOut3D.Managers
                 elapsed += GetDeltaTime();
                 float t = Mathf.Clamp01(elapsed / duration);
                 float easedT = 1f - Mathf.Pow(1f - t, 3f);
-                tile.transform.SetPositionAndRotation(
-                    Vector3.LerpUnclamped(startPosition, targetPosition, easedT),
-                    Quaternion.SlerpUnclamped(startRotation, targetRotation, easedT));
+                preview.RectTransform.anchoredPosition = Vector2.LerpUnclamped(startPosition, targetPosition, easedT);
+                preview.RectTransform.sizeDelta = Vector2.LerpUnclamped(startSize, targetSize, easedT);
                 yield return null;
             }
 
-            tile.transform.SetParent(GetTrayParentTransform(), true);
-            tile.transform.SetPositionAndRotation(targetPosition, targetRotation);
+            preview.RectTransform.anchoredPosition = targetPosition;
+            preview.RectTransform.sizeDelta = targetSize;
+            preview.AnimationRoutine = null;
             onCompleted?.Invoke();
             SetAnimationLock(false);
+        }
+
+        private bool TryCreateTrayPreview(MahjongTile tile, Camera activeCamera, int slotIndex, out RuntimeTrayPreview preview)
+        {
+            preview = null;
+            if (tile == null || activeCamera == null || EnsureTrayOverlay() == null)
+            {
+                return false;
+            }
+
+            ItemPreviewGenerator previewGenerator = ItemPreviewGenerator.Resolve();
+            if (previewGenerator == null)
+            {
+                return false;
+            }
+
+            Vector3 originalPosition = tile.transform.position;
+            Quaternion originalRotation = tile.transform.rotation;
+            Transform originalParent = tile.transform.parent;
+            bool originalWorldPositionStays = true;
+            Texture2D texture = null;
+            try
+            {
+                if (TryGetTraySlotPose(tile, slotIndex, out Vector3 capturePosition, out Quaternion captureRotation))
+                {
+                    tile.transform.SetParent(GetTrayParentTransform(), true);
+                    tile.transform.SetPositionAndRotation(capturePosition, captureRotation);
+                }
+
+                texture = previewGenerator.CaptureExisting(tile.gameObject, activeCamera, true);
+            }
+            finally
+            {
+                tile.transform.SetParent(originalParent, originalWorldPositionStays);
+                tile.transform.SetPositionAndRotation(originalPosition, originalRotation);
+            }
+
+            if (texture == null)
+            {
+                return false;
+            }
+
+            ClearTrayTile(tile);
+
+            GameObject previewObject = new GameObject($"Tray Preview {tile.TileId}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup), typeof(InventoryItemPreview));
+            previewObject.transform.SetParent(trayOverlayRoot, false);
+
+            RectTransform rectTransform = previewObject.transform as RectTransform;
+            if (rectTransform == null)
+            {
+                Destroy(previewObject);
+                Destroy(texture);
+                return false;
+            }
+
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.localScale = Vector3.one;
+            rectTransform.localRotation = Quaternion.identity;
+
+            Image image = previewObject.GetComponent<Image>();
+            image.raycastTarget = false;
+            image.preserveAspect = true;
+
+            CanvasGroup canvasGroup = previewObject.GetComponent<CanvasGroup>();
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            InventoryItemPreview itemPreview = previewObject.GetComponent<InventoryItemPreview>();
+            itemPreview.SetPreview(texture, image);
+
+            Vector2 startScreenPosition = activeCamera.WorldToScreenPoint(tile.transform.position);
+            rectTransform.anchoredPosition = ScreenToTrayOverlayPosition(startScreenPosition);
+            rectTransform.sizeDelta = EstimateTrayPreviewStartSize(texture, tile, activeCamera);
+
+            preview = new RuntimeTrayPreview
+            {
+                GameObject = previewObject,
+                RectTransform = rectTransform,
+                CanvasGroup = canvasGroup,
+                ItemPreview = itemPreview,
+            };
+            trayPreviewsByTile[tile] = preview;
+            preview.AnimationRoutine = StartCoroutine(WaitForTrayPreviewAnimation(preview));
+            return true;
+        }
+
+        private IEnumerator WaitForTrayPreviewAnimation(RuntimeTrayPreview preview)
+        {
+            yield return null;
+            if (preview != null)
+            {
+                preview.AnimationRoutine = null;
+            }
         }
 
         /// <summary>
@@ -611,6 +810,466 @@ namespace MahjongOut3D.Managers
             }
 
             return Mathf.Max(fallbackOffset, (firstHalfExtent + secondHalfExtent) * 0.5f);
+        }
+
+        private RectTransform EnsureTrayOverlay()
+        {
+            if (trayOverlayRoot != null)
+            {
+                return trayOverlayRoot;
+            }
+
+            GameObject overlayObject = new GameObject("Tile Tray Overlay", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+            if (transform.root != null)
+            {
+                overlayObject.transform.SetParent(transform.root, false);
+            }
+
+            trayOverlayCanvas = overlayObject.GetComponent<Canvas>();
+            trayOverlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            trayOverlayCanvas.sortingOrder = TrayOverlaySortingOrder;
+            trayOverlayCanvas.pixelPerfect = false;
+
+            CanvasScaler scaler = overlayObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+
+            trayOverlayRoot = overlayObject.transform as RectTransform;
+            trayOverlayRoot.anchorMin = Vector2.zero;
+            trayOverlayRoot.anchorMax = Vector2.one;
+            trayOverlayRoot.pivot = new Vector2(0.5f, 0.5f);
+            trayOverlayRoot.offsetMin = Vector2.zero;
+            trayOverlayRoot.offsetMax = Vector2.zero;
+            trayOverlayRoot.localScale = Vector3.one;
+            trayOverlayRoot.localRotation = Quaternion.identity;
+            trayOverlayRoot.anchoredPosition = Vector2.zero;
+            RefreshTrayOverlayLayout();
+            return trayOverlayRoot;
+        }
+
+        private void RefreshTrayOverlayLayout()
+        {
+            if (trayOverlayRoot == null)
+            {
+                return;
+            }
+
+            trayOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Screen.width);
+            trayOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Screen.height);
+            Canvas.ForceUpdateCanvases();
+        }
+
+        private Vector2 ResolveTrayAnchoredPosition(int slotIndex)
+        {
+            RefreshTrayOverlayLayout();
+            if (TryGetTraySlotScreenPoint(slotIndex, out Vector2 screenPoint))
+            {
+                return ScreenToTrayOverlayPosition(screenPoint);
+            }
+
+            int clampedSlot = Mathf.Clamp(slotIndex, 0, 3);
+            return ScreenToTrayOverlayPosition(new Vector2(
+                Screen.width * (0.5f + ((clampedSlot - 1.5f) * GetTrayViewportSlotSpacing())),
+                Screen.height * GetTrayViewportY()));
+        }
+
+        private Vector2 ResolveTraySlotSize(int slotIndex, Vector2 fallbackSize)
+        {
+            TraySlotAnchorProvider provider = ResolveTraySlotAnchorProvider();
+            if (provider != null && provider.TryGetTraySlotAnchor(slotIndex, out RectTransform slotAnchor) && slotAnchor != null)
+            {
+                Vector3[] corners = new Vector3[4];
+                slotAnchor.GetWorldCorners(corners);
+
+                Canvas canvas = slotAnchor.GetComponentInParent<Canvas>();
+                Camera uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+                Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
+                Vector2 max = new Vector2(float.MinValue, float.MinValue);
+                for (int index = 0; index < corners.Length; index++)
+                {
+                    Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[index]);
+                    min = Vector2.Min(min, screenPoint);
+                    max = Vector2.Max(max, screenPoint);
+                }
+
+                Vector2 size = max - min;
+                if (size.x > 1f && size.y > 1f)
+                {
+                    return size * Mathf.Max(0.1f, inventoryItemPreviewScale);
+                }
+            }
+
+            return fallbackSize * 0.72f * Mathf.Max(0.1f, inventoryItemPreviewScale);
+        }
+
+        private Vector2 ScreenToTrayOverlayPosition(Vector2 screenPoint)
+        {
+            if (EnsureTrayOverlay() == null)
+            {
+                return screenPoint;
+            }
+
+            return RectTransformUtility.ScreenPointToLocalPointInRectangle(trayOverlayRoot, screenPoint, null, out Vector2 anchoredPosition)
+                ? anchoredPosition
+                : screenPoint;
+        }
+
+        private Vector2 EstimateTrayPreviewStartSize(Texture2D texture, MahjongTile tile, Camera activeCamera)
+        {
+            if (texture == null)
+            {
+                return new Vector2(96f, 96f);
+            }
+
+            Vector2 textureSize = new Vector2(texture.width, texture.height);
+            if (tile == null || activeCamera == null)
+            {
+                return textureSize;
+            }
+
+            Vector3 tileSize = tile.GetPlacementSize();
+            if (tileSize.sqrMagnitude <= Mathf.Epsilon)
+            {
+                return textureSize;
+            }
+
+            Vector3 worldCenter = tile.transform.position;
+            float widthWorld = Mathf.Max(0.01f, tileSize.x);
+            float heightWorld = Mathf.Max(0.01f, tileSize.y);
+            Vector3 leftScreen = activeCamera.WorldToScreenPoint(worldCenter - (activeCamera.transform.right * (widthWorld * 0.5f)));
+            Vector3 rightScreen = activeCamera.WorldToScreenPoint(worldCenter + (activeCamera.transform.right * (widthWorld * 0.5f)));
+            Vector3 downScreen = activeCamera.WorldToScreenPoint(worldCenter - (activeCamera.transform.up * (heightWorld * 0.5f)));
+            Vector3 upScreen = activeCamera.WorldToScreenPoint(worldCenter + (activeCamera.transform.up * (heightWorld * 0.5f)));
+            Vector2 screenSize = new Vector2(
+                Mathf.Abs(rightScreen.x - leftScreen.x),
+                Mathf.Abs(upScreen.y - downScreen.y));
+
+            if (screenSize.x <= 1f || screenSize.y <= 1f)
+            {
+                return textureSize;
+            }
+
+            return screenSize;
+        }
+
+        private IEnumerator PlayTrayPreviewMatchSequenceRoutine(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            RuntimeTrayPreview firstPreview,
+            RuntimeTrayPreview secondPreview)
+        {
+            Camera activeCamera = null;
+            if (Context.Services.TryGet(out CameraManager cameraManager))
+            {
+                activeCamera = cameraManager.ActiveCamera;
+            }
+
+            if (firstPreview == null && firstTile != null)
+            {
+                TryCreateTrayPreview(firstTile, activeCamera, -1, out firstPreview);
+            }
+
+            if (secondPreview == null && secondTile != null)
+            {
+                TryCreateTrayPreview(secondTile, activeCamera, -1, out secondPreview);
+            }
+
+            SetTileRenderersVisible(firstTile, false);
+            SetTileRenderersVisible(secondTile, false);
+
+            if (firstPreview?.RectTransform == null && secondPreview?.RectTransform == null)
+            {
+                yield break;
+            }
+
+            if (firstPreview?.RectTransform == null)
+            {
+                yield return AnimateSingleTrayPreviewMatch(secondTile, secondPreview, firstTile);
+                yield break;
+            }
+
+            if (secondPreview?.RectTransform == null)
+            {
+                yield return AnimateSingleTrayPreviewMatch(firstTile, firstPreview, secondTile);
+                yield break;
+            }
+
+            if (firstPreview.AnimationRoutine != null)
+            {
+                StopCoroutine(firstPreview.AnimationRoutine);
+                firstPreview.AnimationRoutine = null;
+            }
+
+            if (secondPreview.AnimationRoutine != null)
+            {
+                StopCoroutine(secondPreview.AnimationRoutine);
+                secondPreview.AnimationRoutine = null;
+            }
+
+            RectTransform firstRect = firstPreview.RectTransform;
+            RectTransform secondRect = secondPreview.RectTransform;
+
+            Vector2 firstStartPos = firstRect.anchoredPosition;
+            Vector2 secondStartPos = secondRect.anchoredPosition;
+            Vector2 firstStartSize = firstRect.sizeDelta;
+            Vector2 secondStartSize = secondRect.sizeDelta;
+            Vector3 firstStartScale = firstRect.localScale;
+            Vector3 secondStartScale = secondRect.localScale;
+
+            Vector2 impactCenter = (firstStartPos + secondStartPos) * 0.5f;
+            Vector2 offset = secondStartPos - firstStartPos;
+            Vector2 axis = offset.sqrMagnitude > 1f ? offset.normalized : Vector2.right;
+            float initialDistance = offset.magnitude;
+
+            float stageSlide = Mathf.Max(35f, initialDistance * 0.35f);
+            float liftY = 16f;
+            Vector2 firstStagePos = impactCenter - (axis * stageSlide) + new Vector2(0f, liftY);
+            Vector2 secondStagePos = impactCenter + (axis * stageSlide) + new Vector2(0f, liftY);
+
+            float halfWidthFirst = firstStartSize.x * 0.5f * 0.85f;
+            float halfWidthSecond = secondStartSize.x * 0.5f * 0.85f;
+            float contactOffset = Mathf.Max(8f, (halfWidthFirst + halfWidthSecond) * 0.35f);
+            Vector2 firstImpactPos = impactCenter - (axis * contactOffset);
+            Vector2 secondImpactPos = impactCenter + (axis * contactOffset);
+
+            float duration = GetMatchDurationSeconds();
+            float liftPhaseDuration = duration * 0.55f;
+            float collidePhaseDuration = Mathf.Max(0.05f, duration - liftPhaseDuration);
+
+            float elapsed = 0f;
+            Vector3 popScale = Vector3.one * 1.15f;
+
+            while (elapsed < liftPhaseDuration)
+            {
+                elapsed += GetDeltaTime();
+                float t = Mathf.Clamp01(elapsed / liftPhaseDuration);
+                float easedT = 1f - Mathf.Pow(1f - t, 3f);
+
+                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstStartPos, firstStagePos, easedT);
+                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondStartPos, secondStagePos, easedT);
+                firstRect.localScale = Vector3.LerpUnclamped(firstStartScale, popScale, easedT);
+                secondRect.localScale = Vector3.LerpUnclamped(secondStartScale, popScale, easedT);
+                yield return null;
+            }
+
+            elapsed = 0f;
+            while (elapsed < collidePhaseDuration)
+            {
+                elapsed += GetDeltaTime();
+                float t = Mathf.Clamp01(elapsed / collidePhaseDuration);
+                float easedT = 1f - Mathf.Pow(1f - t, 4f);
+
+                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstStagePos, firstImpactPos, easedT);
+                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondStagePos, secondImpactPos, easedT);
+                firstRect.localScale = Vector3.LerpUnclamped(popScale, Vector3.one, easedT);
+                secondRect.localScale = Vector3.LerpUnclamped(popScale, Vector3.one, easedT);
+                yield return null;
+            }
+
+            firstRect.anchoredPosition = firstImpactPos;
+            secondRect.anchoredPosition = secondImpactPos;
+            firstRect.localScale = Vector3.one;
+            secondRect.localScale = Vector3.one;
+
+            PlayMatchFeedbackUi(firstTile, secondTile, impactCenter, firstPreview, secondPreview);
+            firstTile?.SetVisible(false);
+            secondTile?.SetVisible(false);
+
+            if (firstPreview.GameObject != null)
+            {
+                firstPreview.GameObject.SetActive(false);
+            }
+
+            if (secondPreview.GameObject != null)
+            {
+                secondPreview.GameObject.SetActive(false);
+            }
+
+            DestroyTrayPreview(firstPreview);
+            DestroyTrayPreview(secondPreview);
+            if (firstTile != null)
+            {
+                trayPreviewsByTile.Remove(firstTile);
+            }
+
+            if (secondTile != null)
+            {
+                trayPreviewsByTile.Remove(secondTile);
+            }
+        }
+
+        private IEnumerator AnimateSingleTrayPreviewMatch(MahjongTile tileWithPreview, RuntimeTrayPreview preview, MahjongTile otherTile)
+        {
+            if (preview?.RectTransform == null)
+            {
+                yield break;
+            }
+
+            if (preview.AnimationRoutine != null)
+            {
+                StopCoroutine(preview.AnimationRoutine);
+                preview.AnimationRoutine = null;
+            }
+
+            RectTransform rect = preview.RectTransform;
+            Vector2 startPos = rect.anchoredPosition;
+            Vector3 startScale = rect.localScale;
+            float duration = GetMatchDurationSeconds();
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += GetDeltaTime();
+                float t = Mathf.Clamp01(elapsed / duration);
+                float scaleT = Mathf.Sin(t * Mathf.PI);
+                rect.localScale = Vector3.LerpUnclamped(startScale, startScale * 1.2f, scaleT);
+                yield return null;
+            }
+
+            PlayMatchFeedbackUi(tileWithPreview, otherTile, startPos, preview, null);
+            tileWithPreview?.SetVisible(false);
+            otherTile?.SetVisible(false);
+
+            if (preview.GameObject != null)
+            {
+                preview.GameObject.SetActive(false);
+            }
+
+            DestroyTrayPreview(preview);
+            if (tileWithPreview != null)
+            {
+                trayPreviewsByTile.Remove(tileWithPreview);
+            }
+        }
+
+        private void PlayMatchFeedbackUi(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            Vector2 impactUiPosition,
+            RuntimeTrayPreview firstPreview,
+            RuntimeTrayPreview secondPreview)
+        {
+            if (TryPlayMatchUiShardEffectUi(firstTile, secondTile, impactUiPosition, firstPreview, secondPreview))
+            {
+                return;
+            }
+
+            Camera activeCamera = null;
+            if (Context.Services.TryGet(out CameraManager cameraManager))
+            {
+                activeCamera = cameraManager.ActiveCamera;
+            }
+
+            if (activeCamera != null)
+            {
+                Vector2 screenPos = TrayOverlayToScreenPosition(impactUiPosition);
+                float distance = GetTrayTargetDistance(activeCamera, firstTile != null ? firstTile : secondTile);
+                Vector3 worldPos = activeCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, distance));
+                PlayMatchParticle(worldPos);
+            }
+        }
+
+        private bool TryPlayMatchUiShardEffectUi(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            Vector2 impactPosition,
+            RuntimeTrayPreview firstPreview,
+            RuntimeTrayPreview secondPreview)
+        {
+            if (animationSettings == null || !animationSettings.UseMatchUiShards)
+            {
+                return false;
+            }
+
+            if (matchUiShardEffect == null)
+            {
+                matchUiShardEffect = MatchUiShardEffect.Create(transform);
+            }
+
+            matchUiShardEffect?.Prewarm();
+
+            Vector2 firstUiPosition = firstPreview?.RectTransform != null
+                ? firstPreview.RectTransform.anchoredPosition
+                : impactPosition;
+            Vector2 secondUiPosition = secondPreview?.RectTransform != null
+                ? secondPreview.RectTransform.anchoredPosition
+                : impactPosition;
+            Vector2 firstScreenPosition = TrayOverlayToScreenPosition(firstUiPosition);
+            Vector2 secondScreenPosition = TrayOverlayToScreenPosition(secondUiPosition);
+            Vector2 firstSize = firstPreview?.RectTransform != null
+                ? firstPreview.RectTransform.rect.size
+                : new Vector2(96f, 96f);
+            Vector2 secondSize = secondPreview?.RectTransform != null
+                ? secondPreview.RectTransform.rect.size
+                : new Vector2(96f, 96f);
+
+            return matchUiShardEffect != null && matchUiShardEffect.PlayUi(
+                firstTile,
+                secondTile,
+                firstScreenPosition,
+                secondScreenPosition,
+                firstSize,
+                secondSize,
+                animationSettings);
+        }
+
+        private Vector2 TrayOverlayToScreenPosition(Vector2 anchoredPosition)
+        {
+            if (trayOverlayRoot == null)
+            {
+                return anchoredPosition;
+            }
+
+            Vector3 worldPoint = trayOverlayRoot.TransformPoint(anchoredPosition);
+            return RectTransformUtility.WorldToScreenPoint(null, worldPoint);
+        }
+
+        private void DestroyTrayPreview(RuntimeTrayPreview preview)
+        {
+            if (preview == null)
+            {
+                return;
+            }
+
+            if (preview.AnimationRoutine != null)
+            {
+                StopCoroutine(preview.AnimationRoutine);
+            }
+
+            if (preview.GameObject != null)
+            {
+                Destroy(preview.GameObject);
+            }
+        }
+
+        private static void SetTileRenderersVisible(MahjongTile tile, bool isVisible)
+        {
+            if (tile == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = tile.GetComponentsInChildren<Renderer>(true);
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                Renderer renderer = renderers[index];
+                if (renderer != null)
+                {
+                    renderer.enabled = isVisible;
+                }
+            }
+        }
+
+        private sealed class RuntimeTrayPreview
+        {
+            public GameObject GameObject { get; set; }
+
+            public RectTransform RectTransform { get; set; }
+
+            public CanvasGroup CanvasGroup { get; set; }
+
+            public InventoryItemPreview ItemPreview { get; set; }
+
+            public Coroutine AnimationRoutine { get; set; }
         }
 
         /// <summary>

@@ -484,6 +484,7 @@ namespace MahjongOut3D.TileSystem
         public void SetBufferedSelection(bool isBuffered)
         {
             isBufferedSelection = isBuffered;
+            RefreshPresentation(true);
             if (!isBuffered)
             {
                 CacheReferences();
@@ -1210,12 +1211,12 @@ namespace MahjongOut3D.TileSystem
         {
             if (tileCollider != null)
             {
-                tileCollider.enabled = currentState == TileState.Visible || currentState == TileState.Selected;
+                tileCollider.enabled = (currentState == TileState.Visible || currentState == TileState.Selected) && !isBufferedSelection && !IsRemoved && !IsMatched;
             }
 
             if (matchIndicatorRenderer != null)
             {
-                matchIndicatorRenderer.enabled = currentState != TileState.Hidden && currentState != TileState.Removed;
+                matchIndicatorRenderer.enabled = currentState != TileState.Hidden && currentState != TileState.Removed && currentState != TileState.Matched && !isBufferedSelection;
             }
 
             ApplyComboIndicatorVisibility();
@@ -1471,7 +1472,7 @@ namespace MahjongOut3D.TileSystem
                 return;
             }
 
-            bool tileVisible = state != TileState.Hidden && state != TileState.Removed;
+            bool tileVisible = state != TileState.Hidden && state != TileState.Removed && state != TileState.Matched && !isBufferedSelection;
             bool shouldShowFill = tileVisible && !faceDown;
             if (fillRenderer.enabled != shouldShowFill)
             {

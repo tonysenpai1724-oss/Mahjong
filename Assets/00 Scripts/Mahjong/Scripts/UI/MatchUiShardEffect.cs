@@ -85,6 +85,70 @@ namespace MahjongOut3D.UI
         }
 
         /// <summary>
+        /// Plays a shard burst for two UI tray tiles using screen-space positions.
+        /// </summary>
+        public bool PlayUi(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            Vector2 firstScreenPosition,
+            Vector2 secondScreenPosition,
+            Vector2 firstEffectSize,
+            Vector2 secondEffectSize,
+            TileAnimationSettings settings)
+        {
+            if (settings == null)
+            {
+                return false;
+            }
+
+            InitializeOverlay();
+            RefreshOverlayLayout();
+
+            Texture2D pieceTexture = firstTile != null && firstTile.PieceTexture != null
+                ? firstTile.PieceTexture
+                : secondTile != null ? secondTile.PieceTexture : null;
+
+            bool spawnedAnyShard = false;
+            if (firstTile != null && TryConvertScreenToAnchoredPosition(firstScreenPosition, out Vector2 firstCenterPosition))
+            {
+                spawnedAnyShard |= SpawnTileShardsDirect(
+                    firstTile,
+                    firstCenterPosition,
+                    firstEffectSize,
+                    pieceTexture,
+                    settings,
+                    -1f,
+                    true,
+                    true);
+            }
+
+            if (secondTile != null && TryConvertScreenToAnchoredPosition(secondScreenPosition, out Vector2 secondCenterPosition))
+            {
+                spawnedAnyShard |= SpawnTileShardsDirect(
+                    secondTile,
+                    secondCenterPosition,
+                    secondEffectSize,
+                    pieceTexture,
+                    settings,
+                    1f,
+                    true,
+                    true);
+            }
+
+            if (!spawnedAnyShard)
+            {
+                return false;
+            }
+
+            if (animationRoutine == null)
+            {
+                animationRoutine = StartCoroutine(AnimateShards(settings));
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Prepares the overlay so first-use playback has a valid full-screen layout.
         /// </summary>
         public void Prewarm()
@@ -224,12 +288,55 @@ namespace MahjongOut3D.UI
                 return false;
             }
 
-            Vector2 effectSize = EstimateTileScreenSize(tile, worldCamera, sourceTexture, settings.MatchUiShardScale);
+            Vector2 effectSize = EstimateTileScreenSize(tile, worldCamera, sourceTexture, 1f);
+            return SpawnTileShardsDirect(tile, centerPosition, effectSize, sourceTexture, settings, horizontalDirection, true, true);
+        }
+
+        private bool SpawnTileShardsDirect(
+            MahjongTile tile,
+            Vector2 centerPosition,
+            Vector2 effectSize,
+            Texture2D sourceTexture,
+            TileAnimationSettings settings,
+            float horizontalDirection,
+            bool applyConfiguredScale,
+            bool useSharedCropSeed)
+        {
+            if (rootRect == null || settings == null)
+            {
+                return false;
+            }
+
+            if (sourceTexture == null && tile != null)
+            {
+                sourceTexture = ResolveSourceTexture(tile);
+            }
+
+            if (sourceTexture == null)
+            {
+                sourceTexture = Texture2D.whiteTexture;
+            }
+
+            Vector2 scaledEffectSize = (effectSize.x <= 1f || effectSize.y <= 1f)
+                ? new Vector2(96f, 96f)
+                : effectSize;
+            if (applyConfiguredScale)
+            {
+                scaledEffectSize *= Mathf.Max(0.1f, settings.MatchUiShardScale);
+            }
 
             Sprite[] irregularSprites = settings.MatchUiShardSprites;
             if (irregularSprites != null && irregularSprites.Length > 0)
             {
-                return SpawnIrregularShards(tile, centerPosition, effectSize, sourceTexture, settings, irregularSprites, horizontalDirection);
+                return SpawnIrregularShards(
+                    tile,
+                    centerPosition,
+                    scaledEffectSize,
+                    sourceTexture,
+                    settings,
+                    irregularSprites,
+                    horizontalDirection,
+                    useSharedCropSeed);
             }
 
             int rows = Mathf.Max(1, settings.MatchUiShardRows);
@@ -240,10 +347,10 @@ namespace MahjongOut3D.UI
                 return false;
             }
 
-            float shardWidth = effectSize.x / columns;
-            float shardHeight = effectSize.y / rows;
-            float left = centerPosition.x - (effectSize.x * 0.5f);
-            float top = centerPosition.y + (effectSize.y * 0.5f);
+            float shardWidth = scaledEffectSize.x / columns;
+            float shardHeight = scaledEffectSize.y / rows;
+            float left = centerPosition.x - (scaledEffectSize.x * 0.5f);
+            float top = centerPosition.y + (scaledEffectSize.y * 0.5f);
             int shardIndex = 0;
 
             for (int row = 0; row < rows; row++)
@@ -294,6 +401,7 @@ namespace MahjongOut3D.UI
 
                     RuntimeShard shard = new RuntimeShard
                     {
+                        Root = shardObject,
                         Rect = shardRect,
                         Image = shardImage,
                         Velocity = new Vector2(horizontalSpeed + horizontalScatter, verticalSpeed),
@@ -303,6 +411,7 @@ namespace MahjongOut3D.UI
                         Lifetime = Mathf.Max(0.05f, lifetime),
                         FadeStartTime = Mathf.Clamp01(settings.MatchUiFadeStartNormalized) * Mathf.Max(0.05f, lifetime),
                         BaseScale = Vector3.one,
+                        IsVisible = true,
                     };
 
                     activeShards.Add(shard);
@@ -313,9 +422,9 @@ namespace MahjongOut3D.UI
             return shardIndex > 0;
         }
 
-        private bool SpawnIrregularShards(MahjongTile tile, Vector2 centerPosition, Vector2 effectSize, Texture2D sourceTexture, TileAnimationSettings settings, Sprite[] irregularSprites, float horizontalDirection)
+        private bool SpawnIrregularShards(MahjongTile tile, Vector2 centerPosition, Vector2 effectSize, Texture2D sourceTexture, TileAnimationSettings settings, Sprite[] irregularSprites, float horizontalDirection, bool useSharedCropSeed)
         {
-            if (tile == null || irregularSprites == null || irregularSprites.Length == 0)
+            if (irregularSprites == null || irregularSprites.Length == 0 || sourceTexture == null)
             {
                 return false;
             }
@@ -347,7 +456,19 @@ namespace MahjongOut3D.UI
                 float width = Mathf.Sqrt(Mathf.Max(16f, averageShardArea * aspect * areaScale));
                 float height = width / Mathf.Max(0.25f, aspect);
 
-                Sprite textureSprite = CreateRandomTextureCropSprite(sourceTexture);
+                float sideBias = horizontalDirection * Random.Range(effectSize.x * 0.02f, effectSize.x * 0.07f);
+                float spawnX = streamCenterX + sideBias + lineOffset + waveOffset + Random.Range(-spawnWidth, spawnWidth);
+                float spawnY = centerPosition.y + Random.Range(-spawnHeight, spawnHeight);
+
+                Sprite textureSprite = CreateTextureCropSprite(
+                    sourceTexture,
+                    centerPosition,
+                    effectSize,
+                    spawnX,
+                    spawnY,
+                    width,
+                    height,
+                    useSharedCropSeed);
                 if (textureSprite == null)
                 {
                     continue;
@@ -361,10 +482,6 @@ namespace MahjongOut3D.UI
                 shardRect.anchorMax = new Vector2(0.5f, 0.5f);
                 shardRect.pivot = new Vector2(0.5f, 0.5f);
                 shardRect.sizeDelta = new Vector2(width, height);
-
-                float sideBias = horizontalDirection * Random.Range(effectSize.x * 0.02f, effectSize.x * 0.07f);
-                float spawnX = streamCenterX + sideBias + lineOffset + waveOffset + Random.Range(-spawnWidth, spawnWidth);
-                float spawnY = centerPosition.y + Random.Range(-spawnHeight, spawnHeight);
                 shardRect.anchoredPosition = new Vector2(spawnX, spawnY);
                 shardRect.localRotation = Quaternion.Euler(0f, 0f, Random.Range(-28f, 28f));
 
@@ -533,7 +650,14 @@ namespace MahjongOut3D.UI
                 return false;
             }
 
-            return RectTransformUtility.ScreenPointToLocalPointInRectangle(rootRect, screenPoint, null, out anchoredPosition);
+            return TryConvertScreenToAnchoredPosition(screenPoint, out anchoredPosition);
+        }
+
+        private bool TryConvertScreenToAnchoredPosition(Vector2 screenPosition, out Vector2 anchoredPosition)
+        {
+            anchoredPosition = default;
+            return rootRect != null
+                && RectTransformUtility.ScreenPointToLocalPointInRectangle(rootRect, screenPosition, null, out anchoredPosition);
         }
 
         private Vector2 EstimateTileScreenSize(MahjongTile tile, Camera worldCamera, Texture2D sourceTexture, float sizeScale)
@@ -572,12 +696,12 @@ namespace MahjongOut3D.UI
             }
 
             string cacheKey = texture.GetEntityId() + "_" + rows + "x" + columns;
-            if (cachedSprites.TryGetValue(cacheKey, out Sprite[] sprites))
+            if (cachedSprites.TryGetValue(cacheKey, out Sprite[] cached) && cached != null && cached.Length > 0 && cached[0] != null && cached[0].texture != null)
             {
-                return sprites;
+                return cached;
             }
 
-            sprites = new Sprite[rows * columns];
+            Sprite[] sprites = new Sprite[rows * columns];
             float width = texture.width / (float)columns;
             float height = texture.height / (float)rows;
             int spriteIndex = 0;
@@ -594,29 +718,52 @@ namespace MahjongOut3D.UI
                 }
             }
 
-            cachedSprites.Add(cacheKey, sprites);
+            cachedSprites[cacheKey] = sprites;
             return sprites;
         }
 
-        private Sprite CreateRandomTextureCropSprite(Texture2D texture)
+        private Sprite CreateTextureCropSprite(
+            Texture2D texture,
+            Vector2 centerPosition,
+            Vector2 effectSize,
+            float spawnX,
+            float spawnY,
+            float width,
+            float height,
+            bool useSharedCropSeed)
         {
             if (texture == null)
             {
                 return null;
             }
 
-            float normalizedWidth = Random.Range(MinTextureCropNormalizedSize, MaxTextureCropNormalizedSize);
-            float normalizedHeight = Random.Range(MinTextureCropNormalizedSize, MaxTextureCropNormalizedSize);
-            float maxX = Mathf.Max(0f, 1f - normalizedWidth);
-            float maxY = Mathf.Max(0f, 1f - normalizedHeight);
-            float normalizedX = Random.Range(0f, maxX);
-            float normalizedY = Random.Range(0f, maxY);
+            float safeEffectWidth = Mathf.Max(1f, effectSize.x);
+            float safeEffectHeight = Mathf.Max(1f, effectSize.y);
+
+            // Normalized position of the shard relative to the tile bounds [0..1]
+            float normalizedX = useSharedCropSeed
+                ? 0.5f
+                : Mathf.Clamp01((spawnX - (centerPosition.x - safeEffectWidth * 0.5f)) / safeEffectWidth);
+            float normalizedY = useSharedCropSeed
+                ? 0.5f
+                : Mathf.Clamp01((spawnY - (centerPosition.y - safeEffectHeight * 0.5f)) / safeEffectHeight);
+
+            // Use one identical source region for both emission directions when requested.
+            float cropNormW = useSharedCropSeed
+                ? 0.32f
+                : Mathf.Clamp(width / safeEffectWidth, MinTextureCropNormalizedSize, MaxTextureCropNormalizedSize);
+            float cropNormH = useSharedCropSeed
+                ? 0.32f
+                : Mathf.Clamp(height / safeEffectHeight, MinTextureCropNormalizedSize, MaxTextureCropNormalizedSize);
+
+            float startNormX = Mathf.Clamp(normalizedX - (cropNormW * 0.5f), 0f, 1f - cropNormW);
+            float startNormY = Mathf.Clamp(normalizedY - (cropNormH * 0.5f), 0f, 1f - cropNormH);
 
             Rect rect = new Rect(
-                normalizedX * texture.width,
-                normalizedY * texture.height,
-                Mathf.Max(4f, normalizedWidth * texture.width),
-                Mathf.Max(4f, normalizedHeight * texture.height));
+                startNormX * texture.width,
+                startNormY * texture.height,
+                Mathf.Max(4f, cropNormW * texture.width),
+                Mathf.Max(4f, cropNormH * texture.height));
 
             Sprite sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), DefaultPixelsPerUnit, 0, SpriteMeshType.FullRect);
             generatedRuntimeSprites.Add(sprite);
@@ -630,12 +777,6 @@ namespace MahjongOut3D.UI
                 return null;
             }
 
-            Texture2D bodyTexture = ResolveRendererTexture(tile.MeshRenderer);
-            if (bodyTexture != null)
-            {
-                return bodyTexture;
-            }
-
             if (tile.PieceTexture != null)
             {
                 return tile.PieceTexture;
@@ -644,6 +785,25 @@ namespace MahjongOut3D.UI
             if (tile.FillTexture != null)
             {
                 return tile.FillTexture;
+            }
+
+            if (tile.FillMaterial != null)
+            {
+                Texture2D fillMatTex = ResolveRendererTexture(tile.FillMaterial);
+                if (fillMatTex != null)
+                {
+                    return fillMatTex;
+                }
+            }
+
+            Renderer[] renderers = tile.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Texture2D tex = ResolveRendererTexture(renderers[i]);
+                if (tex != null)
+                {
+                    return tex;
+                }
             }
 
             return null;
@@ -656,7 +816,11 @@ namespace MahjongOut3D.UI
                 return null;
             }
 
-            Material material = renderer.sharedMaterial;
+            return ResolveRendererTexture(renderer.sharedMaterial);
+        }
+
+        private static Texture2D ResolveRendererTexture(Material material)
+        {
             if (material == null)
             {
                 return null;

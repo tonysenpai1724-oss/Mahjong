@@ -30,7 +30,7 @@ MonoBehaviour:
   <UseMatchUiShards>k__BackingField: 1
   <MatchUiShardRows>k__BackingField: 6
   <MatchUiShardColumns>k__BackingField: 8
-  <MatchUiShardScale>k__BackingField: 4
+  <MatchUiShardScale>k__BackingField: 2
   <MatchUiLifetimeSeconds>k__BackingField: 3
   <MatchUiEmissionDurationSeconds>k__BackingField: 0.18
   <MatchUiBurstSpeedMin>k__BackingField: 240
