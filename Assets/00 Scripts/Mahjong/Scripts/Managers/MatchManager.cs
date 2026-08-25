@@ -752,7 +752,11 @@ namespace MahjongOut3D.Managers
         /// <summary>
         /// Resolves a successful pair match.
         /// </summary>
-        private IEnumerator ResolveMatchedPair(MahjongTile firstTile, MahjongTile secondTile, bool rewardCoins)
+        private IEnumerator ResolveMatchedPair(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            bool rewardCoins,
+            bool moveToTrayBeforeMatch = false)
         {
             if (!TryBeginResolution())
             {
@@ -771,6 +775,11 @@ namespace MahjongOut3D.Managers
                 Context.Services.TryGet(out animationManager);
                 if (animationManager != null)
                 {
+                    if (moveToTrayBeforeMatch)
+                    {
+                        yield return MoveAutoMatchedPairIntoTray(firstTile, secondTile, animationManager);
+                    }
+
                     animationManager.PlayMatchSequence(firstTile, secondTile, () => completed = true);
                 }
                 else
@@ -1365,7 +1374,7 @@ namespace MahjongOut3D.Managers
                     break;
                 }
 
-                QueueMatchedPairForResolution(comboFirstTile, comboSecondTile, false);
+                QueueMatchedPairForResolution(comboFirstTile, comboSecondTile, false, true);
             }
 
             comboSourceTiles.Clear();
@@ -2010,7 +2019,47 @@ namespace MahjongOut3D.Managers
             }
         }
 
-        private void QueueMatchedPairForResolution(MahjongTile firstTile, MahjongTile secondTile, bool rewardCoins)
+        private IEnumerator MoveAutoMatchedPairIntoTray(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            AnimationManager animationManager)
+        {
+            if (firstTile == null || secondTile == null || animationManager == null)
+            {
+                yield break;
+            }
+
+            int firstSlotIndex = Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 2);
+            int secondSlotIndex = firstSlotIndex + 1;
+            bool firstCompleted = false;
+            bool secondCompleted = false;
+
+            animationManager.HideTrayCapacityWarning();
+            animationManager.StopTrayShake();
+            animationManager.PlayMoveToTray(firstTile, firstSlotIndex, () => firstCompleted = true);
+            animationManager.PlayMoveToTray(secondTile, secondSlotIndex, () => secondCompleted = true);
+
+            float elapsed = 0f;
+            while ((!firstCompleted || !secondCompleted) && elapsed < AnimationCompletionTimeoutSeconds)
+            {
+                elapsed += GetResolutionDeltaTime();
+                yield return null;
+            }
+
+            if (!firstCompleted || !secondCompleted)
+            {
+                MahjongRuntimeLogger.LogWarning("Combo auto-match tray animation timed out. Continuing with match animation.");
+            }
+
+            animationManager.SetTrayBoardTileVisible(firstTile, false);
+            animationManager.SetTrayBoardTileVisible(secondTile, false);
+        }
+
+        private void QueueMatchedPairForResolution(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            bool rewardCoins,
+            bool moveToTrayBeforeMatch = false)
         {
             if (firstTile == null || secondTile == null)
             {
@@ -2019,24 +2068,28 @@ namespace MahjongOut3D.Managers
 
             ReservePairForMatchResolution(firstTile, secondTile);
 
-            StartOrQueueMatchedPairResolution(firstTile, secondTile, rewardCoins);
+            StartOrQueueMatchedPairResolution(firstTile, secondTile, rewardCoins, moveToTrayBeforeMatch);
         }
 
-        private void StartOrQueueMatchedPairResolution(MahjongTile firstTile, MahjongTile secondTile, bool rewardCoins)
+        private void StartOrQueueMatchedPairResolution(
+            MahjongTile firstTile,
+            MahjongTile secondTile,
+            bool rewardCoins,
+            bool moveToTrayBeforeMatch = false)
         {
             if (firstTile == null || secondTile == null)
             {
                 return;
             }
 
-            PendingMatchResolution pendingResolution = new PendingMatchResolution(firstTile, secondTile, rewardCoins);
+            PendingMatchResolution pendingResolution = new PendingMatchResolution(firstTile, secondTile, rewardCoins, moveToTrayBeforeMatch);
             if (IsResolvingMatch)
             {
                 pendingMatchQueue.Enqueue(pendingResolution);
                 return;
             }
 
-            StartCoroutine(ResolveMatchedPair(firstTile, secondTile, rewardCoins));
+            StartCoroutine(ResolveMatchedPair(firstTile, secondTile, rewardCoins, moveToTrayBeforeMatch));
         }
 
         private void ReservePairForMatchResolution(MahjongTile firstTile, MahjongTile secondTile)
@@ -2080,7 +2133,11 @@ namespace MahjongOut3D.Managers
                     continue;
                 }
 
-                StartCoroutine(ResolveMatchedPair(pendingResolution.First, pendingResolution.Second, pendingResolution.RewardCoins));
+                StartCoroutine(ResolveMatchedPair(
+                    pendingResolution.First,
+                    pendingResolution.Second,
+                    pendingResolution.RewardCoins,
+                    pendingResolution.MoveToTrayBeforeMatch));
                 return true;
             }
 
@@ -2434,11 +2491,16 @@ namespace MahjongOut3D.Managers
 
         private readonly struct PendingMatchResolution
         {
-            public PendingMatchResolution(MahjongTile first, MahjongTile second, bool rewardCoins)
+            public PendingMatchResolution(
+                MahjongTile first,
+                MahjongTile second,
+                bool rewardCoins,
+                bool moveToTrayBeforeMatch)
             {
                 First = first;
                 Second = second;
                 RewardCoins = rewardCoins;
+                MoveToTrayBeforeMatch = moveToTrayBeforeMatch;
             }
 
             public MahjongTile First { get; }
@@ -2446,6 +2508,8 @@ namespace MahjongOut3D.Managers
             public MahjongTile Second { get; }
 
             public bool RewardCoins { get; }
+
+            public bool MoveToTrayBeforeMatch { get; }
         }
 
         /// <summary>
