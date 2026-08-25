@@ -234,10 +234,14 @@ public class GameplayManager : Singleton<GameplayManager>
         int comboBonus = Mathf.Max(0, CurrentCombo - 1) * (Mathf.Max(5, baseScore / 2));
         Score += baseScore + comboBonus;
 
-        if (CurrentCombo > 1)
+        var gameplayHud = UnityEngine.Object.FindAnyObjectByType<MahjongOut3D.UI.GameplayHudView>(FindObjectsInactive.Include);
+        if (gameplayHud != null)
         {
-            var gameplayHud = UnityEngine.Object.FindAnyObjectByType<MahjongOut3D.UI.GameplayHudView>(FindObjectsInactive.Include);
-            gameplayHud?.ShowComboText(CurrentCombo);
+            gameplayHud.SetComboTrayGlow(CurrentCombo);
+            if (CurrentCombo > 1)
+            {
+                gameplayHud.ShowComboText(CurrentCombo);
+            }
         }
     }
 
@@ -245,6 +249,9 @@ public class GameplayManager : Singleton<GameplayManager>
     {
         CurrentCombo = 0;
         lastMatchTime = float.NegativeInfinity;
+
+        var gameplayHud = UnityEngine.Object.FindAnyObjectByType<MahjongOut3D.UI.GameplayHudView>(FindObjectsInactive.Include);
+        gameplayHud?.ResetComboTrayGlow();
     }
 
     public void OnClick(Vector3 pos)

@@ -33,6 +33,7 @@ namespace MahjongOut3D.UI
       //  [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
         [SerializeField] private TMP_Text comboText;
         [SerializeField] private Image comboImage;
+        [SerializeField] private ComboTrayGlowController comboTrayGlowController;
 
         private Action<int> pieceMaterialChangedCallback;
        // private bool suppressPieceMaterialDropdownCallback;
@@ -165,6 +166,27 @@ namespace MahjongOut3D.UI
             }
 
             SetBoosterCounts(10, 10, 10, 10, 10);
+        }
+
+        /// <summary>
+        /// Updates the selection tray and slot glow for the current combo.
+        /// </summary>
+        public void SetComboTrayGlow(int combo)
+        {
+            if (comboTrayGlowController == null)
+            {
+                comboTrayGlowController = FindAnyObjectByType<ComboTrayGlowController>(FindObjectsInactive.Include);
+            }
+
+            comboTrayGlowController?.SetCombo(combo);
+        }
+
+        /// <summary>
+        /// Clears the selection tray and slot glow after a combo reset.
+        /// </summary>
+        public void ResetComboTrayGlow()
+        {
+            comboTrayGlowController?.ResetCombo();
         }
 
         /// <summary>
