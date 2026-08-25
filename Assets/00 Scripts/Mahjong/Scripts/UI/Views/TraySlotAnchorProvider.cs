@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MahjongOut3D.UI
 {
@@ -8,6 +9,28 @@ namespace MahjongOut3D.UI
     public sealed class TraySlotAnchorProvider : MonoBehaviour
     {
         [SerializeField] private RectTransform[] traySlotAnchors;
+        [SerializeField] private RectTransform previewRoot;
+        [SerializeField] private Image capacityWarningImage;
+
+        public Image CapacityWarningImage => capacityWarningImage;
+
+        public RectTransform PreviewRoot
+        {
+            get
+            {
+                if (previewRoot != null)
+                {
+                    return previewRoot;
+                }
+
+                if (traySlotAnchors != null && traySlotAnchors.Length > 0 && traySlotAnchors[0] != null)
+                {
+                    return traySlotAnchors[0].parent as RectTransform;
+                }
+
+                return transform as RectTransform;
+            }
+        }
 
         public bool TryGetTraySlotAnchor(int slotIndex, out RectTransform slotAnchor)
         {

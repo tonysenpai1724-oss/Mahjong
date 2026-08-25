@@ -22,6 +22,18 @@ namespace MahjongOut3D.Managers
         [SerializeField] private TileAnimationSettings animationSettings;
         [SerializeField] private TraySlotAnchorProvider traySlotAnchorProvider;
         [SerializeField, Min(0.1f)] private float inventoryItemPreviewScale = 1f;
+        [SerializeField, Min(0f)] private float trayMatchRetreatDistance = 28f;
+        [SerializeField] private Image trayCapacityWarningImage;
+        [SerializeField, Min(0.05f)] private float trayShakeDurationSeconds = 1f;
+        [SerializeField, Min(0f)] private float trayShakeAmplitude = 1.5f;
+        [SerializeField, Min(0f)] private float trayShakeRotationDegrees = 2.5f;
+        [SerializeField, Min(0f)] private float trayShakeVerticalAmplitude = 0.5f;
+        [SerializeField, Min(0.05f)] private float trayWarningDurationSeconds = 3f;
+        [SerializeField, Min(0.01f)] private float trayWarningBlinkIntervalSeconds = 0.12f;
+
+        private Coroutine trayShakeRoutine;
+        private Coroutine trayWarningRoutine;
+        private readonly Dictionary<RuntimeTrayPreview, TrayShakeState> activeTrayShakeStates = new Dictionary<RuntimeTrayPreview, TrayShakeState>();
 
         private readonly Dictionary<MahjongTile, RuntimeTrayPreview> trayPreviewsByTile = new Dictionary<MahjongTile, RuntimeTrayPreview>();
         private ComponentPool<ParticleSystem> particlePool;
@@ -46,6 +58,11 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnInitialize()
         {
+            if (trayCapacityWarningImage == null && traySlotAnchorProvider != null)
+            {
+                trayCapacityWarningImage = traySlotAnchorProvider.CapacityWarningImage;
+            }
+
             if (animationSettings != null && animationSettings.MatchParticlePrefab != null)
             {
                 particlePool = new ComponentPool<ParticleSystem>(animationSettings.MatchParticlePrefab);
@@ -58,6 +75,10 @@ namespace MahjongOut3D.Managers
             }
 
             EnsureTrayOverlay();
+            if (trayCapacityWarningImage != null)
+            {
+                trayCapacityWarningImage.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -66,6 +87,26 @@ namespace MahjongOut3D.Managers
         protected override void OnShutdown()
         {
             ClearHintHighlight();
+            if (trayShakeRoutine != null)
+            {
+                StopCoroutine(trayShakeRoutine);
+                trayShakeRoutine = null;
+            }
+
+            RestoreTrayShakeStates();
+
+            if (trayWarningRoutine != null)
+            {
+                StopCoroutine(trayWarningRoutine);
+                trayWarningRoutine = null;
+            }
+
+            if (trayCapacityWarningImage != null)
+            {
+                trayCapacityWarningImage.enabled = true;
+                trayCapacityWarningImage.gameObject.SetActive(false);
+            }
+
             particlePool?.Clear();
             particlePool = null;
             if (matchUiShardEffect != null)
@@ -78,7 +119,13 @@ namespace MahjongOut3D.Managers
             ClearTrayPreviews();
             if (trayOverlayRoot != null)
             {
-                Destroy(trayOverlayRoot.gameObject);
+                TraySlotAnchorProvider provider = ResolveTraySlotAnchorProvider();
+                bool ownsTrayOverlay = provider == null || trayOverlayRoot != provider.PreviewRoot;
+                if (ownsTrayOverlay)
+                {
+                    Destroy(trayOverlayRoot.gameObject);
+                }
+
                 trayOverlayRoot = null;
                 trayOverlayCanvas = null;
             }
@@ -126,25 +173,233 @@ namespace MahjongOut3D.Managers
         }
 
         /// <summary>
-        /// Snaps a tile directly into one of the temporary selection tray slots.
+        /// Animates a tile to one of the temporary selection tray slots.
         /// </summary>
         public bool SnapToTray(MahjongTile tile, int slotIndex)
         {
+            return AnimateTrayTileToSlot(tile, slotIndex, null);
+        }
+
+        /// <summary>
+        /// Animates every existing tray preview to its current compact slot.
+        /// </summary>
+        public void AnimateTrayTilesToSlots(IList<MahjongTile> tiles, int startIndex = 0)
+        {
+            if (tiles == null)
+            {
+                return;
+            }
+
+            int clampedStartIndex = Mathf.Clamp(startIndex, 0, tiles.Count);
+            for (int index = clampedStartIndex; index < tiles.Count; index++)
+            {
+                MahjongTile tile = tiles[index];
+                if (tile != null)
+                {
+                    AnimateTrayTileToSlot(tile, index, null);
+                }
+            }
+        }
+
+        private bool AnimateTrayTileToSlot(MahjongTile tile, int slotIndex, Action onCompleted)
+        {
             if (tile == null || !trayPreviewsByTile.TryGetValue(tile, out RuntimeTrayPreview preview) || preview?.RectTransform == null)
             {
+                onCompleted?.Invoke();
                 return false;
             }
 
             if (preview.AnimationRoutine != null)
             {
                 StopCoroutine(preview.AnimationRoutine);
-                preview.AnimationRoutine = null;
             }
 
-            preview.RectTransform.anchoredPosition = ResolveTrayAnchoredPosition(slotIndex);
-            preview.RectTransform.sizeDelta = ResolveTraySlotSize(slotIndex, preview.RectTransform.sizeDelta);
-            preview.RectTransform.localScale = Vector3.one;
+            preview.AnimationRoutine = StartCoroutine(AnimateTrayTileToSlotRoutine(preview, slotIndex, onCompleted));
             return true;
+        }
+
+        private IEnumerator AnimateTrayTileToSlotRoutine(RuntimeTrayPreview preview, int slotIndex, Action onCompleted)
+        {
+            if (preview?.RectTransform == null)
+            {
+                onCompleted?.Invoke();
+                yield break;
+            }
+
+            RectTransform rect = preview.RectTransform;
+            Vector2 startPosition = rect.anchoredPosition;
+            Vector2 startSize = rect.sizeDelta;
+            Vector2 targetPosition = ResolveTrayAnchoredPosition(slotIndex);
+            Vector2 targetSize = ResolveTraySlotSize(slotIndex, startSize);
+            float duration = GetTrayMoveDurationSeconds() * 0.75f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += GetDeltaTime();
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration));
+                float easedT = 1f - Mathf.Pow(1f - t, 3f);
+                rect.anchoredPosition = Vector2.LerpUnclamped(startPosition, targetPosition, easedT);
+                rect.sizeDelta = Vector2.LerpUnclamped(startSize, targetSize, easedT);
+                yield return null;
+            }
+
+            rect.anchoredPosition = targetPosition;
+            rect.sizeDelta = targetSize;
+            rect.localScale = Vector3.one;
+            preview.AnimationRoutine = null;
+            onCompleted?.Invoke();
+        }
+
+        /// <summary>
+        /// Plays tray feedback after a tile reaches its slot.
+        /// </summary>
+        public void PlayTrayOccupancyFeedback(int tileCount, bool shouldShake)
+        {
+            if (trayCapacityWarningImage == null)
+            {
+                TraySlotAnchorProvider provider = ResolveTraySlotAnchorProvider();
+                if (provider != null)
+                {
+                    trayCapacityWarningImage = provider.CapacityWarningImage;
+                }
+            }
+
+            if (shouldShake && tileCount > 1)
+            {
+                StopTrayShake();
+                trayShakeRoutine = StartCoroutine(ShakeTrayPreviewsRoutine());
+            }
+            else
+            {
+                StopTrayShake();
+            }
+
+            if (tileCount == 3 && trayCapacityWarningImage != null)
+            {
+                if (trayWarningRoutine != null)
+                {
+                    StopCoroutine(trayWarningRoutine);
+                }
+
+                trayWarningRoutine = StartCoroutine(BlinkTrayWarningRoutine());
+            }
+        }
+
+        private void StopTrayShake()
+        {
+            if (trayShakeRoutine != null)
+            {
+                StopCoroutine(trayShakeRoutine);
+                trayShakeRoutine = null;
+            }
+
+            RestoreTrayShakeStates();
+        }
+
+        public void HideTrayCapacityWarning()
+        {
+            if (trayWarningRoutine != null)
+            {
+                StopCoroutine(trayWarningRoutine);
+                trayWarningRoutine = null;
+            }
+
+            if (trayCapacityWarningImage != null)
+            {
+                trayCapacityWarningImage.enabled = true;
+                trayCapacityWarningImage.gameObject.SetActive(false);
+            }
+        }
+
+        private IEnumerator ShakeTrayPreviewsRoutine()
+        {
+            activeTrayShakeStates.Clear();
+            foreach (RuntimeTrayPreview preview in trayPreviewsByTile.Values)
+            {
+                if (preview?.RectTransform != null)
+                {
+                    activeTrayShakeStates[preview] = new TrayShakeState
+                    {
+                        Position = preview.RectTransform.anchoredPosition,
+                        Rotation = preview.RectTransform.localRotation,
+                        Scale = preview.RectTransform.localScale,
+                    };
+                }
+            }
+
+            float duration = Mathf.Max(0.05f, trayShakeDurationSeconds);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += GetDeltaTime();
+                float progress = Mathf.Clamp01(elapsed / duration);
+                float strength = Mathf.Sin(progress * Mathf.PI);
+                int previewIndex = 0;
+                foreach (KeyValuePair<RuntimeTrayPreview, TrayShakeState> entry in activeTrayShakeStates)
+                {
+                    if (entry.Key?.RectTransform != null && entry.Key.AnimationRoutine == null)
+                    {
+                        float phase = previewIndex * 0.42f;
+                        float sway = Mathf.Sin((elapsed * 10f) + phase);
+                        float secondarySway = Mathf.Sin((elapsed * 15f) + phase);
+                        float offsetX = sway * trayShakeAmplitude * strength;
+                        float offsetY = secondarySway * trayShakeVerticalAmplitude * strength;
+                        float angle = sway * trayShakeRotationDegrees * strength;
+
+                        entry.Key.RectTransform.anchoredPosition = entry.Value.Position + new Vector2(offsetX, offsetY);
+                        entry.Key.RectTransform.localRotation = entry.Value.Rotation * Quaternion.Euler(0f, 0f, angle);
+                        entry.Key.RectTransform.localScale = entry.Value.Scale;
+                    }
+
+                    previewIndex++;
+                }
+
+                yield return null;
+            }
+
+            RestoreTrayShakeStates();
+            trayShakeRoutine = null;
+        }
+
+        private void RestoreTrayShakeStates()
+        {
+            foreach (KeyValuePair<RuntimeTrayPreview, TrayShakeState> entry in activeTrayShakeStates)
+            {
+                if (entry.Key?.RectTransform != null && entry.Key.AnimationRoutine == null)
+                {
+                    entry.Key.RectTransform.anchoredPosition = entry.Value.Position;
+                    entry.Key.RectTransform.localRotation = entry.Value.Rotation;
+                    entry.Key.RectTransform.localScale = entry.Value.Scale;
+                }
+            }
+
+            activeTrayShakeStates.Clear();
+        }
+
+        private IEnumerator BlinkTrayWarningRoutine()
+        {
+            trayCapacityWarningImage.gameObject.SetActive(true);
+            float duration = Mathf.Max(0.05f, trayWarningDurationSeconds);
+            float interval = Mathf.Max(0.01f, trayWarningBlinkIntervalSeconds);
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                trayCapacityWarningImage.enabled = !trayCapacityWarningImage.enabled;
+                float waitElapsed = 0f;
+                while (waitElapsed < interval)
+                {
+                    float deltaTime = GetDeltaTime();
+                    waitElapsed += deltaTime;
+                    elapsed += deltaTime;
+                    yield return null;
+                }
+            }
+
+            trayCapacityWarningImage.enabled = true;
+            trayCapacityWarningImage.gameObject.SetActive(false);
+            trayWarningRoutine = null;
         }
 
         /// <summary>
@@ -819,6 +1074,14 @@ namespace MahjongOut3D.Managers
                 return trayOverlayRoot;
             }
 
+            TraySlotAnchorProvider provider = ResolveTraySlotAnchorProvider();
+            if (provider != null && provider.PreviewRoot != null)
+            {
+                trayOverlayRoot = provider.PreviewRoot;
+                trayOverlayCanvas = trayOverlayRoot.GetComponentInParent<Canvas>();
+                return trayOverlayRoot;
+            }
+
             GameObject overlayObject = new GameObject("Tile Tray Overlay", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
             if (transform.root != null)
             {
@@ -853,9 +1116,32 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            trayOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Screen.width);
-            trayOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Screen.height);
+            if (trayOverlayCanvas != null && trayOverlayCanvas.transform == trayOverlayRoot.transform)
+            {
+                trayOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Screen.width);
+                trayOverlayRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Screen.height);
+            }
+
             Canvas.ForceUpdateCanvases();
+        }
+
+        private Vector2 ScreenToTrayOverlayPosition(Vector2 screenPoint)
+        {
+            if (EnsureTrayOverlay() == null)
+            {
+                return screenPoint;
+            }
+
+            Camera canvasCamera = trayOverlayCanvas != null && trayOverlayCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? trayOverlayCanvas.worldCamera
+                : null;
+            return RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                trayOverlayRoot,
+                screenPoint,
+                canvasCamera,
+                out Vector2 anchoredPosition)
+                ? anchoredPosition
+                : screenPoint;
         }
 
         private Vector2 ResolveTrayAnchoredPosition(int slotIndex)
@@ -899,18 +1185,6 @@ namespace MahjongOut3D.Managers
             }
 
             return fallbackSize * 0.72f * Mathf.Max(0.1f, inventoryItemPreviewScale);
-        }
-
-        private Vector2 ScreenToTrayOverlayPosition(Vector2 screenPoint)
-        {
-            if (EnsureTrayOverlay() == null)
-            {
-                return screenPoint;
-            }
-
-            return RectTransformUtility.ScreenPointToLocalPointInRectangle(trayOverlayRoot, screenPoint, null, out Vector2 anchoredPosition)
-                ? anchoredPosition
-                : screenPoint;
         }
 
         private Vector2 EstimateTrayPreviewStartSize(Texture2D texture, MahjongTile tile, Camera activeCamera)
@@ -1008,6 +1282,10 @@ namespace MahjongOut3D.Managers
             RectTransform firstRect = firstPreview.RectTransform;
             RectTransform secondRect = secondPreview.RectTransform;
 
+            // Keep both matching previews above every other tile while they move and collide.
+            firstRect.SetAsLastSibling();
+            secondRect.SetAsLastSibling();
+
             Vector2 firstStartPos = firstRect.anchoredPosition;
             Vector2 secondStartPos = secondRect.anchoredPosition;
             Vector2 firstStartSize = firstRect.sizeDelta;
@@ -1015,15 +1293,14 @@ namespace MahjongOut3D.Managers
             Vector3 firstStartScale = firstRect.localScale;
             Vector3 secondStartScale = secondRect.localScale;
 
-            Vector2 impactCenter = (firstStartPos + secondStartPos) * 0.5f;
             Vector2 offset = secondStartPos - firstStartPos;
             Vector2 axis = offset.sqrMagnitude > 1f ? offset.normalized : Vector2.right;
-            float initialDistance = offset.magnitude;
+            Vector2 impactCenter = (firstStartPos + secondStartPos) * 0.5f;
 
-            float stageSlide = Mathf.Max(35f, initialDistance * 0.35f);
-            float liftY = 16f;
-            Vector2 firstStagePos = impactCenter - (axis * stageSlide) + new Vector2(0f, liftY);
-            Vector2 secondStagePos = impactCenter + (axis * stageSlide) + new Vector2(0f, liftY);
+            // Let the adjacent previews retreat outward before the final collision.
+            float retreatDistance = Mathf.Max(0f, trayMatchRetreatDistance);
+            Vector2 firstRetreatPos = firstStartPos - (axis * retreatDistance);
+            Vector2 secondRetreatPos = secondStartPos + (axis * retreatDistance);
 
             float halfWidthFirst = firstStartSize.x * 0.5f * 0.85f;
             float halfWidthSecond = secondStartSize.x * 0.5f * 0.85f;
@@ -1032,20 +1309,20 @@ namespace MahjongOut3D.Managers
             Vector2 secondImpactPos = impactCenter + (axis * contactOffset);
 
             float duration = GetMatchDurationSeconds();
-            float liftPhaseDuration = duration * 0.55f;
-            float collidePhaseDuration = Mathf.Max(0.05f, duration - liftPhaseDuration);
+            float retreatPhaseDuration = Mathf.Max(0.04f, duration * 0.35f);
+            float collidePhaseDuration = Mathf.Max(0.05f, duration - retreatPhaseDuration);
 
             float elapsed = 0f;
-            Vector3 popScale = Vector3.one * 1.15f;
+            Vector3 popScale = Vector3.one * 1.12f;
 
-            while (elapsed < liftPhaseDuration)
+            while (elapsed < retreatPhaseDuration)
             {
                 elapsed += GetDeltaTime();
-                float t = Mathf.Clamp01(elapsed / liftPhaseDuration);
+                float t = Mathf.Clamp01(elapsed / retreatPhaseDuration);
                 float easedT = 1f - Mathf.Pow(1f - t, 3f);
 
-                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstStartPos, firstStagePos, easedT);
-                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondStartPos, secondStagePos, easedT);
+                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstStartPos, firstRetreatPos, easedT);
+                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondStartPos, secondRetreatPos, easedT);
                 firstRect.localScale = Vector3.LerpUnclamped(firstStartScale, popScale, easedT);
                 secondRect.localScale = Vector3.LerpUnclamped(secondStartScale, popScale, easedT);
                 yield return null;
@@ -1058,8 +1335,8 @@ namespace MahjongOut3D.Managers
                 float t = Mathf.Clamp01(elapsed / collidePhaseDuration);
                 float easedT = 1f - Mathf.Pow(1f - t, 4f);
 
-                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstStagePos, firstImpactPos, easedT);
-                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondStagePos, secondImpactPos, easedT);
+                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstRetreatPos, firstImpactPos, easedT);
+                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondRetreatPos, secondImpactPos, easedT);
                 firstRect.localScale = Vector3.LerpUnclamped(popScale, Vector3.one, easedT);
                 secondRect.localScale = Vector3.LerpUnclamped(popScale, Vector3.one, easedT);
                 yield return null;
@@ -1111,6 +1388,7 @@ namespace MahjongOut3D.Managers
             }
 
             RectTransform rect = preview.RectTransform;
+            rect.SetAsLastSibling();
             Vector2 startPos = rect.anchoredPosition;
             Vector3 startScale = rect.localScale;
             float duration = GetMatchDurationSeconds();
@@ -1257,6 +1535,15 @@ namespace MahjongOut3D.Managers
                     renderer.enabled = isVisible;
                 }
             }
+        }
+
+        private struct TrayShakeState
+        {
+            public Vector2 Position;
+
+            public Quaternion Rotation;
+
+            public Vector3 Scale;
         }
 
         private sealed class RuntimeTrayPreview
