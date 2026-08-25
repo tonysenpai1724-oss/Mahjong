@@ -1950,6 +1950,11 @@ namespace MahjongOut3D.Managers
                 bool completed = false;
                 AnimationManager animationManager = GetAnimationManager();
                 animationManager?.HideTrayCapacityWarning();
+                if (matchingTrayTile != null)
+                {
+                    animationManager?.StopTrayShake();
+                }
+
                 if (animationManager != null)
                 {
                     animationManager.PlayMoveToTray(tappedTile, targetSlotIndex, () => completed = true);
@@ -2041,6 +2046,7 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
+            GetAnimationManager()?.StopTrayShake();
             pendingMatchedTiles.Add(firstTile);
             pendingMatchedTiles.Add(secondTile);
             ClearMemorySelectionOriginalFaceState(firstTile);

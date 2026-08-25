@@ -286,7 +286,7 @@ namespace MahjongOut3D.Managers
             }
         }
 
-        private void StopTrayShake()
+        public void StopTrayShake()
         {
             if (trayShakeRoutine != null)
             {
