@@ -38,6 +38,7 @@ namespace MahjongOut3D.Managers
 
         private Coroutine trayShakeRoutine;
         private Coroutine trayWarningRoutine;
+        private int animationLockCount;
         private readonly Dictionary<RuntimeTrayPreview, TrayShakeState> activeTrayShakeStates = new Dictionary<RuntimeTrayPreview, TrayShakeState>();
 
         private readonly Dictionary<MahjongTile, RuntimeTrayPreview> trayPreviewsByTile = new Dictionary<MahjongTile, RuntimeTrayPreview>();
@@ -214,16 +215,26 @@ namespace MahjongOut3D.Managers
                 return false;
             }
 
+            Vector2 fallbackSize = preview.RectTransform.sizeDelta;
+            preview.TargetSlotIndex = slotIndex;
+            preview.TargetPosition = ResolveTrayAnchoredPosition(slotIndex);
+            preview.TargetSize = ResolveTraySlotSize(slotIndex, fallbackSize);
+            if (preview.IsEnteringTray)
+            {
+                onCompleted?.Invoke();
+                return true;
+            }
+
             if (preview.AnimationRoutine != null)
             {
                 StopCoroutine(preview.AnimationRoutine);
             }
 
-            preview.AnimationRoutine = StartCoroutine(AnimateTrayTileToSlotRoutine(preview, slotIndex, onCompleted));
+            preview.AnimationRoutine = StartCoroutine(AnimateTrayTileToSlotRoutine(preview, onCompleted));
             return true;
         }
 
-        private IEnumerator AnimateTrayTileToSlotRoutine(RuntimeTrayPreview preview, int slotIndex, Action onCompleted)
+        private IEnumerator AnimateTrayTileToSlotRoutine(RuntimeTrayPreview preview, Action onCompleted)
         {
             if (preview?.RectTransform == null)
             {
@@ -234,8 +245,8 @@ namespace MahjongOut3D.Managers
             RectTransform rect = preview.RectTransform;
             Vector2 startPosition = rect.anchoredPosition;
             Vector2 startSize = rect.sizeDelta;
-            Vector2 targetPosition = ResolveTrayAnchoredPosition(slotIndex);
-            Vector2 targetSize = ResolveTraySlotSize(slotIndex, startSize);
+            Vector2 targetPosition = preview.TargetPosition;
+            Vector2 targetSize = preview.TargetSize.sqrMagnitude > Mathf.Epsilon ? preview.TargetSize : startSize;
             float duration = GetTrayMoveDurationSeconds() * 0.75f;
             float elapsed = 0f;
 
@@ -448,7 +459,16 @@ namespace MahjongOut3D.Managers
         /// <param name="isLocked">New animation lock state.</param>
         public void SetAnimationLock(bool isLocked)
         {
-            IsAnimationLocked = isLocked;
+            if (isLocked)
+            {
+                animationLockCount++;
+            }
+            else
+            {
+                animationLockCount = Mathf.Max(0, animationLockCount - 1);
+            }
+
+            IsAnimationLocked = animationLockCount > 0;
         }
 
         /// <summary>
@@ -459,7 +479,8 @@ namespace MahjongOut3D.Managers
             StopAllCoroutines();
             ClearHintHighlight();
             ClearTrayPreviews();
-            SetAnimationLock(false);
+            animationLockCount = 0;
+            IsAnimationLocked = false;
         }
 
         /// <summary>
@@ -671,11 +692,23 @@ namespace MahjongOut3D.Managers
                 yield break;
             }
 
-            float duration = GetTrayMoveDurationSeconds();
             Vector2 startPosition = preview.RectTransform.anchoredPosition;
             Vector2 startSize = preview.RectTransform.sizeDelta;
-            Vector2 targetPosition = ResolveTrayAnchoredPosition(slotIndex);
-            Vector2 targetSize = ResolveTraySlotSize(slotIndex, startSize);
+            preview.TargetSlotIndex = slotIndex;
+            preview.TargetPosition = ResolveTrayAnchoredPosition(slotIndex);
+            preview.TargetSize = ResolveTraySlotSize(slotIndex, startSize);
+            preview.IsEnteringTray = true;
+            preview.AnimationRoutine = StartCoroutine(TrackTrayMoveRoutine(preview, onCompleted));
+            yield break;
+        }
+
+        private IEnumerator TrackTrayMoveRoutine(RuntimeTrayPreview preview, Action onCompleted)
+        {
+            Vector2 startPosition = preview.RectTransform.anchoredPosition;
+            Vector2 startSize = preview.RectTransform.sizeDelta;
+            Vector2 targetPosition = preview.TargetPosition;
+            Vector2 targetSize = preview.TargetSize;
+            float duration = GetTrayMoveDurationSeconds();
             float elapsed = 0f;
 
             while (elapsed < duration)
@@ -683,14 +716,17 @@ namespace MahjongOut3D.Managers
                 elapsed += GetDeltaTime();
                 float t = Mathf.Clamp01(elapsed / duration);
                 float easedT = 1f - Mathf.Pow(1f - t, 3f);
+                targetPosition = preview.TargetPosition;
+                targetSize = preview.TargetSize.sqrMagnitude > Mathf.Epsilon ? preview.TargetSize : targetSize;
                 preview.RectTransform.anchoredPosition = Vector2.LerpUnclamped(startPosition, targetPosition, easedT);
                 preview.RectTransform.sizeDelta = Vector2.LerpUnclamped(startSize, targetSize, easedT);
                 yield return null;
             }
 
-            preview.RectTransform.anchoredPosition = targetPosition;
-            preview.RectTransform.sizeDelta = targetSize;
+            preview.RectTransform.anchoredPosition = preview.TargetPosition;
+            preview.RectTransform.sizeDelta = preview.TargetSize.sqrMagnitude > Mathf.Epsilon ? preview.TargetSize : targetSize;
             preview.AnimationRoutine = null;
+            preview.IsEnteringTray = false;
             onCompleted?.Invoke();
             SetAnimationLock(false);
         }
@@ -778,17 +814,7 @@ namespace MahjongOut3D.Managers
                 ItemPreview = itemPreview,
             };
             trayPreviewsByTile[tile] = preview;
-            preview.AnimationRoutine = StartCoroutine(WaitForTrayPreviewAnimation(preview));
             return true;
-        }
-
-        private IEnumerator WaitForTrayPreviewAnimation(RuntimeTrayPreview preview)
-        {
-            yield return null;
-            if (preview != null)
-            {
-                preview.AnimationRoutine = null;
-            }
         }
 
         /// <summary>
@@ -1252,6 +1278,14 @@ namespace MahjongOut3D.Managers
                 TryCreateTrayPreview(secondTile, activeCamera, -1, out secondPreview);
             }
 
+            // Do not start the match-removal animation while either preview is still
+            // being driven by its board-to-tray coroutine.
+            while ((firstPreview != null && firstPreview.IsEnteringTray)
+                || (secondPreview != null && secondPreview.IsEnteringTray))
+            {
+                yield return null;
+            }
+
             SetTileRenderersVisible(firstTile, false);
             SetTileRenderersVisible(secondTile, false);
 
@@ -1615,6 +1649,14 @@ namespace MahjongOut3D.Managers
             public InventoryItemPreview ItemPreview { get; set; }
 
             public Coroutine AnimationRoutine { get; set; }
+
+            public int TargetSlotIndex { get; set; }
+
+            public Vector2 TargetPosition { get; set; }
+
+            public Vector2 TargetSize { get; set; }
+
+            public bool IsEnteringTray { get; set; }
         }
 
         /// <summary>
