@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: VoxelGridLayoutSettings
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.VoxelGridLayoutSettings
   <CellSize>k__BackingField: {x: 1, y: 1, z: 1}
-  <CellSpacing>k__BackingField: {x: 0, y: 0, z: 0}
+  <CellSpacing>k__BackingField: {x: 0, y: 0.2, z: 0}
   <PivotMode>k__BackingField: 1
   <OriginOffset>k__BackingField: {x: 0, y: 0, z: 0}

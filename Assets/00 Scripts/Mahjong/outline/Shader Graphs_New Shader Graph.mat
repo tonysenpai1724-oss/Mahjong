@@ -49,7 +49,7 @@ Material:
     - _XRMotionVectorsPass: 1
     - _outline_scale: 0
     m_Colors:
-    - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 0.31132078, g: 0.29516736, b: 0.29516736, a: 1}
     - _outlineColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

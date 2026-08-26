@@ -39,13 +39,13 @@ MonoBehaviour:
   normalSettings:
     label: Normal
     levelCount: 1
-    minLayerCount: 2
+    minLayerCount: 1
     maxLayerCount: 2
     minPairCount: 45
     maxPairCount: 70
     flippedTileChance: 0.45
-    shape: 5
-    allowedShapes: 05000000
+    shape: 2
+    allowedShapes: 00000000
     difficulty: 1
   hardSettings:
     label: Hard
@@ -61,7 +61,7 @@ MonoBehaviour:
   superHardSettings:
     label: SuperHard
     levelCount: 0
-    minLayerCount: 1
+    minLayerCount: 2
     maxLayerCount: 3
     minPairCount: 30
     maxPairCount: 100

@@ -1389,6 +1389,7 @@ namespace MahjongOut3D.LevelSystem
 
         /// <summary>
         /// Applies per-axis spacing only on the axes that lie on the current face plane.
+        /// This increases the distance between tiles on the face without moving the face outward.
         /// </summary>
         private static Vector3 ApplySurfaceTileSpacingOffset(Vector3 localPosition, VoxelGridDirection facingDirection, Vector3 spacingOffset)
         {

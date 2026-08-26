@@ -212,3 +212,12 @@ MonoBehaviour:
     - {fileID: 2800000, guid: caa2a7b2845810606936799f2a9455a2, type: 3}
     - {fileID: 2800000, guid: 6969f5e6e200022a094f8b11e27ad888, type: 3}
     - {fileID: 2800000, guid: f8b74fa1f892778b5a259be6bcc38eb8, type: 3}
+  - categoryName: Japan
+    textures:
+    - {fileID: 2800000, guid: 3ad2ae2720012f353866e7dcb1a794c2, type: 3}
+    - {fileID: 2800000, guid: 40dcdef0bfebc5ccd859e22f1b0b0d59, type: 3}
+    - {fileID: 2800000, guid: 2eac434f9f916bddfbb74bb500d11fb4, type: 3}
+    - {fileID: 2800000, guid: 64da0c9165604d470b0e74c8525fd9f4, type: 3}
+    - {fileID: 2800000, guid: d0bcb23588199178bb3a8e43edc4c749, type: 3}
+    - {fileID: 2800000, guid: ffe82099689dcd2dd9d4853a41ff435d, type: 3}
+    - {fileID: 2800000, guid: b36ecc85d4418ec68ac89bd049e170f7, type: 3}

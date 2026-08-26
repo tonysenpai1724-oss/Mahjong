@@ -1912,13 +1912,13 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Resolves the face-center offset after pushing the entire tile inward so the assembled block reads as a flatter square face.
+        /// Resolves the exact face-center offset so opposite cube faces stay perfectly balanced around the cube center.
         /// </summary>
         private static float GetRecessedCubeFaceNormalOffset(float cubeSideLength, CubeTileMetrics metrics)
         {
-            float centeredOffset = (cubeSideLength - metrics.Thickness) * 0.55f;
-            float inwardRecess = metrics.Thickness * 1f;
-            return Mathf.Max(0f, centeredOffset - inwardRecess);
+            float halfSideLength = Mathf.Max(0f, cubeSideLength) * 0.5f;
+            float halfThickness = Mathf.Max(0.01f, metrics.Thickness) * 0.5f;
+            return Mathf.Max(0f, halfSideLength - halfThickness);
         }
 
         /// <summary>
@@ -2064,10 +2064,15 @@ namespace MahjongOut3D.LevelSystem
                     float mismatch = longestSide <= 0.01f ? 0f : Mathf.Abs(panelWidth - panelHeight) / longestSide;
                     int tileCount = columnCount * rowCount;
 
-                    bool isBetterMismatch = mismatch + 0.0001f < bestMismatch;
+                    const float PreferredPanelMismatch = 0.18f;
+                    bool candidateIsAcceptablySquare = mismatch <= PreferredPanelMismatch;
+                    bool bestIsAcceptablySquare = bestMismatch <= PreferredPanelMismatch;
+                    bool isBetterCompactSquare = candidateIsAcceptablySquare && bestIsAcceptablySquare && sideLength + 0.0001f < bestSideLength;
+                    bool isBetterSquareClass = candidateIsAcceptablySquare && !bestIsAcceptablySquare;
+                    bool isBetterMismatch = candidateIsAcceptablySquare == bestIsAcceptablySquare && mismatch + 0.0001f < bestMismatch;
                     bool isSameMismatchWithSmallerShell = Mathf.Abs(mismatch - bestMismatch) <= 0.0001f && sideLength + 0.0001f < bestSideLength;
                     bool isSameMismatchAndShellWithFewerTiles = Mathf.Abs(mismatch - bestMismatch) <= 0.0001f && Mathf.Abs(sideLength - bestSideLength) <= 0.0001f && tileCount < bestTileCount;
-                    if (!isBetterMismatch && !isSameMismatchWithSmallerShell && !isSameMismatchAndShellWithFewerTiles)
+                    if (!isBetterCompactSquare && !isBetterSquareClass && !isBetterMismatch && !isSameMismatchWithSmallerShell && !isSameMismatchAndShellWithFewerTiles)
                     {
                         continue;
                     }

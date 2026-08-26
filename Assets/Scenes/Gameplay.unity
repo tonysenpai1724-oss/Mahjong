@@ -860,9 +860,9 @@ MonoBehaviour:
   tileBaseColor: {r: 0.8867924, g: 0.7942281, b: 0.7905838, a: 1}
   tileSpacingOffset: {x: 0, y: 0, z: 0.1}
   surfaceTileSpacingOffset: {x: 0, y: 0, z: 0}
-  leftRightSurfaceSpacingOffset: {x: 0, y: 0, z: 0}
-  upDownSurfaceSpacingOffset: {x: 0, y: 0, z: 0}
-  frontBackSurfaceSpacingOffset: {x: 0, y: 0.1, z: 0}
+  leftRightSurfaceSpacingOffset: {x: 0, y: 0, z: 0.08}
+  upDownSurfaceSpacingOffset: {x: 0, y: 0, z: 0.08}
+  frontBackSurfaceSpacingOffset: {x: 0, y: 0.2, z: 0}
   surfaceShellSeparationScale: 0.6
   generateOnStart: 1
   clearExistingChildrenOnGenerate: 1
