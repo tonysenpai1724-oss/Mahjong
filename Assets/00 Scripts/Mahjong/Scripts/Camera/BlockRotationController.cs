@@ -1,4 +1,5 @@
 using MahjongOut3D.Core;
+using MahjongOut3D.TileSystem;
 using UnityEngine;
 
 namespace MahjongOut3D.CameraSystem
@@ -19,6 +20,9 @@ namespace MahjongOut3D.CameraSystem
         [SerializeField] private bool resetRotationWhenTargetChanges = true;
 
         private bool isInitialized;
+        private Transform contentTarget;
+        private Transform contentOriginalParent;
+        private Transform dynamicPivot;
         private Quaternion baseLocalRotation = Quaternion.identity;
         private Quaternion targetRotationOffset = Quaternion.identity;
         private Quaternion currentRotationOffset = Quaternion.identity;
@@ -28,7 +32,7 @@ namespace MahjongOut3D.CameraSystem
         /// <summary>
         /// Gets the transform currently being rotated.
         /// </summary>
-        public Transform RotationTarget => rotationTarget;
+        public Transform RotationTarget => contentTarget != null ? contentTarget : rotationTarget;
 
         /// <summary>
         /// Initializes the rotation controller.
@@ -50,7 +54,17 @@ namespace MahjongOut3D.CameraSystem
         /// </summary>
         public void Shutdown()
         {
+            RestoreContentParent();
+            if (dynamicPivot != null)
+            {
+                Destroy(dynamicPivot.gameObject);
+                dynamicPivot = null;
+            }
+
             isInitialized = false;
+            rotationTarget = null;
+            contentTarget = null;
+            contentOriginalParent = null;
             targetRotationOffset = Quaternion.identity;
             currentRotationOffset = Quaternion.identity;
             inertialRotationVelocity = Vector2.zero;
@@ -63,7 +77,26 @@ namespace MahjongOut3D.CameraSystem
         /// <param name="target">Transform to rotate.</param>
         public void SetRotationTarget(Transform target)
         {
-            rotationTarget = target;
+            if (target == null)
+            {
+                RestoreContentParent();
+                rotationTarget = null;
+                contentTarget = null;
+                contentOriginalParent = null;
+                ApplyTargetRotation(true);
+                return;
+            }
+
+            if (target == contentTarget)
+            {
+                UpdateDynamicPivotPosition();
+                return;
+            }
+
+            RestoreContentParent();
+            contentTarget = target;
+            contentOriginalParent = target.parent;
+            rotationTarget = EnsureDynamicPivot(target);
             baseLocalRotation = rotationTarget != null ? rotationTarget.localRotation : Quaternion.identity;
 
             if (resetRotationWhenTargetChanges)
@@ -91,6 +124,8 @@ namespace MahjongOut3D.CameraSystem
             {
                 return;
             }
+
+            UpdateDynamicPivotPosition();
 
             float deltaTime = Mathf.Max(GetDeltaTime(), 0.0001f);
             Vector2 scaledDelta = screenDelta * GetRotationSpeed();
@@ -161,6 +196,138 @@ namespace MahjongOut3D.CameraSystem
             }
 
             rotationTarget.localRotation = currentRotationOffset * baseLocalRotation;
+        }
+
+        /// <summary>
+        /// Wraps the block in a runtime pivot so rotations happen around the remaining tile center.
+        /// </summary>
+        private Transform EnsureDynamicPivot(Transform target)
+        {
+            if (dynamicPivot == null)
+            {
+                GameObject pivotObject = new GameObject("Runtime Block Rotation Pivot");
+                dynamicPivot = pivotObject.transform;
+            }
+
+            dynamicPivot.SetParent(contentOriginalParent, true);
+            dynamicPivot.SetPositionAndRotation(ResolveContentWorldCenter(target), target.rotation);
+            target.SetParent(dynamicPivot, true);
+            return dynamicPivot;
+        }
+
+        /// <summary>
+        /// Re-centers the runtime pivot without changing the block's visible world pose.
+        /// </summary>
+        private void UpdateDynamicPivotPosition()
+        {
+            if (dynamicPivot == null || contentTarget == null || contentTarget.parent != dynamicPivot)
+            {
+                return;
+            }
+
+            Transform pivotParent = dynamicPivot.parent;
+            Quaternion pivotRotation = dynamicPivot.rotation;
+            contentTarget.SetParent(pivotParent, true);
+            dynamicPivot.position = ResolveContentWorldCenter(contentTarget);
+            dynamicPivot.rotation = pivotRotation;
+            contentTarget.SetParent(dynamicPivot, true);
+        }
+
+        private void RestoreContentParent()
+        {
+            if (contentTarget != null && dynamicPivot != null && contentTarget.parent == dynamicPivot)
+            {
+                contentTarget.SetParent(contentOriginalParent, true);
+            }
+        }
+
+        private static Vector3 ResolveContentWorldCenter(Transform target)
+        {
+            if (TryGetRemainingTileBounds(target, out Bounds tileBounds))
+            {
+                return tileBounds.center;
+            }
+
+            if (TryGetRendererBounds(target, out Bounds rendererBounds))
+            {
+                return rendererBounds.center;
+            }
+
+            return target.position;
+        }
+
+        private static bool TryGetRemainingTileBounds(Transform target, out Bounds bounds)
+        {
+            bounds = default;
+            if (target == null)
+            {
+                return false;
+            }
+
+            MahjongTile[] tiles = target.GetComponentsInChildren<MahjongTile>(true);
+            bool hasBounds = false;
+            for (int index = 0; index < tiles.Length; index++)
+            {
+                MahjongTile tile = tiles[index];
+                if (tile == null || tile.IsRemoved || tile.IsMatched || tile.IsBufferedSelection)
+                {
+                    continue;
+                }
+
+                Bounds tileBounds;
+                if (tile.TileCollider != null)
+                {
+                    tileBounds = tile.TileCollider.bounds;
+                }
+                else if (!TryGetRendererBounds(tile.transform, out tileBounds))
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = tileBounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(tileBounds);
+                }
+            }
+
+            return hasBounds;
+        }
+
+        private static bool TryGetRendererBounds(Transform target, out Bounds bounds)
+        {
+            bounds = default;
+            if (target == null)
+            {
+                return false;
+            }
+
+            Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
+            bool hasBounds = false;
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                Renderer renderer = renderers[index];
+                if (renderer == null || !renderer.enabled)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return hasBounds;
         }
 
         /// <summary>

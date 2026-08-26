@@ -22,7 +22,12 @@ namespace MahjongOut3D.Managers
         [SerializeField] private TileAnimationSettings animationSettings;
         [SerializeField] private TraySlotAnchorProvider traySlotAnchorProvider;
         [SerializeField, Min(0.1f)] private float inventoryItemPreviewScale = 1f;
-        [SerializeField, Min(0f)] private float trayMatchRetreatDistance = 28f;
+        [SerializeField, Min(1f)] private float trayMatchArcSideDistance = 180f;
+        [SerializeField, Min(0f)] private float trayMatchArcLift = 96f;
+        [SerializeField, Min(0f)] private float trayMatchLandingYOffset = 72f;
+        [SerializeField, Min(0.1f)] private float trayMatchLandingScale = 1.5f;
+        [SerializeField, Min(0.05f)] private float trayMatchPreviewMinDurationSeconds = 0.34f;
+        [SerializeField, Range(0.1f, 1f)] private float trayMatchEffectTriggerNormalized = 0.82f;
         [SerializeField] private Image trayCapacityWarningImage;
         [SerializeField, Min(0.05f)] private float trayShakeDurationSeconds = 1f;
         [SerializeField, Min(0f)] private float trayShakeAmplitude = 1.5f;
@@ -1282,7 +1287,7 @@ namespace MahjongOut3D.Managers
             RectTransform firstRect = firstPreview.RectTransform;
             RectTransform secondRect = secondPreview.RectTransform;
 
-            // Keep both matching previews above every other tile while they move and collide.
+            // Keep both matching previews above every other tile while they move.
             firstRect.SetAsLastSibling();
             secondRect.SetAsLastSibling();
 
@@ -1293,61 +1298,48 @@ namespace MahjongOut3D.Managers
             Vector3 firstStartScale = firstRect.localScale;
             Vector3 secondStartScale = secondRect.localScale;
 
-            Vector2 offset = secondStartPos - firstStartPos;
-            Vector2 axis = offset.sqrMagnitude > 1f ? offset.normalized : Vector2.right;
-            Vector2 impactCenter = (firstStartPos + secondStartPos) * 0.5f;
-
-            // Let the adjacent previews retreat outward before the final collision.
-            float retreatDistance = Mathf.Max(0f, trayMatchRetreatDistance);
-            Vector2 firstRetreatPos = firstStartPos - (axis * retreatDistance);
-            Vector2 secondRetreatPos = secondStartPos + (axis * retreatDistance);
-
-            float halfWidthFirst = firstStartSize.x * 0.5f * 0.85f;
-            float halfWidthSecond = secondStartSize.x * 0.5f * 0.85f;
-            float contactOffset = Mathf.Max(8f, (halfWidthFirst + halfWidthSecond) * 0.35f);
-            Vector2 firstImpactPos = impactCenter - (axis * contactOffset);
-            Vector2 secondImpactPos = impactCenter + (axis * contactOffset);
-
-            float duration = GetMatchDurationSeconds();
-            float retreatPhaseDuration = Mathf.Max(0.04f, duration * 0.35f);
-            float collidePhaseDuration = Mathf.Max(0.05f, duration - retreatPhaseDuration);
-
+            Vector2 landingCenter = ResolveTrayMatchLandingPosition(firstStartPos, secondStartPos, firstStartSize, secondStartSize);
+            float halfWidthFirst = firstStartSize.x * 0.5f;
+            float halfWidthSecond = secondStartSize.x * 0.5f;
+            float landingContactOffset = Mathf.Max(10f, (halfWidthFirst + halfWidthSecond) * 0.22f);
+            Vector2 firstImpactPos = landingCenter - (Vector2.right * landingContactOffset);
+            Vector2 secondImpactPos = landingCenter + (Vector2.right * landingContactOffset);
+            float firstSide = firstStartPos.x <= secondStartPos.x ? -1f : 1f;
+            float secondSide = -firstSide;
+            Vector2 firstControlOne = BuildTrayMatchFirstArcControlPoint(firstStartPos, firstImpactPos, firstSide);
+            Vector2 firstControlTwo = BuildTrayMatchSecondArcControlPoint(firstStartPos, firstImpactPos, firstSide);
+            Vector2 secondControlOne = BuildTrayMatchFirstArcControlPoint(secondStartPos, secondImpactPos, secondSide);
+            Vector2 secondControlTwo = BuildTrayMatchSecondArcControlPoint(secondStartPos, secondImpactPos, secondSide);
+            float duration = GetTrayMatchPreviewDurationSeconds();
+            float effectTriggerT = GetTrayMatchEffectTriggerNormalized();
+            float flightDuration = Mathf.Max(0.05f, duration * effectTriggerT);
             float elapsed = 0f;
-            Vector3 popScale = Vector3.one * 1.12f;
+            Vector3 firstLandingScale = firstStartScale * Mathf.Max(0.1f, trayMatchLandingScale);
+            Vector3 secondLandingScale = secondStartScale * Mathf.Max(0.1f, trayMatchLandingScale);
 
-            while (elapsed < retreatPhaseDuration)
+            while (elapsed < flightDuration)
             {
                 elapsed += GetDeltaTime();
-                float t = Mathf.Clamp01(elapsed / retreatPhaseDuration);
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration));
+                float scaleT = Mathf.Clamp01(elapsed / flightDuration);
                 float easedT = 1f - Mathf.Pow(1f - t, 3f);
+                float easedScaleT = 1f - Mathf.Pow(1f - scaleT, 3f);
 
-                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstStartPos, firstRetreatPos, easedT);
-                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondStartPos, secondRetreatPos, easedT);
-                firstRect.localScale = Vector3.LerpUnclamped(firstStartScale, popScale, easedT);
-                secondRect.localScale = Vector3.LerpUnclamped(secondStartScale, popScale, easedT);
+                firstRect.anchoredPosition = EvaluateCubicBezier(firstStartPos, firstControlOne, firstControlTwo, firstImpactPos, easedT);
+                secondRect.anchoredPosition = EvaluateCubicBezier(secondStartPos, secondControlOne, secondControlTwo, secondImpactPos, easedT);
+                firstRect.localScale = Vector3.LerpUnclamped(firstStartScale, firstLandingScale, easedScaleT);
+                secondRect.localScale = Vector3.LerpUnclamped(secondStartScale, secondLandingScale, easedScaleT);
                 yield return null;
             }
 
-            elapsed = 0f;
-            while (elapsed < collidePhaseDuration)
-            {
-                elapsed += GetDeltaTime();
-                float t = Mathf.Clamp01(elapsed / collidePhaseDuration);
-                float easedT = 1f - Mathf.Pow(1f - t, 4f);
+            float finalEasedT = 1f - Mathf.Pow(1f - effectTriggerT, 3f);
+            firstRect.anchoredPosition = EvaluateCubicBezier(firstStartPos, firstControlOne, firstControlTwo, firstImpactPos, finalEasedT);
+            secondRect.anchoredPosition = EvaluateCubicBezier(secondStartPos, secondControlOne, secondControlTwo, secondImpactPos, finalEasedT);
+            firstRect.localScale = firstLandingScale;
+            secondRect.localScale = secondLandingScale;
 
-                firstRect.anchoredPosition = Vector2.LerpUnclamped(firstRetreatPos, firstImpactPos, easedT);
-                secondRect.anchoredPosition = Vector2.LerpUnclamped(secondRetreatPos, secondImpactPos, easedT);
-                firstRect.localScale = Vector3.LerpUnclamped(popScale, Vector3.one, easedT);
-                secondRect.localScale = Vector3.LerpUnclamped(popScale, Vector3.one, easedT);
-                yield return null;
-            }
-
-            firstRect.anchoredPosition = firstImpactPos;
-            secondRect.anchoredPosition = secondImpactPos;
-            firstRect.localScale = Vector3.one;
-            secondRect.localScale = Vector3.one;
-
-            PlayMatchFeedbackUi(firstTile, secondTile, impactCenter, firstPreview, secondPreview);
+            Vector2 effectCenter = (firstRect.anchoredPosition + secondRect.anchoredPosition) * 0.5f;
+            PlayMatchFeedbackUi(firstTile, secondTile, effectCenter, firstPreview, secondPreview);
             firstTile?.SetVisible(false);
             secondTile?.SetVisible(false);
 
@@ -1374,6 +1366,57 @@ namespace MahjongOut3D.Managers
             }
         }
 
+        private Vector2 ResolveTrayMatchLandingPosition(Vector2 firstStartPos, Vector2 secondStartPos, Vector2 firstStartSize, Vector2 secondStartSize)
+        {
+            Vector2 trayCenter;
+            if (TryGetTraySlotScreenPoint(0, out Vector2 firstSlotScreen) && TryGetTraySlotScreenPoint(3, out Vector2 lastSlotScreen))
+            {
+                trayCenter = ScreenToTrayOverlayPosition((firstSlotScreen + lastSlotScreen) * 0.5f);
+            }
+            else
+            {
+                trayCenter = (firstStartPos + secondStartPos) * 0.5f;
+            }
+
+            float verticalOffset = Mathf.Max(
+                trayMatchLandingYOffset,
+                Mathf.Max(firstStartSize.y, secondStartSize.y) * 0.32f);
+            return trayCenter + Vector2.down * verticalOffset;
+        }
+
+        private Vector2 BuildTrayMatchFirstArcControlPoint(Vector2 startPosition, Vector2 endPosition, float side)
+        {
+            float resolvedSide = Mathf.Sign(side);
+            if (Mathf.Approximately(resolvedSide, 0f))
+            {
+                resolvedSide = 1f;
+            }
+
+            return Vector2.LerpUnclamped(startPosition, endPosition, 0.28f)
+                + new Vector2(resolvedSide * Mathf.Max(1f, trayMatchArcSideDistance), Mathf.Max(0f, trayMatchArcLift));
+        }
+
+        private Vector2 BuildTrayMatchSecondArcControlPoint(Vector2 startPosition, Vector2 endPosition, float side)
+        {
+            float resolvedSide = Mathf.Sign(side);
+            if (Mathf.Approximately(resolvedSide, 0f))
+            {
+                resolvedSide = 1f;
+            }
+
+            return Vector2.LerpUnclamped(startPosition, endPosition, 0.72f)
+                + new Vector2(resolvedSide * Mathf.Max(1f, trayMatchArcSideDistance) * 0.55f, Mathf.Max(0f, trayMatchArcLift) * 0.35f);
+        }
+
+        private static Vector2 EvaluateCubicBezier(Vector2 start, Vector2 controlOne, Vector2 controlTwo, Vector2 end, float t)
+        {
+            float inverseT = 1f - t;
+            return (inverseT * inverseT * inverseT * start)
+                + (3f * inverseT * inverseT * t * controlOne)
+                + (3f * inverseT * t * t * controlTwo)
+                + (t * t * t * end);
+        }
+
         private IEnumerator AnimateSingleTrayPreviewMatch(MahjongTile tileWithPreview, RuntimeTrayPreview preview, MahjongTile otherTile)
         {
             if (preview?.RectTransform == null)
@@ -1390,20 +1433,35 @@ namespace MahjongOut3D.Managers
             RectTransform rect = preview.RectTransform;
             rect.SetAsLastSibling();
             Vector2 startPos = rect.anchoredPosition;
+            Vector2 startSize = rect.sizeDelta;
             Vector3 startScale = rect.localScale;
-            float duration = GetMatchDurationSeconds();
+            Vector2 landingPos = ResolveTrayMatchLandingPosition(startPos, startPos, startSize, startSize);
+            float side = startPos.x <= landingPos.x ? -1f : 1f;
+            Vector2 controlOne = BuildTrayMatchFirstArcControlPoint(startPos, landingPos, side);
+            Vector2 controlTwo = BuildTrayMatchSecondArcControlPoint(startPos, landingPos, side);
+            Vector3 landingScale = startScale * Mathf.Max(0.1f, trayMatchLandingScale);
+            float duration = GetTrayMatchPreviewDurationSeconds();
+            float effectTriggerT = GetTrayMatchEffectTriggerNormalized();
+            float flightDuration = Mathf.Max(0.05f, duration * effectTriggerT);
             float elapsed = 0f;
 
-            while (elapsed < duration)
+            while (elapsed < flightDuration)
             {
                 elapsed += GetDeltaTime();
-                float t = Mathf.Clamp01(elapsed / duration);
-                float scaleT = Mathf.Sin(t * Mathf.PI);
-                rect.localScale = Vector3.LerpUnclamped(startScale, startScale * 1.2f, scaleT);
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration));
+                float scaleT = Mathf.Clamp01(elapsed / flightDuration);
+                float easedT = 1f - Mathf.Pow(1f - t, 3f);
+                float easedScaleT = 1f - Mathf.Pow(1f - scaleT, 3f);
+                rect.anchoredPosition = EvaluateCubicBezier(startPos, controlOne, controlTwo, landingPos, easedT);
+                rect.localScale = Vector3.LerpUnclamped(startScale, landingScale, easedScaleT);
                 yield return null;
             }
 
-            PlayMatchFeedbackUi(tileWithPreview, otherTile, startPos, preview, null);
+            float finalEasedT = 1f - Mathf.Pow(1f - effectTriggerT, 3f);
+            rect.anchoredPosition = EvaluateCubicBezier(startPos, controlOne, controlTwo, landingPos, finalEasedT);
+            rect.localScale = landingScale;
+
+            PlayMatchFeedbackUi(tileWithPreview, otherTile, rect.anchoredPosition, preview, null);
             tileWithPreview?.SetVisible(false);
             otherTile?.SetVisible(false);
 
@@ -1586,6 +1644,8 @@ namespace MahjongOut3D.Managers
         }
 
         private float GetMatchDurationSeconds() => animationSettings != null ? animationSettings.MatchDurationSeconds : 0.35f;
+        private float GetTrayMatchPreviewDurationSeconds() => Mathf.Max(GetMatchDurationSeconds(), trayMatchPreviewMinDurationSeconds);
+        private float GetTrayMatchEffectTriggerNormalized() => Mathf.Clamp(trayMatchEffectTriggerNormalized, 0.5f, 1f);
         private float GetMatchSlideDistance() => animationSettings != null ? animationSettings.MatchSlideDistance : 1.25f;
         private float GetMatchRotationDegrees() => animationSettings != null ? animationSettings.MatchRotationDegrees : 55f;
         private float GetMatchDisappearGap() => animationSettings != null ? animationSettings.MatchDisappearGap : 0.08f;

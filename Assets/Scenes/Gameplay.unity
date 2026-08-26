@@ -7053,6 +7053,7 @@ MonoBehaviour:
   previewLocalPosition: {x: 0, y: 0, z: 0}
   previewLocalScale: {x: 1, y: 1, z: 1}
   previewLocalEulerAngles: {x: 0, y: 0, z: 0}
+  maxCameraCaptureSize: 512
   cropTransparentPixels: 1
   cropPaddingPercent: 0.08
   alphaThreshold: 0.02
@@ -11345,7 +11346,12 @@ MonoBehaviour:
   animationSettings: {fileID: 11400000, guid: 54d8e42891ff41928442f725f2657b0d, type: 2}
   traySlotAnchorProvider: {fileID: 1853129376}
   inventoryItemPreviewScale: 1.45
-  trayMatchRetreatDistance: 100
+  trayMatchArcSideDistance: 180
+  trayMatchArcLift: 96
+  trayMatchLandingYOffset: 72
+  trayMatchLandingScale: 1.5
+  trayMatchPreviewMinDurationSeconds: 0.34
+  trayMatchEffectTriggerNormalized: 0.5
   trayCapacityWarningImage: {fileID: 874543857}
   trayShakeDurationSeconds: 0.5
   trayShakeAmplitude: 5

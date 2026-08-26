@@ -19,6 +19,7 @@ namespace MahjongOut3D.UI
         public Vector3 previewLocalPosition = Vector3.zero;
         public Vector3 previewLocalScale = Vector3.one;
         public Vector3 previewLocalEulerAngles = Vector3.zero;
+        [Min(64)] public int maxCameraCaptureSize = DefaultRenderTextureSize;
 
         [Header("Crop")]
         public bool cropTransparentPixels = true;
@@ -147,9 +148,8 @@ namespace MahjongOut3D.UI
                 return null;
             }
 
-            EnsureRenderTextureSize(
-                Mathf.Max(1, sourceCamera.pixelWidth > 0 ? sourceCamera.pixelWidth : Screen.width),
-                Mathf.Max(1, sourceCamera.pixelHeight > 0 ? sourceCamera.pixelHeight : Screen.height));
+            Vector2Int captureSize = ResolveCameraCaptureSize(sourceCamera);
+            EnsureRenderTextureSize(captureSize.x, captureSize.y);
 
             previewCamera.CopyFrom(sourceCamera);
             previewCamera.enabled = false;
@@ -283,6 +283,23 @@ namespace MahjongOut3D.UI
                 hideFlags = HideFlags.HideAndDontSave,
             };
             ownsRenderTexture = true;
+        }
+
+        private Vector2Int ResolveCameraCaptureSize(Camera sourceCamera)
+        {
+            int width = Mathf.Max(1, sourceCamera != null && sourceCamera.pixelWidth > 0 ? sourceCamera.pixelWidth : Screen.width);
+            int height = Mathf.Max(1, sourceCamera != null && sourceCamera.pixelHeight > 0 ? sourceCamera.pixelHeight : Screen.height);
+            int maxSize = Mathf.Max(64, maxCameraCaptureSize);
+            int longestSide = Mathf.Max(width, height);
+            if (longestSide <= maxSize)
+            {
+                return new Vector2Int(width, height);
+            }
+
+            float scale = maxSize / (float)longestSide;
+            return new Vector2Int(
+                Mathf.Max(1, Mathf.RoundToInt(width * scale)),
+                Mathf.Max(1, Mathf.RoundToInt(height * scale)));
         }
 
         private void SetLayerRecursively(GameObject target, int layer)
