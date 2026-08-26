@@ -156,10 +156,15 @@ namespace MahjongOut3D.UI
             previewCamera.clearFlags = CameraClearFlags.SolidColor;
             previewCamera.backgroundColor = Color.clear;
             previewCamera.cullingMask = 1 << previewLayer;
-            return Capture();
+            return Capture(false);
         }
 
         public Texture2D Capture()
+        {
+            return Capture(true);
+        }
+
+        private Texture2D Capture(bool normalizeAlpha)
         {
             EnsurePreviewResources();
             if (previewCamera == null || renderTexture == null)
@@ -210,7 +215,11 @@ namespace MahjongOut3D.UI
             previewCamera.clearFlags = currentClearFlags;
             previewCamera.backgroundColor = currentBackgroundColor;
 
-            NormalizeCapturedAlpha(texture, previewCamera.backgroundColor);
+            if (normalizeAlpha)
+            {
+                NormalizeCapturedAlpha(texture, previewCamera.backgroundColor);
+            }
+
             return cropTransparentPixels ? CropToVisiblePixels(texture) : texture;
         }
 
@@ -507,15 +516,17 @@ namespace MahjongOut3D.UI
             int maxStartY = Mathf.Max(0, height - cropSize);
             int startX = Mathf.Clamp(centerX - cropSize / 2, 0, maxStartX);
             int startY = Mathf.Clamp(centerY - cropSize / 2, 0, maxStartY);
+            if (startX == 0 && startY == 0 && cropSize == width && cropSize == height)
+            {
+                return source;
+            }
 
             Texture2D cropped = new Texture2D(cropSize, cropSize, TextureFormat.RGBA32, false)
             {
                 filterMode = FilterMode.Bilinear,
                 wrapMode = TextureWrapMode.Clamp,
             };
-            Color32[] clearPixels = new Color32[cropSize * cropSize];
-            cropped.SetPixels32(clearPixels);
-
+            Color32[] croppedPixels = new Color32[cropSize * cropSize];
             for (int y = 0; y < cropSize; y++)
             {
                 int sourceY = startY + y;
@@ -524,18 +535,21 @@ namespace MahjongOut3D.UI
                     continue;
                 }
 
-                for (int x = 0; x < cropSize; x++)
+                int sourceX = Mathf.Max(0, startX);
+                int destinationX = sourceX - startX;
+                int copyWidth = Mathf.Min(cropSize - destinationX, width - sourceX);
+                if (copyWidth > 0)
                 {
-                    int sourceX = startX + x;
-                    if (sourceX < 0 || sourceX >= width)
-                    {
-                        continue;
-                    }
-
-                    cropped.SetPixel(x, y, source.GetPixel(sourceX, sourceY));
+                    System.Array.Copy(
+                        pixels,
+                        (sourceY * width) + sourceX,
+                        croppedPixels,
+                        (y * cropSize) + destinationX,
+                        copyWidth);
                 }
             }
 
+            cropped.SetPixels32(croppedPixels);
             cropped.Apply();
             Destroy(source);
             return cropped;
