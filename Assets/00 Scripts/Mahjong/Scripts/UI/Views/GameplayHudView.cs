@@ -30,13 +30,13 @@ namespace MahjongOut3D.UI
         [SerializeField] private BoosterHudBinding shuffleBooster;
         [SerializeField] private BoosterHudBinding bombBooster;
         [SerializeField] private BoosterHudBinding xrayBooster;
-      //  [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
+        [SerializeField] private TMP_Dropdown pieceMaterialDropdown;
         [SerializeField] private TMP_Text comboText;
         [SerializeField] private Image comboImage;
         [SerializeField] private ComboTrayGlowController comboTrayGlowController;
 
         private Action<int> pieceMaterialChangedCallback;
-       // private bool suppressPieceMaterialDropdownCallback;
+        private bool suppressPieceMaterialDropdownCallback;
         private Sequence comboPopupSequence;
         private Sequence comboImageSequence;
 
@@ -53,40 +53,40 @@ namespace MahjongOut3D.UI
             BindButton(xrayButton, onXRay);
 
             pieceMaterialChangedCallback = onPieceMaterialChanged;
-          //  BindPieceMaterialDropdown();
+          BindPieceMaterialDropdown();
         }
 
         /// <summary>
         /// Rebuilds the runtime piece-material dropdown options.
         /// </summary>
-        // public void SetPieceMaterialOptions(IReadOnlyList<string> optionLabels, int selectedIndex)
-        // {
-        //     TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
-        //     if (dropdown == null)
-        //     {
-        //         return;
-        //     }
+        public void SetPieceMaterialOptions(IReadOnlyList<string> optionLabels, int selectedIndex)
+        {
+            TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
+            if (dropdown == null)
+            {
+                return;
+            }
 
-        //     bool hasOptions = optionLabels != null && optionLabels.Count > 0;
-        //     dropdown.gameObject.SetActive(hasOptions);
-        //     if (!hasOptions)
-        //     {
-        //         return;
-        //     }
+            bool hasOptions = optionLabels != null && optionLabels.Count > 0;
+            dropdown.gameObject.SetActive(hasOptions);
+            if (!hasOptions)
+            {
+                return;
+            }
 
-        //     List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>(optionLabels.Count);
-        //     for (int index = 0; index < optionLabels.Count; index++)
-        //     {
-        //         options.Add(new TMP_Dropdown.OptionData(optionLabels[index]));
-        //     }
+            List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>(optionLabels.Count);
+            for (int index = 0; index < optionLabels.Count; index++)
+            {
+                options.Add(new TMP_Dropdown.OptionData(optionLabels[index]));
+            }
 
-        //   //  suppressPieceMaterialDropdownCallback = true;
-        //     dropdown.ClearOptions();
-        //     dropdown.AddOptions(options);
-        //     dropdown.SetValueWithoutNotify(Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, options.Count - 1)));
-        //     dropdown.RefreshShownValue();
-        //    // suppressPieceMaterialDropdownCallback = false;
-        // }
+          //  suppressPieceMaterialDropdownCallback = true;
+            dropdown.ClearOptions();
+            dropdown.AddOptions(options);
+            dropdown.SetValueWithoutNotify(Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, options.Count - 1)));
+            dropdown.RefreshShownValue();
+           // suppressPieceMaterialDropdownCallback = false;
+        }
 
         /// <summary>
         /// Updates the visible coin counter.
@@ -344,27 +344,27 @@ private void ShowComboBurstImage()
             button.onClick.AddListener(() => callback?.Invoke());
         }
 
-        // private void BindPieceMaterialDropdown()
-        // {
-        //     TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
-        //     if (dropdown == null)
-        //     {
-        //         return;
-        //     }
+        private void BindPieceMaterialDropdown()
+        {
+            TMP_Dropdown dropdown = EnsurePieceMaterialDropdown();
+            if (dropdown == null)
+            {
+                return;
+            }
 
-        //     dropdown.onValueChanged.RemoveAllListeners();
-        //     dropdown.onValueChanged.AddListener(HandlePieceMaterialDropdownValueChanged);
-        // }
+            dropdown.onValueChanged.RemoveAllListeners();
+            dropdown.onValueChanged.AddListener(HandlePieceMaterialDropdownValueChanged);
+        }
 
-        // private void HandlePieceMaterialDropdownValueChanged(int selectedIndex)
-        // {
-        //     if (suppressPieceMaterialDropdownCallback)
-        //     {
-        //         return;
-        //     }
+        private void HandlePieceMaterialDropdownValueChanged(int selectedIndex)
+        {
+            if (suppressPieceMaterialDropdownCallback)
+            {
+                return;
+            }
 
-        //     pieceMaterialChangedCallback?.Invoke(selectedIndex);
-        // }
+            pieceMaterialChangedCallback?.Invoke(selectedIndex);
+        }
 
         private BoosterHudBinding GetBoosterBinding(PowerUpType powerUpType)
         {
@@ -413,45 +413,45 @@ private void ShowComboBurstImage()
             }
         }
 
-        // private TMP_Dropdown EnsurePieceMaterialDropdown()
-        // {
-        //     if (pieceMaterialDropdown != null)
-        //     {
-        //         return pieceMaterialDropdown;
-        //     }
+        private TMP_Dropdown EnsurePieceMaterialDropdown()
+        {
+            if (pieceMaterialDropdown != null)
+            {
+                return pieceMaterialDropdown;
+            }
 
-        //     RectTransform root = transform as RectTransform;
-        //     if (root == null)
-        //     {
-        //         return null;
-        //     }
+            RectTransform root = transform as RectTransform;
+            if (root == null)
+            {
+                return null;
+            }
 
-        //     GameObject dropdownObject = TMP_DefaultControls.CreateDropdown(BuildDropdownResources());
-        //     dropdownObject.name = "PieceMaterialDropdown";
+            GameObject dropdownObject = TMP_DefaultControls.CreateDropdown(BuildDropdownResources());
+            dropdownObject.name = "PieceMaterialDropdown";
 
-        //     RectTransform dropdownRect = dropdownObject.GetComponent<RectTransform>();
-        //     dropdownRect.SetParent(root, false);
-        //     dropdownRect.anchorMin = new Vector2(1f, 1f);
-        //     dropdownRect.anchorMax = new Vector2(1f, 1f);
-        //     dropdownRect.pivot = new Vector2(1f, 1f);
-        //     dropdownRect.sizeDelta = new Vector2(280f, 36f);
-        //     dropdownRect.anchoredPosition = new Vector2(-24f, -120f);
+            RectTransform dropdownRect = dropdownObject.GetComponent<RectTransform>();
+            dropdownRect.SetParent(root, false);
+            dropdownRect.anchorMin = new Vector2(1f, 1f);
+            dropdownRect.anchorMax = new Vector2(1f, 1f);
+            dropdownRect.pivot = new Vector2(1f, 1f);
+            dropdownRect.sizeDelta = new Vector2(280f, 36f);
+            dropdownRect.anchoredPosition = new Vector2(-24f, -120f);
 
-        //     pieceMaterialDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
-        //     if (pieceMaterialDropdown?.captionText != null)
-        //     {
-        //         pieceMaterialDropdown.captionText.text = "Piece Material";
-        //         pieceMaterialDropdown.captionText.fontSize = 20f;
-        //     }
+            pieceMaterialDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
+            if (pieceMaterialDropdown?.captionText != null)
+            {
+                pieceMaterialDropdown.captionText.text = "Piece Material";
+                pieceMaterialDropdown.captionText.fontSize = 20f;
+            }
 
-        //     if (pieceMaterialDropdown?.itemText != null)
-        //     {
-        //         pieceMaterialDropdown.itemText.fontSize = 18f;
-        //     }
+            if (pieceMaterialDropdown?.itemText != null)
+            {
+                pieceMaterialDropdown.itemText.fontSize = 18f;
+            }
 
-        //     dropdownObject.SetActive(false);
-        //     return pieceMaterialDropdown;
-        // }
+            dropdownObject.SetActive(false);
+            return pieceMaterialDropdown;
+        }
 
         private TMP_Text EnsureComboText()
         {

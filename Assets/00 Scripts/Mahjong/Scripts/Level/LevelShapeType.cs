@@ -8,6 +8,9 @@ namespace MahjongOut3D.LevelSystem
         Cube = 0,
         Heart = 1,
         Cylinder = 2,
+        Pyramid = 3,
+        Dome = 4,
+        Ramp = 5,
 
         Custom = 8,
     }

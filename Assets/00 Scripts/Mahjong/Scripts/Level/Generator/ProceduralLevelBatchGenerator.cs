@@ -298,6 +298,9 @@ namespace MahjongOut3D.LevelSystem
                 case LevelShapeType.Cube:
                 case LevelShapeType.Heart:
                 case LevelShapeType.Cylinder:
+                case LevelShapeType.Pyramid:
+                case LevelShapeType.Dome:
+                case LevelShapeType.Ramp:
                     return shape;
 
                 default:
@@ -766,7 +769,7 @@ namespace MahjongOut3D.LevelSystem
                 {
                     candidate = CreateShapeCandidate(settings, random);
                     int tileCount = GetTargetTileCount(settings, candidate);
-                    List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
+                    List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shape, candidate.Shells, tileCount, random);
                     logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
                     if (TryBuildTileDefinitions(candidate.Shape, occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions))
@@ -925,7 +928,7 @@ namespace MahjongOut3D.LevelSystem
             {
                 candidate = CreateShapeCandidate(settings, random);
                 int tileCount = GetTargetTileCount(settings, candidate);
-                List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shells, tileCount, random);
+                List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shape, candidate.Shells, tileCount, random);
                 logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
                 if (TryBuildTileDefinitions(shape, occupiedCoordinates, candidate.GridSize, logicalGridSize, settings, random, out tileDefinitions, entry != null ? entry.uniquePair : -1))
@@ -1037,6 +1040,21 @@ namespace MahjongOut3D.LevelSystem
             if (normalized.Equals("cylinder", StringComparison.OrdinalIgnoreCase))
             {
                 return LevelShapeType.Cylinder;
+            }
+
+            if (normalized.Equals("pyramid", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.Pyramid;
+            }
+
+            if (normalized.Equals("dome", StringComparison.OrdinalIgnoreCase) || normalized.Equals("sphere", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.Dome;
+            }
+
+            if (normalized.Equals("ramp", StringComparison.OrdinalIgnoreCase) || normalized.Equals("slope", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.Ramp;
             }
 
             return LevelShapeType.Cube;
@@ -1442,17 +1460,24 @@ namespace MahjongOut3D.LevelSystem
                 return 0;
             }
 
-            if (candidate.Shape == LevelShapeType.Heart || candidate.Shape == LevelShapeType.Cylinder)
+            int maxTileCount = settings != null ? Mathf.Max(2, settings.MaxPairCount * 2) : int.MaxValue;
+            int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+            int total = GetShellTileCapacity(shells);
+
+            if (candidate.Shape == LevelShapeType.Pyramid || candidate.Shape == LevelShapeType.Dome || candidate.Shape == LevelShapeType.Ramp)
             {
-                int total = GetShellTileCapacity(shells);
-                return total % 2 == 0 ? total : Mathf.Max(2, total - 1);
+                int clamped1Total = Mathf.Min(total, maxTileCount);
+                return clamped1Total % 2 == 0 ? clamped1Total : Mathf.Max(2, clamped1Total - 1);
             }
 
-            int maxTileCount = Mathf.Max(2, settings.MaxPairCount * 2);
-            int minTileCount = Mathf.Max(2, settings.MinPairCount * 2);
+            int preferredCount = GetPreferredCubeTileCount(shells, candidate.TargetLayerCount, minTileCount, maxTileCount);
+            if (preferredCount >= 2)
+            {
+                return preferredCount;
+            }
 
-            return GetPreferredCubeTileCount(shells, candidate.TargetLayerCount, minTileCount, maxTileCount);
-
+            int clampedTotal = Mathf.Min(total, maxTileCount);
+            return clampedTotal % 2 == 0 ? clampedTotal : Mathf.Max(2, clampedTotal - 1);
         }
 
         /// <summary>
@@ -1561,8 +1586,13 @@ namespace MahjongOut3D.LevelSystem
         /// <summary>
         /// Builds the occupied coordinates by taking shell layers in the order supplied by the shell builder.
         /// </summary>
-        private static List<TilePlacementData> BuildOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random)
+        private static List<TilePlacementData> BuildOccupiedCoordinates(LevelShapeType shape, List<List<TilePlacementData>> shells, int tileCount, System.Random random)
         {
+            if (ShouldKeepShapeSelectionCompact(shape))
+            {
+                return BuildCompactOccupiedCoordinates(shells, tileCount);
+            }
+
             List<TilePlacementData> orderedCoordinates = new List<TilePlacementData>(tileCount);
             for (int shellIndex = 0; shellIndex < shells.Count && orderedCoordinates.Count < tileCount; shellIndex++)
             {
@@ -1581,6 +1611,145 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return orderedCoordinates;
+        }
+
+        private static bool ShouldKeepShapeSelectionCompact(LevelShapeType shape)
+        {
+            return shape == LevelShapeType.Pyramid
+                || shape == LevelShapeType.Dome
+                || shape == LevelShapeType.Ramp;
+        }
+
+        private static List<TilePlacementData> BuildCompactOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount)
+        {
+            List<TilePlacementData> orderedCoordinates = new List<TilePlacementData>(tileCount);
+            if (shells == null || shells.Count == 0 || tileCount <= 0)
+            {
+                return orderedCoordinates;
+            }
+
+            Vector3 center = CalculatePlacementSelectionCenter(shells);
+            List<TilePlacementData> flattenedPlacements = new List<TilePlacementData>();
+
+            for (int shellIndex = 0; shellIndex < shells.Count; shellIndex++)
+            {
+                List<TilePlacementData> shellCoordinates = shells[shellIndex];
+                if (shellCoordinates == null)
+                {
+                    continue;
+                }
+
+                for (int coordinateIndex = 0; coordinateIndex < shellCoordinates.Count; coordinateIndex++)
+                {
+                    TilePlacementData placement = shellCoordinates[coordinateIndex];
+                    if (placement == null)
+                    {
+                        continue;
+                    }
+
+                    flattenedPlacements.Add(ClonePlacement(placement, shellIndex));
+                }
+            }
+
+            flattenedPlacements.Sort((left, right) => CompareCompactPlacementOrder(left, right, center));
+
+            int selectionCount = Mathf.Min(tileCount, flattenedPlacements.Count);
+            for (int index = 0; index < selectionCount; index++)
+            {
+                orderedCoordinates.Add(flattenedPlacements[index]);
+            }
+
+            if (orderedCoordinates.Count % 2 != 0)
+            {
+                orderedCoordinates.RemoveAt(orderedCoordinates.Count - 1);
+            }
+
+            return orderedCoordinates;
+        }
+
+        private static Vector3 CalculatePlacementSelectionCenter(List<List<TilePlacementData>> shells)
+        {
+            if (shells == null || shells.Count == 0)
+            {
+                return Vector3.zero;
+            }
+
+            Vector3 sum = Vector3.zero;
+            int count = 0;
+            for (int shellIndex = 0; shellIndex < shells.Count; shellIndex++)
+            {
+                List<TilePlacementData> shell = shells[shellIndex];
+                if (shell == null)
+                {
+                    continue;
+                }
+
+                for (int placementIndex = 0; placementIndex < shell.Count; placementIndex++)
+                {
+                    TilePlacementData placement = shell[placementIndex];
+                    if (placement == null)
+                    {
+                        continue;
+                    }
+
+                    sum += placement.Coordinate;
+                    count++;
+                }
+            }
+
+            return count > 0 ? sum / count : Vector3.zero;
+        }
+
+        private static int CompareCompactPlacementOrder(TilePlacementData left, TilePlacementData right, Vector3 center)
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return 0;
+            }
+
+            if (left == null)
+            {
+                return 1;
+            }
+
+            if (right == null)
+            {
+                return -1;
+            }
+
+            float leftDistance = ((Vector3)left.Coordinate - center).sqrMagnitude;
+            float rightDistance = ((Vector3)right.Coordinate - center).sqrMagnitude;
+            int distanceComparison = leftDistance.CompareTo(rightDistance);
+            if (distanceComparison != 0)
+            {
+                return distanceComparison;
+            }
+
+            int shellComparison = left.ShellIndex.CompareTo(right.ShellIndex);
+            if (shellComparison != 0)
+            {
+                return shellComparison;
+            }
+
+            int yComparison = right.Coordinate.y.CompareTo(left.Coordinate.y);
+            if (yComparison != 0)
+            {
+                return yComparison;
+            }
+
+            int xComparison = left.Coordinate.x.CompareTo(right.Coordinate.x);
+            if (xComparison != 0)
+            {
+                return xComparison;
+            }
+
+            int zComparison = left.Coordinate.z.CompareTo(right.Coordinate.z);
+            if (zComparison != 0)
+            {
+                return zComparison;
+            }
+
+            return left.FacingDirection.CompareTo(right.FacingDirection);
         }
 
         /// <summary>
@@ -1635,6 +1804,14 @@ namespace MahjongOut3D.LevelSystem
                     return builder.Build(targetLayerCount, minTileCount, maxTileCount, random);
                 }
 
+                case LevelShapeType.Pyramid:
+                    return BuildShells(BuildPyramidCoordinates(gridSize));
+
+                case LevelShapeType.Dome:
+                    return BuildShells(BuildDomeCoordinates(gridSize));
+
+                case LevelShapeType.Ramp:
+                    return BuildShells(BuildRampCoordinates(gridSize));
             }
 
             return BuildShells(BuildShapeCoordinates(gridSize));
@@ -2130,7 +2307,23 @@ namespace MahjongOut3D.LevelSystem
                     depth = width;
                     break;
 
-              
+                case LevelShapeType.Pyramid:
+                    width = Mathf.Clamp(3 + safeLayerCount, 3, 11);
+                    height = Mathf.Clamp(2 + safeLayerCount, 2, 8);
+                    depth = width;
+                    break;
+
+                case LevelShapeType.Dome:
+                    width = Mathf.Clamp(3 + safeLayerCount, 3, 11);
+                    height = Mathf.Clamp(2 + ((safeLayerCount + 1) / 2), 2, 6);
+                    depth = width;
+                    break;
+
+                case LevelShapeType.Ramp:
+                    width = Mathf.Clamp(3 + safeLayerCount, 3, 11);
+                    height = Mathf.Clamp(2 + safeLayerCount, 2, 8);
+                    depth = Mathf.Clamp(3 + (safeLayerCount / 2), 3, 7);
+                    break;
             }
 
             return new VoxelGridSize(width, height, depth);
@@ -2154,6 +2347,122 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return coordinates;
+        }
+
+        /// <summary>
+        /// Builds a compact stepped pyramid with every outer face exposed.
+        /// </summary>
+        private static List<Vector3Int> BuildPyramidCoordinates(VoxelGridSize gridSize)
+        {
+            int width = Mathf.Max(1, gridSize.Width);
+            int height = Mathf.Max(1, gridSize.Height);
+            int depth = Mathf.Max(1, gridSize.Depth);
+            List<Vector3Int> coordinates = new List<Vector3Int>(gridSize.Volume);
+
+            for (int y = 0; y < height; y++)
+            {
+                int insetX = Mathf.Min(y, Mathf.Max(0, (width - 1) / 2));
+                int insetZ = Mathf.Min(y, Mathf.Max(0, (depth - 1) / 2));
+                int minX = insetX;
+                int maxX = Mathf.Max(minX, width - 1 - insetX);
+                int minZ = insetZ;
+                int maxZ = Mathf.Max(minZ, depth - 1 - insetZ);
+
+                for (int x = minX; x <= maxX; x++)
+                {
+                    for (int z = minZ; z <= maxZ; z++)
+                    {
+                        coordinates.Add(new Vector3Int(x, y, z));
+                    }
+                }
+            }
+
+            EnsureEvenCoordinateCount(coordinates);
+            return coordinates;
+        }
+
+        /// <summary>
+        /// Builds a softly rounded dome by shrinking each upper layer toward the center.
+        /// </summary>
+        private static List<Vector3Int> BuildDomeCoordinates(VoxelGridSize gridSize)
+        {
+            int width = Mathf.Max(1, gridSize.Width);
+            int height = Mathf.Max(1, gridSize.Height);
+            int depth = Mathf.Max(1, gridSize.Depth);
+            List<Vector3Int> coordinates = new List<Vector3Int>(gridSize.Volume);
+            Vector2 center = new Vector2((width - 1) * 0.5f, (depth - 1) * 0.5f);
+            float radiusX = Mathf.Max(0.5f, (width - 1) * 0.5f);
+            float radiusZ = Mathf.Max(0.5f, (depth - 1) * 0.5f);
+
+            for (int y = 0; y < height; y++)
+            {
+                float t = height <= 1 ? 0f : y / Mathf.Max(1f, height - 1f);
+                float layerScale = Mathf.Sqrt(Mathf.Clamp01(1f - (t * t * 0.92f)));
+                float layerRadiusX = Mathf.Max(1f, radiusX * layerScale);
+                float layerRadiusZ = Mathf.Max(1f, radiusZ * layerScale);
+                int minX = Mathf.Clamp(Mathf.FloorToInt(center.x - layerRadiusX), 0, width - 1);
+                int maxX = Mathf.Clamp(Mathf.CeilToInt(center.x + layerRadiusX), 0, width - 1);
+                int minZ = Mathf.Clamp(Mathf.FloorToInt(center.y - layerRadiusZ), 0, depth - 1);
+                int maxZ = Mathf.Clamp(Mathf.CeilToInt(center.y + layerRadiusZ), 0, depth - 1);
+
+                for (int x = minX; x <= maxX; x++)
+                {
+                    for (int z = minZ; z <= maxZ; z++)
+                    {
+                        float dx = (x - center.x) / layerRadiusX;
+                        float dz = (z - center.y) / layerRadiusZ;
+                        if ((dx * dx) + (dz * dz) <= 1f)
+                        {
+                            coordinates.Add(new Vector3Int(x, y, z));
+                        }
+                    }
+                }
+            }
+
+            EnsureEvenCoordinateCount(coordinates);
+            return coordinates;
+        }
+
+        /// <summary>
+        /// Builds a simple slanted wedge that stays readable from the outside.
+        /// </summary>
+        private static List<Vector3Int> BuildRampCoordinates(VoxelGridSize gridSize)
+        {
+            int width = Mathf.Max(1, gridSize.Width);
+            int height = Mathf.Max(1, gridSize.Height);
+            int depth = Mathf.Max(1, gridSize.Depth);
+            List<Vector3Int> coordinates = new List<Vector3Int>(gridSize.Volume);
+
+            for (int x = 0; x < width; x++)
+            {
+                int allowedHeight = Mathf.Clamp(Mathf.CeilToInt(Mathf.Lerp(1f, height, width <= 1 ? 1f : (x + 1f) / width)), 1, height);
+                for (int y = 0; y < allowedHeight; y++)
+                {
+                    int zInset = Mathf.Min(y, Mathf.Max(0, (depth - 1) / 3));
+                    int minZ = zInset;
+                    int maxZ = Mathf.Max(minZ, depth - 1 - zInset);
+                    for (int z = minZ; z <= maxZ; z++)
+                    {
+                        coordinates.Add(new Vector3Int(x, y, z));
+                    }
+                }
+            }
+
+            EnsureEvenCoordinateCount(coordinates);
+            return coordinates;
+        }
+
+        /// <summary>
+        /// Keeps shape volumes pair-friendly by trimming a single boundary tile when needed.
+        /// </summary>
+        private static void EnsureEvenCoordinateCount(List<Vector3Int> coordinates)
+        {
+            if (coordinates == null || coordinates.Count % 2 == 0 || coordinates.Count == 0)
+            {
+                return;
+            }
+
+            coordinates.RemoveAt(coordinates.Count - 1);
         }
 
         /// <summary>

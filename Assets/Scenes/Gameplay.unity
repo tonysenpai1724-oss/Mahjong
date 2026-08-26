@@ -5425,7 +5425,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &834537396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10812,6 +10812,7 @@ MonoBehaviour:
     quantityText: {fileID: 0}
     availableSprite: {fileID: 0}
     emptySprite: {fileID: 0}
+  pieceMaterialDropdown: {fileID: 2134241727}
   comboText: {fileID: 0}
   comboImage: {fileID: 521955250}
   comboTrayGlowController: {fileID: 0}
@@ -16589,7 +16590,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &2134241727
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16673,7 +16674,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 441.29, y: 468.8963}
+  m_AnchoredPosition: {x: 441.29, y: 310.4}
   m_SizeDelta: {x: 185.43, y: 97.387}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2134241729
