@@ -862,7 +862,8 @@ MonoBehaviour:
   surfaceTileSpacingOffset: {x: 0, y: 0, z: 0}
   leftRightSurfaceSpacingOffset: {x: 0, y: 0, z: 0.08}
   upDownSurfaceSpacingOffset: {x: 0, y: 0, z: 0.08}
-  frontBackSurfaceSpacingOffset: {x: 0, y: 0.2, z: 0}
+  frontBackSurfaceSpacingOffset: {x: 0, y: 0.08, z: 0}
+  frontBackSurfaceTileLocalZScale: 0.9
   surfaceShellSeparationScale: 0.6
   generateOnStart: 1
   clearExistingChildrenOnGenerate: 1

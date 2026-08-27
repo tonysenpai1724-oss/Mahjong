@@ -52,6 +52,7 @@ namespace MahjongOut3D.TileSystem
         private Coroutine faceFlipRoutine;
         private Vector3 blockedTapBaseLocalPosition;
         private Vector3 pieceFaceBaseLocalPosition;
+        private Vector3 pieceFaceBaseLocalScale;
         private Vector3 fillFaceBaseLocalPosition;
         private Vector3 fillFaceBaseLocalScale;
         private Quaternion pieceFaceBaseLocalRotation;
@@ -538,6 +539,27 @@ namespace MahjongOut3D.TileSystem
             {
                 ApplyFaceVisualState(true);
             }
+        }
+
+        /// <summary>
+        /// Applies a runtime local scale override to the Mahjong piece renderer only.
+        /// </summary>
+        /// <param name="scaleMultiplier">Per-axis scale multiplier applied on top of the cached piece scale.</param>
+        public void SetPieceLocalScaleMultiplier(Vector3 scaleMultiplier)
+        {
+            if (pieceRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (pieceRenderer == null)
+            {
+                return;
+            }
+
+            CacheFaceBaseLocalRotations();
+            Vector3 baseScale = pieceFaceBaseLocalScale == Vector3.zero ? pieceRenderer.transform.localScale : pieceFaceBaseLocalScale;
+            pieceRenderer.transform.localScale = Vector3.Scale(baseScale, scaleMultiplier);
         }
 
         /// <summary>
@@ -1324,6 +1346,7 @@ namespace MahjongOut3D.TileSystem
             if (pieceRenderer != null)
             {
                 pieceFaceBaseLocalPosition = pieceRenderer.transform.localPosition;
+                pieceFaceBaseLocalScale = pieceRenderer.transform.localScale;
                 pieceFaceBaseLocalRotation = pieceRenderer.transform.localRotation;
             }
 

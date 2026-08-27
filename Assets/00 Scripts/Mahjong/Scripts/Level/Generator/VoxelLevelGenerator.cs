@@ -90,6 +90,8 @@ namespace MahjongOut3D.LevelSystem
         [SerializeField] private Vector3 upDownSurfaceSpacingOffset;
         [Tooltip("Cube-only extra spacing for Front/Back faces on surface-placement levels.")]
         [SerializeField] private Vector3 frontBackSurfaceSpacingOffset;
+        [Tooltip("Cube-only local Z scale applied to Front/Back face tiles on surface-placement levels.")]
+        [SerializeField, Range(0.01f, 1f)] private float frontBackSurfaceTileLocalZScale = 0.95f;
         [SerializeField, Range(0.5f, 1f)] private float surfaceShellSeparationScale = 0.8f;
 
         [Header("Generation")]
@@ -150,6 +152,8 @@ namespace MahjongOut3D.LevelSystem
         public MahjongMaterialSO mahjongMaterialSO;
         private Material pieceBaseMaterial;
         private Texture2D pieceTexture;
+        private bool activeCubeSurfaceTilePlacement;
+
         /// <summary>
         /// Initializes the generator with the shared runtime context.
         /// </summary>
@@ -206,6 +210,7 @@ namespace MahjongOut3D.LevelSystem
 
             levelDefinition = definition;
             levelManager?.SetActiveLevelDefinition(definition, definition.UseSurfaceTilePlacement);
+            activeCubeSurfaceTilePlacement = definition.UseSurfaceTilePlacement && definition.Shape == LevelShapeType.Cube;
             ConfigureFillTexturePool(definition.FillCategoryNames);
 
             VoxelGridSize singleBlockGridSize = definition.GetSingleBlockRuntimeGridSize();
@@ -238,6 +243,7 @@ namespace MahjongOut3D.LevelSystem
 
             VoxelGridSize gridSize = new VoxelGridSize(jsonData.width, jsonData.height, jsonData.depth);
             levelManager?.SetActiveLevelDefinition(null, jsonData.useSurfaceTilePlacement);
+            activeCubeSurfaceTilePlacement = jsonData.useSurfaceTilePlacement && jsonData.shape == LevelShapeType.Cube;
             ConfigureFillTexturePool(jsonData.fillCategoryNames);
             IList<LevelTileDefinition> runtimeTiles = BuildRuntimeTileDefinitions(
                 jsonData.useSurfaceTilePlacement,
@@ -1544,6 +1550,8 @@ namespace MahjongOut3D.LevelSystem
             Transform parent = GetRuntimeBlockRoot(definition != null ? definition.RuntimeBlockIndex : 0);
             MahjongTile template = tilePrefab != null ? tilePrefab : runtimeFallbackTilePrefab;
             MahjongTile tile = usePooling && tilePool != null ? tilePool.Get(parent) : Instantiate(template, parent);
+            Vector3 pieceScaleMultiplier = ResolveTileLocalScale(definition);
+            tile.SetPieceLocalScaleMultiplier(pieceScaleMultiplier);
             Quaternion spawnRotation = Quaternion.Euler(definition.LocalEulerAngles);
             Vector3 baseLocalPosition = ApplyTileSpacing(definition.UseCustomLocalPosition ? definition.LocalPosition : grid.GetLocalPosition(definition.GridCoordinate));
             Vector3 placementOffset = spawnRotation * tile.GetPlacementOffset();
@@ -1612,6 +1620,26 @@ namespace MahjongOut3D.LevelSystem
                 Mathf.Max(0f, 1f + tileSpacingOffset.z));
 
             return Vector3.Scale(localPosition, spacingScale);
+        }
+
+        /// <summary>
+        /// Resolves the local scale multiplier applied to the Mahjong piece renderer.
+        /// Front/Back faces get a slightly thinner Z multiplier so they read closer to the other face orientations.
+        /// </summary>
+        private Vector3 ResolveTileLocalScale(LevelTileDefinition definition)
+        {
+            if (definition == null)
+            {
+                return Vector3.one;
+            }
+
+            VoxelGridDirection facingDirection = ResolveFacingDirection(definition.LocalEulerAngles);
+            if (facingDirection != VoxelGridDirection.Back && facingDirection != VoxelGridDirection.Forward)
+            {
+                return Vector3.one;
+            }
+
+            return new Vector3(1f, 1f, Mathf.Clamp(frontBackSurfaceTileLocalZScale, 0.01f, 1f));
         }
 
         /// <summary>

@@ -107,6 +107,24 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Applies a runtime base scale override used for generated tile face tuning.
+        /// </summary>
+        /// <param name="scale">Base scale to use for this tile instance.</param>
+        public void SetRuntimeBaseScale(Vector3 scale)
+        {
+            EnsureInitialized();
+
+            baseScale = scale;
+            currentScale = scale;
+            targetScale = scale;
+            scaleXSmoothVelocity = 0f;
+            scaleYSmoothVelocity = 0f;
+            scaleZSmoothVelocity = 0f;
+            hasInitializedScaleState = true;
+            ApplyScale(scale);
+        }
+
+        /// <summary>
         /// Applies a runtime base color override used for debugging or lightweight theming.
         /// </summary>
         /// <param name="color">Base color to use for this tile instance.</param>

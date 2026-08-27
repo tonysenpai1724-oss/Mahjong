@@ -2440,13 +2440,11 @@ namespace MahjongOut3D.LevelSystem
 
             for (int x = 0; x < width; x++)
             {
-                int allowedHeight = Mathf.Clamp(Mathf.CeilToInt(Mathf.Lerp(1f, height, width <= 1 ? 1f : (x + 1f) / width)), 1, height);
+                float progress = width <= 1 ? 1f : x / Mathf.Max(1f, width - 1f);
+                int allowedHeight = Mathf.Clamp(Mathf.CeilToInt(Mathf.Lerp(1f, height, progress)), 1, height);
                 for (int y = 0; y < allowedHeight; y++)
                 {
-                    int zInset = Mathf.Min(y, Mathf.Max(0, (depth - 1) / 3));
-                    int minZ = zInset;
-                    int maxZ = Mathf.Max(minZ, depth - 1 - zInset);
-                    for (int z = minZ; z <= maxZ; z++)
+                    for (int z = 0; z < depth; z++)
                     {
                         coordinates.Add(new Vector3Int(x, y, z));
                     }
