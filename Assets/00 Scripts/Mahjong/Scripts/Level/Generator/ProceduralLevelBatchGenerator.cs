@@ -1615,9 +1615,7 @@ namespace MahjongOut3D.LevelSystem
 
         private static bool ShouldKeepShapeSelectionCompact(LevelShapeType shape)
         {
-            return shape == LevelShapeType.Pyramid
-                || shape == LevelShapeType.Dome
-                || shape == LevelShapeType.Ramp;
+            return ShapeSelectionStrategy.IsCompact(shape);
         }
 
         private static List<TilePlacementData> BuildCompactOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount)
@@ -1805,13 +1803,13 @@ namespace MahjongOut3D.LevelSystem
                 }
 
                 case LevelShapeType.Pyramid:
-                    return BuildShells(BuildPyramidCoordinates(gridSize));
+                    return new PyramidShellLayoutBuilder().Build(gridSize);
 
                 case LevelShapeType.Dome:
-                    return BuildShells(BuildDomeCoordinates(gridSize));
+                    return new DomeShellLayoutBuilder().Build(gridSize);
 
                 case LevelShapeType.Ramp:
-                    return BuildShells(BuildRampCoordinates(gridSize));
+                    return new RampShellLayoutBuilder().Build(gridSize);
             }
 
             return BuildShells(BuildShapeCoordinates(gridSize));
@@ -2352,120 +2350,6 @@ namespace MahjongOut3D.LevelSystem
             }
 
             return coordinates;
-        }
-
-        /// <summary>
-        /// Builds a compact stepped pyramid with every outer face exposed.
-        /// </summary>
-        private static List<Vector3Int> BuildPyramidCoordinates(VoxelGridSize gridSize)
-        {
-            int width = Mathf.Max(1, gridSize.Width);
-            int height = Mathf.Max(1, gridSize.Height);
-            int depth = Mathf.Max(1, gridSize.Depth);
-            List<Vector3Int> coordinates = new List<Vector3Int>(gridSize.Volume);
-
-            for (int y = 0; y < height; y++)
-            {
-                int insetX = Mathf.Min(y, Mathf.Max(0, (width - 1) / 2));
-                int insetZ = Mathf.Min(y, Mathf.Max(0, (depth - 1) / 2));
-                int minX = insetX;
-                int maxX = Mathf.Max(minX, width - 1 - insetX);
-                int minZ = insetZ;
-                int maxZ = Mathf.Max(minZ, depth - 1 - insetZ);
-
-                for (int x = minX; x <= maxX; x++)
-                {
-                    for (int z = minZ; z <= maxZ; z++)
-                    {
-                        coordinates.Add(new Vector3Int(x, y, z));
-                    }
-                }
-            }
-
-            EnsureEvenCoordinateCount(coordinates);
-            return coordinates;
-        }
-
-        /// <summary>
-        /// Builds a softly rounded dome by shrinking each upper layer toward the center.
-        /// </summary>
-        private static List<Vector3Int> BuildDomeCoordinates(VoxelGridSize gridSize)
-        {
-            int width = Mathf.Max(1, gridSize.Width);
-            int height = Mathf.Max(1, gridSize.Height);
-            int depth = Mathf.Max(1, gridSize.Depth);
-            List<Vector3Int> coordinates = new List<Vector3Int>(gridSize.Volume);
-            Vector2 center = new Vector2((width - 1) * 0.5f, (depth - 1) * 0.5f);
-            float radiusX = Mathf.Max(0.5f, (width - 1) * 0.5f);
-            float radiusZ = Mathf.Max(0.5f, (depth - 1) * 0.5f);
-
-            for (int y = 0; y < height; y++)
-            {
-                float t = height <= 1 ? 0f : y / Mathf.Max(1f, height - 1f);
-                float layerScale = Mathf.Sqrt(Mathf.Clamp01(1f - (t * t * 0.92f)));
-                float layerRadiusX = Mathf.Max(1f, radiusX * layerScale);
-                float layerRadiusZ = Mathf.Max(1f, radiusZ * layerScale);
-                int minX = Mathf.Clamp(Mathf.FloorToInt(center.x - layerRadiusX), 0, width - 1);
-                int maxX = Mathf.Clamp(Mathf.CeilToInt(center.x + layerRadiusX), 0, width - 1);
-                int minZ = Mathf.Clamp(Mathf.FloorToInt(center.y - layerRadiusZ), 0, depth - 1);
-                int maxZ = Mathf.Clamp(Mathf.CeilToInt(center.y + layerRadiusZ), 0, depth - 1);
-
-                for (int x = minX; x <= maxX; x++)
-                {
-                    for (int z = minZ; z <= maxZ; z++)
-                    {
-                        float dx = (x - center.x) / layerRadiusX;
-                        float dz = (z - center.y) / layerRadiusZ;
-                        if ((dx * dx) + (dz * dz) <= 1f)
-                        {
-                            coordinates.Add(new Vector3Int(x, y, z));
-                        }
-                    }
-                }
-            }
-
-            EnsureEvenCoordinateCount(coordinates);
-            return coordinates;
-        }
-
-        /// <summary>
-        /// Builds a simple slanted wedge that stays readable from the outside.
-        /// </summary>
-        private static List<Vector3Int> BuildRampCoordinates(VoxelGridSize gridSize)
-        {
-            int width = Mathf.Max(1, gridSize.Width);
-            int height = Mathf.Max(1, gridSize.Height);
-            int depth = Mathf.Max(1, gridSize.Depth);
-            List<Vector3Int> coordinates = new List<Vector3Int>(gridSize.Volume);
-
-            for (int x = 0; x < width; x++)
-            {
-                float progress = width <= 1 ? 1f : x / Mathf.Max(1f, width - 1f);
-                int allowedHeight = Mathf.Clamp(Mathf.CeilToInt(Mathf.Lerp(1f, height, progress)), 1, height);
-                for (int y = 0; y < allowedHeight; y++)
-                {
-                    for (int z = 0; z < depth; z++)
-                    {
-                        coordinates.Add(new Vector3Int(x, y, z));
-                    }
-                }
-            }
-
-            EnsureEvenCoordinateCount(coordinates);
-            return coordinates;
-        }
-
-        /// <summary>
-        /// Keeps shape volumes pair-friendly by trimming a single boundary tile when needed.
-        /// </summary>
-        private static void EnsureEvenCoordinateCount(List<Vector3Int> coordinates)
-        {
-            if (coordinates == null || coordinates.Count % 2 == 0 || coordinates.Count == 0)
-            {
-                return;
-            }
-
-            coordinates.RemoveAt(coordinates.Count - 1);
         }
 
         /// <summary>
