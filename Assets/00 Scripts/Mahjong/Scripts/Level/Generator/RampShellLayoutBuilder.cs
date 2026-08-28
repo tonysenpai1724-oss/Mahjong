@@ -31,7 +31,7 @@ namespace MahjongOut3D.LevelSystem
                 DirectShellLayoutBuilder.AddBox(occupiedCells, x, x, 0, columnHeight - 1, 0, depthCount - 1);
             }
 
-            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep());
+            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep(), tileMetrics.Thickness + inPlaneGap, tileMetrics.Thickness + inPlaneGap);
             return new List<List<ProceduralLevelBatchGenerator.TilePlacementData>> { shell };
         }
 

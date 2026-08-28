@@ -43,7 +43,9 @@ namespace MahjongOut3D.LevelSystem
         public static List<ProceduralLevelBatchGenerator.TilePlacementData> BuildSurfaceShell(
             HashSet<Vector3Int> occupiedCells,
             ProceduralLevelBatchGenerator.CubeTileMetrics metrics,
-            Vector3 cellStep)
+            Vector3 cellStep,
+            float sideNormalClearance = 0f,
+            float frontBackNormalClearance = 0f)
         {
             List<ProceduralLevelBatchGenerator.TilePlacementData> shell = new List<ProceduralLevelBatchGenerator.TilePlacementData>();
             if (occupiedCells == null || occupiedCells.Count == 0)
@@ -59,6 +61,8 @@ namespace MahjongOut3D.LevelSystem
             float xStep = Mathf.Max(faceWidth + MinimumSeparation, cellStep.x);
             float yStep = Mathf.Max(faceWidth + MinimumSeparation, cellStep.y);
             float zStep = Mathf.Max(faceHeight + MinimumSeparation, cellStep.z);
+            float safeSideNormalClearance = Mathf.Max(0f, sideNormalClearance);
+            float safeFrontBackNormalClearance = Mathf.Max(0f, frontBackNormalClearance);
             Vector3 center = new Vector3(
                 (minX + maxX) * 0.5f,
                 (minY + maxY) * 0.5f,
@@ -82,7 +86,9 @@ namespace MahjongOut3D.LevelSystem
                         xStep,
                         yStep,
                         zStep,
-                        thickness);
+                        thickness,
+                        safeSideNormalClearance,
+                        safeFrontBackNormalClearance);
                     shell.Add(CreatePlacement(coordinate, localPosition, facingDirection));
                 }
             }
@@ -97,9 +103,13 @@ namespace MahjongOut3D.LevelSystem
             float xStep,
             float yStep,
             float zStep,
-            float thickness)
+            float thickness,
+            float sideNormalClearance,
+            float frontBackNormalClearance)
         {
             float centeredX = (coordinate.x - center.x) * xStep;
+            float sideClearance = Mathf.Max(0f, sideNormalClearance);
+            float frontBackClearance = Mathf.Max(0f, frontBackNormalClearance);
             float centeredY = (coordinate.y - center.y) * yStep;
             float centeredZ = (coordinate.z - center.z) * zStep;
             float halfThickness = thickness * 0.5f;
@@ -108,13 +118,13 @@ namespace MahjongOut3D.LevelSystem
             {
                 case VoxelGridDirection.Left:
                     return new Vector3(
-                        centeredX - (xStep * 0.5f) + halfThickness - FacePadding,
+                        centeredX - (xStep * 0.5f) - sideClearance + halfThickness - FacePadding,
                         centeredY,
                         centeredZ);
 
                 case VoxelGridDirection.Right:
                     return new Vector3(
-                        centeredX + (xStep * 0.5f) - halfThickness + FacePadding,
+                        centeredX + (xStep * 0.5f) + sideClearance - halfThickness + FacePadding,
                         centeredY,
                         centeredZ);
 
@@ -134,14 +144,14 @@ namespace MahjongOut3D.LevelSystem
                     return new Vector3(
                         centeredX,
                         centeredY,
-                        centeredZ - (zStep * 0.5f) + halfThickness - FacePadding);
+                        centeredZ - (zStep * 0.5f) - frontBackClearance + halfThickness - FacePadding);
 
                 case VoxelGridDirection.Forward:
                 default:
                     return new Vector3(
                         centeredX,
                         centeredY,
-                        centeredZ + (zStep * 0.5f) - halfThickness + FacePadding);
+                        centeredZ + (zStep * 0.5f) + frontBackClearance - halfThickness + FacePadding);
             }
         }
 
