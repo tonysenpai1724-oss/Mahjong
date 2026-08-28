@@ -523,6 +523,7 @@ namespace MahjongOut3D.Managers
             MahjongTile trayMatchTile = FindMatchingTrayTile(tappedTile);
 
             bool completed = false;
+            GetAudioManager()?.PlayFlipTile();
             tappedTile.FlipFaceUp(() => completed = true);
 
             float elapsed = 0f;
@@ -563,6 +564,7 @@ namespace MahjongOut3D.Managers
                 }
 
                 bool flipCompleted = false;
+                GetAudioManager()?.PlayFlipTile();
                 tappedTile.FlipFaceUp(() => flipCompleted = true);
 
                 float flipElapsed = 0f;
@@ -630,6 +632,7 @@ namespace MahjongOut3D.Managers
                 if (ShouldRestoreMemoryTileFaceDown(tile))
                 {
                     int capturedIndex = index;
+                    GetAudioManager()?.PlayFlipTile();
                     tile.FlipFaceDown(() => completions[capturedIndex] = true);
                 }
                 else
@@ -715,6 +718,7 @@ namespace MahjongOut3D.Managers
             GetAudioManager()?.PlaySelect();
 
             bool completed = false;
+            GetAudioManager()?.PlayFlipTile();
             tappedTile.FlipFaceUp(() => completed = true);
 
             float elapsed = 0f;
@@ -826,6 +830,7 @@ namespace MahjongOut3D.Managers
                 GetTileManager()?.RefreshTileExposure();
                 IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.Match3);
                 GameplayManager.Instance?.RegisterSuccessfulMatch(GetMatchScoreValue(firstTile, secondTile));
+                GetAudioManager()?.PlayCombo(GameplayManager.Instance != null ? GameplayManager.Instance.CurrentCombo : 0);
                 Context.EventBus.Publish(new MatchSucceededEvent(firstTile, secondTile));
                 PublishProgress();
 
@@ -905,7 +910,6 @@ namespace MahjongOut3D.Managers
 
             try
             {
-                GetAudioManager()?.PlayMismatch();
 
                 float elapsed = 0f;
                 while (elapsed < MemoryRevealTimeoutSeconds)
@@ -922,6 +926,7 @@ namespace MahjongOut3D.Managers
                     firstTile.Deselect();
                     if (ShouldRestoreMemoryTileFaceDown(firstTile))
                     {
+                        GetAudioManager()?.PlayFlipTile();
                         firstTile.FlipFaceDown(() => firstCompleted = true);
                     }
                     else
@@ -935,6 +940,7 @@ namespace MahjongOut3D.Managers
                     secondTile.Deselect();
                     if (ShouldRestoreMemoryTileFaceDown(secondTile))
                     {
+                        GetAudioManager()?.PlayFlipTile();
                         secondTile.FlipFaceDown(() => secondCompleted = true);
                     }
                     else
@@ -1165,6 +1171,7 @@ namespace MahjongOut3D.Managers
                     tile.Deselect();
                     if (ShouldRestoreMemoryTileFaceDown(tile))
                     {
+                        GetAudioManager()?.PlayFlipTile();
                         tile.FlipFaceDown(() => completed = true);
                     }
                     else
@@ -1923,6 +1930,7 @@ namespace MahjongOut3D.Managers
                 if (tappedTile.IsFaceDown)
                 {
                     bool flipCompleted = false;
+                    GetAudioManager()?.PlayFlipTile();
                     tappedTile.FlipFaceUp(() => flipCompleted = true);
 
                     float flipElapsed = 0f;

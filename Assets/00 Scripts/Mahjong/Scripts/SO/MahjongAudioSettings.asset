@@ -12,13 +12,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6e9dc07988e0f2d2bc3ab515df38e6e, type: 3}
   m_Name: MahjongAudioSettings
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Data.MahjongAudioSettings
-  <SelectClip>k__BackingField: {fileID: 0}
-  <MatchClip>k__BackingField: {fileID: 0}
-  <MismatchClip>k__BackingField: {fileID: 0}
-  <WinClip>k__BackingField: {fileID: 0}
-  <LoseClip>k__BackingField: {fileID: 0}
+  <MahjongTapClip>k__BackingField: {fileID: 0}
+  <FlipTileClip>k__BackingField: {fileID: 8300000, guid: 511ca48ace5a22e388865b2b255f15e6, type: 3}
+  <TileMatchClip>k__BackingField: {fileID: 8300000, guid: 4421c475a4a06302497dac2f900b1306, type: 3}
+  <TileSmashClip>k__BackingField: {fileID: 8300000, guid: 97058d752946c27c49d7ef36a1832ae8, type: 3}
+  <GoodClip>k__BackingField: {fileID: 8300000, guid: 4e3dde090d90bcbb981c522aabb4f334, type: 3}
+  <GreatClip>k__BackingField: {fileID: 8300000, guid: ac2c3bdb529d5de5fb07272d0d399ab6, type: 3}
+  <ExcellentClip>k__BackingField: {fileID: 8300000, guid: 3dd6d052f77754db1b956de3ffb4766e, type: 3}
+  <WellDoneClip>k__BackingField: {fileID: 8300000, guid: 52bfefccbaeb8237ebbff3a4cc36ed00, type: 3}
+  <UnbelievableClip>k__BackingField: {fileID: 8300000, guid: f2aec6b142510cfb59dc24f2f824fb0b, type: 3}
+  <BrilliantClip>k__BackingField: {fileID: 8300000, guid: 143451623c6d66eaf815a9158ec3e89a, type: 3}
+  <LegendaryClip>k__BackingField: {fileID: 8300000, guid: df9af284c2d43c8b3852579feee156ed, type: 3}
+  <LevelCompletedClip>k__BackingField: {fileID: 8300000, guid: e94203be9feb83940a7d5391648215fe, type: 3}
+  <LevelFailedClip>k__BackingField: {fileID: 8300000, guid: 6e5ff258ccc5c690690015eb24c1428d, type: 3}
+  <MenuMusicClip>k__BackingField: {fileID: 8300000, guid: 1c6e6c7298ea6bd6a8ea76efb09b9fe3, type: 3}
+  <GameplayMusicClips>k__BackingField:
+  - {fileID: 8300000, guid: bf0a91e27518306f3a475d53372a716c, type: 3}
+  - {fileID: 8300000, guid: 23cdae521e8e90fcf89e3e15a3ddc9a2, type: 3}
+  - {fileID: 8300000, guid: 71f94e95a2a3a29d1991dc79f13747b5, type: 3}
+  <NatureClip>k__BackingField: {fileID: 8300000, guid: 9cced7758ffd2f1efaf875e64d0bfefe, type: 3}
   <HintClip>k__BackingField: {fileID: 0}
   <UndoClip>k__BackingField: {fileID: 0}
   <ShuffleClip>k__BackingField: {fileID: 0}
   <BombClip>k__BackingField: {fileID: 0}
   <XRayClip>k__BackingField: {fileID: 0}
+  <SelectClip>k__BackingField: {fileID: 0}
+  <MatchClip>k__BackingField: {fileID: 0}
+  <MismatchClip>k__BackingField: {fileID: 0}
+  <WinClip>k__BackingField: {fileID: 0}
+  <LoseClip>k__BackingField: {fileID: 0}

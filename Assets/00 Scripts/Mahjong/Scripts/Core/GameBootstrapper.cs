@@ -81,6 +81,12 @@ namespace MahjongOut3D.Core
                 MahjongRuntimeLogger.LogVerbose($"Initialized manager: {manager.GetType().Name}");
             }
 
+            MahjongOut3D.Managers.AudioManager persistentAudioManager = FindFirstObjectByType<MahjongOut3D.Managers.AudioManager>(FindObjectsInactive.Exclude);
+            if (persistentAudioManager != null && !persistentAudioManager.IsInitialized)
+            {
+                persistentAudioManager.Initialize(context);
+            }
+
             CacheLevelGenerators();
             for (int index = 0; index < levelGenerators.Count; index++)
             {

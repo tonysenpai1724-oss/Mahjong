@@ -242,7 +242,7 @@ namespace MahjongOut3D.CameraSystem
         public void FrameBounds(Bounds worldBounds, float paddingMultiplier = 1.2f, bool snap = false, bool resetAngles = false)
         {
             focusTarget = null;
-            focusPoint = worldBounds.center;
+            focusPoint = new Vector3(worldBounds.center.x, focusPoint.y, worldBounds.center.z);
 
             if (resetAngles)
             {
