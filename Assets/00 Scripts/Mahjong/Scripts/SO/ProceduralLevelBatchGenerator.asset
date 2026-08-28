@@ -42,7 +42,7 @@ MonoBehaviour:
     minLayerCount: 1
     maxLayerCount: 2
     minPairCount: 45
-    maxPairCount: 70
+    maxPairCount: 72
     flippedTileChance: 0.45
     shape: 4
     allowedShapes: 0d000000
