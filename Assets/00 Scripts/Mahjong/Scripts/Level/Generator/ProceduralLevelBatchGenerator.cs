@@ -1848,10 +1848,10 @@ namespace MahjongOut3D.LevelSystem
                     return new LShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
 
                 case LevelShapeType.Pyramid:
-                    return new PyramidShellLayoutBuilder().Build(gridSize);
+                    return new PyramidShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
 
                 case LevelShapeType.Dome:
-                    return new DomeShellLayoutBuilder().Build(gridSize);
+                    return new DomeShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
 
                 case LevelShapeType.Ramp:
                     return new RampShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);

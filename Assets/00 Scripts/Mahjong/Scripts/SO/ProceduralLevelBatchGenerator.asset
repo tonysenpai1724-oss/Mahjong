@@ -44,8 +44,8 @@ MonoBehaviour:
     minPairCount: 45
     maxPairCount: 70
     flippedTileChance: 0.45
-    shape: 5
-    allowedShapes: 09000000
+    shape: 4
+    allowedShapes: 03000000
     difficulty: 1
   hardSettings:
     label: Hard

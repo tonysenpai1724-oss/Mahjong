@@ -8,6 +8,9 @@ namespace MahjongOut3D.LevelSystem
     /// </summary>
     internal static class DirectShellLayoutBuilder
     {
+        private const float MinimumSeparation = 0.001f;
+        private const float FacePadding = 0.02f;
+
         private static readonly Vector3Int[] NeighborOffsets =
         {
             Vector3Int.left,
@@ -49,23 +52,20 @@ namespace MahjongOut3D.LevelSystem
             }
 
             GetBounds(occupiedCells, out int minX, out int maxX, out int minY, out int maxY, out int minZ, out int maxZ);
-            Vector3 safeStep = new Vector3(
-                Mathf.Max(0.01f, cellStep.x),
-                Mathf.Max(0.01f, cellStep.y),
-                Mathf.Max(0.01f, cellStep.z));
-            Vector3 centerOffset = new Vector3(
-                (maxX - minX) * safeStep.x,
-                (maxY - minY) * safeStep.y,
-                (maxZ - minZ) * safeStep.z) * 0.5f;
-            Vector3 normalPadding = new Vector3(0.02f, 0.02f, 0.02f);
+
+            float faceWidth = Mathf.Max(0.01f, metrics.FaceWidth);
+            float faceHeight = Mathf.Max(0.01f, metrics.FaceHeight);
+            float thickness = Mathf.Max(0.01f, metrics.Thickness);
+            float xStep = Mathf.Max(faceWidth + MinimumSeparation, cellStep.x);
+            float yStep = Mathf.Max(faceWidth + MinimumSeparation, cellStep.y);
+            float zStep = Mathf.Max(faceHeight + MinimumSeparation, cellStep.z);
+            Vector3 center = new Vector3(
+                (minX + maxX) * 0.5f,
+                (minY + maxY) * 0.5f,
+                (minZ + maxZ) * 0.5f);
 
             foreach (Vector3Int coordinate in occupiedCells)
             {
-                Vector3 baseLocalPosition = new Vector3(
-                    (coordinate.x - minX) * safeStep.x,
-                    (coordinate.y - minY) * safeStep.y,
-                    (coordinate.z - minZ) * safeStep.z) - centerOffset;
-
                 for (int directionIndex = 0; directionIndex < NeighborOffsets.Length; directionIndex++)
                 {
                     Vector3Int offset = NeighborOffsets[directionIndex];
@@ -75,10 +75,14 @@ namespace MahjongOut3D.LevelSystem
                     }
 
                     VoxelGridDirection facingDirection = ToGridDirection(offset);
-                    Vector3 outwardNormal = ((Vector3)offset).normalized;
-                    float faceOffset = GetFaceCenterOffset(facingDirection, safeStep);
-                    Vector3 localPosition = baseLocalPosition + (outwardNormal * (faceOffset + 0.02f));
-                    localPosition += Vector3.Scale(outwardNormal, normalPadding);
+                    Vector3 localPosition = GetFacePosition(
+                        coordinate,
+                        center,
+                        facingDirection,
+                        xStep,
+                        yStep,
+                        zStep,
+                        thickness);
                     shell.Add(CreatePlacement(coordinate, localPosition, facingDirection));
                 }
             }
@@ -86,22 +90,58 @@ namespace MahjongOut3D.LevelSystem
             return shell;
         }
 
-        private static float GetFaceCenterOffset(VoxelGridDirection facingDirection, Vector3 cellStep)
+        private static Vector3 GetFacePosition(
+            Vector3Int coordinate,
+            Vector3 center,
+            VoxelGridDirection facingDirection,
+            float xStep,
+            float yStep,
+            float zStep,
+            float thickness)
         {
+            float centeredX = (coordinate.x - center.x) * xStep;
+            float centeredY = (coordinate.y - center.y) * yStep;
+            float centeredZ = (coordinate.z - center.z) * zStep;
+            float halfThickness = thickness * 0.5f;
+
             switch (facingDirection)
             {
                 case VoxelGridDirection.Left:
+                    return new Vector3(
+                        centeredX - (xStep * 0.5f) + halfThickness - FacePadding,
+                        centeredY,
+                        centeredZ);
+
                 case VoxelGridDirection.Right:
-                    return Mathf.Max(0.01f, cellStep.x * 0.5f);
+                    return new Vector3(
+                        centeredX + (xStep * 0.5f) - halfThickness + FacePadding,
+                        centeredY,
+                        centeredZ);
 
                 case VoxelGridDirection.Down:
+                    return new Vector3(
+                        centeredX,
+                        centeredY - (yStep * 0.5f) + halfThickness - FacePadding,
+                        centeredZ);
+
                 case VoxelGridDirection.Up:
-                    return Mathf.Max(0.01f, cellStep.y * 0.5f);
+                    return new Vector3(
+                        centeredX,
+                        centeredY + (yStep * 0.5f) - halfThickness + FacePadding,
+                        centeredZ);
 
                 case VoxelGridDirection.Back:
+                    return new Vector3(
+                        centeredX,
+                        centeredY,
+                        centeredZ - (zStep * 0.5f) + halfThickness - FacePadding);
+
                 case VoxelGridDirection.Forward:
                 default:
-                    return Mathf.Max(0.01f, cellStep.z * 0.5f);
+                    return new Vector3(
+                        centeredX,
+                        centeredY,
+                        centeredZ + (zStep * 0.5f) - halfThickness + FacePadding);
             }
         }
 
@@ -146,19 +186,14 @@ namespace MahjongOut3D.LevelSystem
             {
                 case VoxelGridDirection.Left:
                     return new Vector3(0f, 0f, 90f);
-
                 case VoxelGridDirection.Right:
                     return new Vector3(0f, 0f, 270f);
-
                 case VoxelGridDirection.Down:
                     return new Vector3(0f, 0f, 180f);
-
                 case VoxelGridDirection.Up:
                     return Vector3.zero;
-
                 case VoxelGridDirection.Back:
                     return new Vector3(270f, 0f, 0f);
-
                 case VoxelGridDirection.Forward:
                 default:
                     return new Vector3(90f, 0f, 0f);
@@ -171,27 +206,22 @@ namespace MahjongOut3D.LevelSystem
             {
                 return VoxelGridDirection.Left;
             }
-
             if (offset == Vector3Int.right)
             {
                 return VoxelGridDirection.Right;
             }
-
             if (offset == Vector3Int.down)
             {
                 return VoxelGridDirection.Down;
             }
-
             if (offset == Vector3Int.up)
             {
                 return VoxelGridDirection.Up;
             }
-
             if (offset == new Vector3Int(0, 0, -1))
             {
                 return VoxelGridDirection.Back;
             }
-
             return VoxelGridDirection.Forward;
         }
     }
