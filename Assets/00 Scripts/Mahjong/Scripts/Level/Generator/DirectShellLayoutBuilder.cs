@@ -45,7 +45,8 @@ namespace MahjongOut3D.LevelSystem
             ProceduralLevelBatchGenerator.CubeTileMetrics metrics,
             Vector3 cellStep,
             float sideNormalClearance = 0f,
-            float frontBackNormalClearance = 0f)
+            float frontBackNormalClearance = 0f,
+            float upDownNormalClearance = 0f)
         {
             List<ProceduralLevelBatchGenerator.TilePlacementData> shell = new List<ProceduralLevelBatchGenerator.TilePlacementData>();
             if (occupiedCells == null || occupiedCells.Count == 0)
@@ -54,15 +55,15 @@ namespace MahjongOut3D.LevelSystem
             }
 
             GetBounds(occupiedCells, out int minX, out int maxX, out int minY, out int maxY, out int minZ, out int maxZ);
-
             float faceWidth = Mathf.Max(0.01f, metrics.FaceWidth);
             float faceHeight = Mathf.Max(0.01f, metrics.FaceHeight);
             float thickness = Mathf.Max(0.01f, metrics.Thickness);
             float xStep = Mathf.Max(faceWidth + MinimumSeparation, cellStep.x);
             float yStep = Mathf.Max(faceWidth + MinimumSeparation, cellStep.y);
             float zStep = Mathf.Max(faceHeight + MinimumSeparation, cellStep.z);
-            float safeSideNormalClearance = Mathf.Max(0f, sideNormalClearance);
-            float safeFrontBackNormalClearance = Mathf.Max(0f, frontBackNormalClearance);
+            float sideClearance = Mathf.Max(0f, sideNormalClearance);
+            float frontBackClearance = Mathf.Max(0f, frontBackNormalClearance);
+            float upDownClearance = Mathf.Max(0f, upDownNormalClearance);
             Vector3 center = new Vector3(
                 (minX + maxX) * 0.5f,
                 (minY + maxY) * 0.5f,
@@ -87,8 +88,9 @@ namespace MahjongOut3D.LevelSystem
                         yStep,
                         zStep,
                         thickness,
-                        safeSideNormalClearance,
-                        safeFrontBackNormalClearance);
+                        sideClearance,
+                        frontBackClearance,
+                        upDownClearance);
                     shell.Add(CreatePlacement(coordinate, localPosition, facingDirection));
                 }
             }
@@ -104,12 +106,11 @@ namespace MahjongOut3D.LevelSystem
             float yStep,
             float zStep,
             float thickness,
-            float sideNormalClearance,
-            float frontBackNormalClearance)
+            float sideClearance,
+            float frontBackClearance,
+            float upDownClearance)
         {
             float centeredX = (coordinate.x - center.x) * xStep;
-            float sideClearance = Mathf.Max(0f, sideNormalClearance);
-            float frontBackClearance = Mathf.Max(0f, frontBackNormalClearance);
             float centeredY = (coordinate.y - center.y) * yStep;
             float centeredZ = (coordinate.z - center.z) * zStep;
             float halfThickness = thickness * 0.5f;
@@ -131,13 +132,13 @@ namespace MahjongOut3D.LevelSystem
                 case VoxelGridDirection.Down:
                     return new Vector3(
                         centeredX,
-                        centeredY - (yStep * 0.5f) + halfThickness - FacePadding,
+                        centeredY - (yStep * 0.5f) - upDownClearance + halfThickness - FacePadding,
                         centeredZ);
 
                 case VoxelGridDirection.Up:
                     return new Vector3(
                         centeredX,
-                        centeredY + (yStep * 0.5f) - halfThickness + FacePadding,
+                        centeredY + (yStep * 0.5f) + upDownClearance - halfThickness + FacePadding,
                         centeredZ);
 
                 case VoxelGridDirection.Back:
@@ -152,26 +153,6 @@ namespace MahjongOut3D.LevelSystem
                         centeredX,
                         centeredY,
                         centeredZ + (zStep * 0.5f) + frontBackClearance - halfThickness + FacePadding);
-            }
-        }
-
-        private static void GetBounds(HashSet<Vector3Int> occupiedCells, out int minX, out int maxX, out int minY, out int maxY, out int minZ, out int maxZ)
-        {
-            minX = int.MaxValue;
-            minY = int.MaxValue;
-            minZ = int.MaxValue;
-            maxX = int.MinValue;
-            maxY = int.MinValue;
-            maxZ = int.MinValue;
-
-            foreach (Vector3Int coordinate in occupiedCells)
-            {
-                minX = Mathf.Min(minX, coordinate.x);
-                maxX = Mathf.Max(maxX, coordinate.x);
-                minY = Mathf.Min(minY, coordinate.y);
-                maxY = Mathf.Max(maxY, coordinate.y);
-                minZ = Mathf.Min(minZ, coordinate.z);
-                maxZ = Mathf.Max(maxZ, coordinate.z);
             }
         }
 
@@ -207,6 +188,26 @@ namespace MahjongOut3D.LevelSystem
                 case VoxelGridDirection.Forward:
                 default:
                     return new Vector3(90f, 0f, 0f);
+            }
+        }
+
+        private static void GetBounds(HashSet<Vector3Int> occupiedCells, out int minX, out int maxX, out int minY, out int maxY, out int minZ, out int maxZ)
+        {
+            minX = int.MaxValue;
+            minY = int.MaxValue;
+            minZ = int.MaxValue;
+            maxX = int.MinValue;
+            maxY = int.MinValue;
+            maxZ = int.MinValue;
+
+            foreach (Vector3Int coordinate in occupiedCells)
+            {
+                minX = Mathf.Min(minX, coordinate.x);
+                maxX = Mathf.Max(maxX, coordinate.x);
+                minY = Mathf.Min(minY, coordinate.y);
+                maxY = Mathf.Max(maxY, coordinate.y);
+                minZ = Mathf.Min(minZ, coordinate.z);
+                maxZ = Mathf.Max(maxZ, coordinate.z);
             }
         }
 

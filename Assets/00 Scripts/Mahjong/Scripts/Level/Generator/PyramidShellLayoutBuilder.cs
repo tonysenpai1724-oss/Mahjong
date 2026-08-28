@@ -33,7 +33,7 @@ namespace MahjongOut3D.LevelSystem
 
             return new List<List<ProceduralLevelBatchGenerator.TilePlacementData>>
             {
-                DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep(), tileMetrics.Thickness + inPlaneGap, tileMetrics.Thickness + inPlaneGap)
+                DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep(), tileMetrics.Thickness + inPlaneGap, tileMetrics.Thickness + inPlaneGap, tileMetrics.Thickness + inPlaneGap)
             };
         }
 

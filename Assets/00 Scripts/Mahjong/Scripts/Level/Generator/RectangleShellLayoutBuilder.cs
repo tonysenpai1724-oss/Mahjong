@@ -26,7 +26,7 @@ namespace MahjongOut3D.LevelSystem
             HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>(gridSize.Volume);
             DirectShellLayoutBuilder.AddBox(occupiedCells, 0, widthCount - 1, 0, heightCount - 1, 0, depthCount - 1);
 
-            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep());
+            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep(), 0f, 0f, tileMetrics.Thickness + inPlaneGap);
             return new List<List<ProceduralLevelBatchGenerator.TilePlacementData>> { shell };
         }
 
