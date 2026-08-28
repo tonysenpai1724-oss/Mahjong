@@ -9,7 +9,12 @@ namespace MahjongOut3D.LevelSystem
         {
             return shape == LevelShapeType.Pyramid
                 || shape == LevelShapeType.Dome
-                || shape == LevelShapeType.Ramp;
+                || shape == LevelShapeType.Ramp
+                || shape == LevelShapeType.Rectangle
+                || shape == LevelShapeType.T
+                || shape == LevelShapeType.H
+                || shape == LevelShapeType.I
+                || shape == LevelShapeType.L;
         }
     }
 }

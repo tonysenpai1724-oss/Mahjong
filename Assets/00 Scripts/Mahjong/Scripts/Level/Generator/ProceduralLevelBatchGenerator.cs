@@ -298,6 +298,11 @@ namespace MahjongOut3D.LevelSystem
                 case LevelShapeType.Cube:
                 case LevelShapeType.Heart:
                 case LevelShapeType.Cylinder:
+                case LevelShapeType.Rectangle:
+                case LevelShapeType.T:
+                case LevelShapeType.H:
+                case LevelShapeType.I:
+                case LevelShapeType.L:
                 case LevelShapeType.Pyramid:
                 case LevelShapeType.Dome:
                 case LevelShapeType.Ramp:
@@ -1057,6 +1062,31 @@ namespace MahjongOut3D.LevelSystem
                 return LevelShapeType.Ramp;
             }
 
+            if (normalized.Equals("rectangle", StringComparison.OrdinalIgnoreCase) || normalized.Equals("rect", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.Rectangle;
+            }
+
+            if (normalized.Equals("t", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.T;
+            }
+
+            if (normalized.Equals("h", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.H;
+            }
+
+            if (normalized.Equals("i", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.I;
+            }
+
+            if (normalized.Equals("l", StringComparison.OrdinalIgnoreCase))
+            {
+                return LevelShapeType.L;
+            }
+
             return LevelShapeType.Cube;
         }
 
@@ -1464,7 +1494,7 @@ namespace MahjongOut3D.LevelSystem
             int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
             int total = GetShellTileCapacity(shells);
 
-            if (candidate.Shape == LevelShapeType.Pyramid || candidate.Shape == LevelShapeType.Dome || candidate.Shape == LevelShapeType.Ramp)
+            if (ShouldKeepShapeSelectionCompact(candidate.Shape))
             {
                 int clamped1Total = Mathf.Min(total, maxTileCount);
                 return clamped1Total % 2 == 0 ? clamped1Total : Mathf.Max(2, clamped1Total - 1);
@@ -1802,6 +1832,21 @@ namespace MahjongOut3D.LevelSystem
                     return builder.Build(targetLayerCount, minTileCount, maxTileCount, random);
                 }
 
+                case LevelShapeType.Rectangle:
+                    return new RectangleShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+
+                case LevelShapeType.T:
+                    return new TShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+
+                case LevelShapeType.H:
+                    return new HShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+
+                case LevelShapeType.I:
+                    return new IShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+
+                case LevelShapeType.L:
+                    return new LShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+
                 case LevelShapeType.Pyramid:
                     return new PyramidShellLayoutBuilder().Build(gridSize);
 
@@ -1809,7 +1854,7 @@ namespace MahjongOut3D.LevelSystem
                     return new DomeShellLayoutBuilder().Build(gridSize);
 
                 case LevelShapeType.Ramp:
-                    return new RampShellLayoutBuilder().Build(gridSize);
+                    return new RampShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
             }
 
             return BuildShells(BuildShapeCoordinates(gridSize));
@@ -2308,6 +2353,36 @@ namespace MahjongOut3D.LevelSystem
                     width = Mathf.Clamp(4 + (safeLayerCount * 2), 6, 18);
                     height = Mathf.Clamp(2 + safeLayerCount, 3, 8);
                     depth = width;
+                    break;
+
+                case LevelShapeType.Rectangle:
+                    width = Mathf.Clamp(4 + (safeLayerCount * 2), 4, 18);
+                    height = Mathf.Clamp(2 + (safeLayerCount / 2), 2, 8);
+                    depth = Mathf.Clamp(4 + safeLayerCount, 4, 18);
+                    break;
+
+                case LevelShapeType.T:
+                    width = Mathf.Clamp(5 + (safeLayerCount * 2), 5, 18);
+                    height = Mathf.Clamp(4 + safeLayerCount, 4, 12);
+                    depth = Mathf.Clamp(3 + (safeLayerCount / 2), 3, 8);
+                    break;
+
+                case LevelShapeType.H:
+                    width = Mathf.Clamp(5 + (safeLayerCount * 2), 5, 18);
+                    height = Mathf.Clamp(4 + safeLayerCount, 4, 12);
+                    depth = Mathf.Clamp(3 + (safeLayerCount / 2), 3, 8);
+                    break;
+
+                case LevelShapeType.I:
+                    width = Mathf.Clamp(3 + (safeLayerCount / 2), 3, 7);
+                    height = Mathf.Clamp(5 + (safeLayerCount * 2), 5, 16);
+                    depth = Mathf.Clamp(3 + (safeLayerCount / 2), 3, 7);
+                    break;
+
+                case LevelShapeType.L:
+                    width = Mathf.Clamp(4 + safeLayerCount, 4, 12);
+                    height = Mathf.Clamp(5 + (safeLayerCount * 2), 5, 16);
+                    depth = Mathf.Clamp(3 + (safeLayerCount / 2), 3, 7);
                     break;
 
                 case LevelShapeType.Pyramid:

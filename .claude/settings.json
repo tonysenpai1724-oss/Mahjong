@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /home/sudv/Mahjong status --short -- \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/RampShellLayoutBuilder.cs\")",
+      "Bash(git -C /home/sudv/Mahjong diff -- \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/DirectShellLayoutBuilder.cs\" \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/RampShellLayoutBuilder.cs\")",
+      "Read(//dev/**)",
+      "Bash(git -C /home/sudv/Mahjong status --short -- \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator\")"
+    ]
+  }
+}

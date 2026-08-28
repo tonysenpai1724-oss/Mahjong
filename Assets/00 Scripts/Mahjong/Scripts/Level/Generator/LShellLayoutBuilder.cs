@@ -4,14 +4,14 @@ using UnityEngine;
 namespace MahjongOut3D.LevelSystem
 {
     /// <summary>
-    /// Builds a stepped ramp shell as one contiguous 3D block.
+    /// Builds a blocky L-shaped shell from rectangular prisms.
     /// </summary>
-    internal sealed class RampShellLayoutBuilder
+    internal sealed class LShellLayoutBuilder
     {
         private readonly ProceduralLevelBatchGenerator.CubeTileMetrics tileMetrics;
         private readonly float inPlaneGap;
 
-        public RampShellLayoutBuilder(ProceduralLevelBatchGenerator.CubeTileMetrics tileMetrics, float inPlaneGap)
+        public LShellLayoutBuilder(ProceduralLevelBatchGenerator.CubeTileMetrics tileMetrics, float inPlaneGap)
         {
             this.tileMetrics = tileMetrics;
             this.inPlaneGap = Mathf.Max(0f, inPlaneGap);
@@ -19,17 +19,17 @@ namespace MahjongOut3D.LevelSystem
 
         public List<List<ProceduralLevelBatchGenerator.TilePlacementData>> Build(VoxelGridSize gridSize)
         {
-            int widthCount = Mathf.Max(2, gridSize.Width);
-            int heightCount = Mathf.Max(2, gridSize.Height);
+            int widthCount = Mathf.Max(3, gridSize.Width);
+            int heightCount = Mathf.Max(3, gridSize.Height);
             int depthCount = Mathf.Max(2, gridSize.Depth);
 
-            HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>(gridSize.Volume);
-            for (int x = 0; x < widthCount; x++)
-            {
-                float progress = widthCount <= 1 ? 1f : x / Mathf.Max(1f, widthCount - 1f);
-                int columnHeight = Mathf.Clamp(Mathf.CeilToInt(Mathf.Lerp(1f, heightCount, progress)), 1, heightCount);
-                DirectShellLayoutBuilder.AddBox(occupiedCells, x, x, 0, columnHeight - 1, 0, depthCount - 1);
-            }
+            HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>();
+
+            int barWidth = Mathf.Max(1, Mathf.CeilToInt(widthCount * 0.26f));
+            int barHeight = Mathf.Max(1, Mathf.CeilToInt(heightCount * 0.26f));
+
+            DirectShellLayoutBuilder.AddBox(occupiedCells, 0, barWidth - 1, 0, heightCount - 1, 0, depthCount - 1);
+            DirectShellLayoutBuilder.AddBox(occupiedCells, 0, widthCount - 1, 0, barHeight - 1, 0, depthCount - 1);
 
             List<ProceduralLevelBatchGenerator.TilePlacementData> shell = DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep());
             return new List<List<ProceduralLevelBatchGenerator.TilePlacementData>> { shell };

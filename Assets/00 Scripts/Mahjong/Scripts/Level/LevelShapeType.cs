@@ -13,5 +13,10 @@ namespace MahjongOut3D.LevelSystem
         Ramp = 5,
 
         Custom = 8,
+        Rectangle = 9,
+        T = 10,
+        H = 11,
+        I = 12,
+        L = 13,
     }
 }
