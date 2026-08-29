@@ -3219,6 +3219,7 @@ GameObject:
   - component: {fileID: 570556428}
   - component: {fileID: 570556427}
   - component: {fileID: 570556429}
+  - component: {fileID: 570556430}
   m_Layer: 5
   m_Name: Hint
   m_TagString: Untagged
@@ -3329,6 +3330,19 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &570556430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570556425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913334ebd487e764b9083acdf346d4cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClick
+  button: {fileID: 0}
 --- !u!1 &572115177
 GameObject:
   m_ObjectHideFlags: 0
@@ -3715,6 +3729,7 @@ GameObject:
   - component: {fileID: 639115193}
   - component: {fileID: 639115192}
   - component: {fileID: 639115191}
+  - component: {fileID: 639115194}
   m_Layer: 5
   m_Name: Undo
   m_TagString: Untagged
@@ -3825,6 +3840,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 639115189}
   m_CullTransparentMesh: 1
+--- !u!114 &639115194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 639115189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913334ebd487e764b9083acdf346d4cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClick
+  button: {fileID: 0}
 --- !u!1 &667352534
 GameObject:
   m_ObjectHideFlags: 0
@@ -8125,6 +8153,7 @@ GameObject:
   - component: {fileID: 1322328586}
   - component: {fileID: 1322328585}
   - component: {fileID: 1322328584}
+  - component: {fileID: 1322328587}
   m_Layer: 5
   m_Name: Shuffle
   m_TagString: Untagged
@@ -8235,6 +8264,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1322328582}
   m_CullTransparentMesh: 1
+--- !u!114 &1322328587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1322328582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913334ebd487e764b9083acdf346d4cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClick
+  button: {fileID: 0}
 --- !u!1 &1342095794
 GameObject:
   m_ObjectHideFlags: 0
@@ -9650,7 +9692,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1585504728
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10003,6 +10045,7 @@ GameObject:
   - component: {fileID: 1608855496}
   - component: {fileID: 1608855498}
   - component: {fileID: 1608855499}
+  - component: {fileID: 1608855500}
   m_Layer: 5
   m_Name: Setting
   m_TagString: Untagged
@@ -10127,6 +10170,19 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1608855500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608855494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913334ebd487e764b9083acdf346d4cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClick
+  button: {fileID: 0}
 --- !u!1 &1616776421
 GameObject:
   m_ObjectHideFlags: 0
@@ -10653,7 +10709,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1817194425
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11075,7 +11131,7 @@ MonoBehaviour:
     quantityText: {fileID: 0}
     availableSprite: {fileID: 0}
     emptySprite: {fileID: 0}
-  pieceMaterialDropdown: {fileID: 2134241727}
+  pieceMaterialDropdown: {fileID: 0}
   comboText: {fileID: 0}
   comboImage: {fileID: 521955250}
   comboTrayGlowController: {fileID: 0}
@@ -16853,7 +16909,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2134241727
 MonoBehaviour:
   m_ObjectHideFlags: 0

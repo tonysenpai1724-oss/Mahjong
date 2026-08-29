@@ -26,7 +26,11 @@ MonoBehaviour:
   <Difficulty>k__BackingField: 1
   <FaceDownTileRatio>k__BackingField: 0
   <ComboTileRatio>k__BackingField: 0
-  <FillCategoryNames>k__BackingField: []
+  <FillCategoryNames>k__BackingField:
+  - Sakura
+  - Dragons
+  - Cards
+  - Japan
   <Tiles>k__BackingField:
   - matchId: 57
     gridCoordinate: {x: 0, y: 0, z: 0}

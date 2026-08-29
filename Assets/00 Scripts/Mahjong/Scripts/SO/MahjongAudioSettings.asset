@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6e9dc07988e0f2d2bc3ab515df38e6e, type: 3}
   m_Name: MahjongAudioSettings
   m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.Data.MahjongAudioSettings
-  <MahjongTapClip>k__BackingField: {fileID: 0}
+  <MahjongTapClip>k__BackingField: {fileID: 8300000, guid: 3b5b030f069933943aa4853ed70a46d2, type: 3}
   <FlipTileClip>k__BackingField: {fileID: 8300000, guid: 511ca48ace5a22e388865b2b255f15e6, type: 3}
   <TileMatchClip>k__BackingField: {fileID: 8300000, guid: 4421c475a4a06302497dac2f900b1306, type: 3}
   <TileSmashClip>k__BackingField: {fileID: 8300000, guid: 97058d752946c27c49d7ef36a1832ae8, type: 3}
+  <TileAppearClip>k__BackingField: {fileID: 8300000, guid: 15f3f8225fafc5d4088e1258e83ef062, type: 3}
   <GoodClip>k__BackingField: {fileID: 8300000, guid: 4e3dde090d90bcbb981c522aabb4f334, type: 3}
   <GreatClip>k__BackingField: {fileID: 8300000, guid: ac2c3bdb529d5de5fb07272d0d399ab6, type: 3}
   <ExcellentClip>k__BackingField: {fileID: 8300000, guid: 3dd6d052f77754db1b956de3ffb4766e, type: 3}
@@ -36,6 +37,7 @@ MonoBehaviour:
   <ShuffleClip>k__BackingField: {fileID: 0}
   <BombClip>k__BackingField: {fileID: 0}
   <XRayClip>k__BackingField: {fileID: 0}
+  <uiClikClip>k__BackingField: {fileID: 8300000, guid: 488371097f903e94f81e8d0736b6d8dd, type: 3}
   <SelectClip>k__BackingField: {fileID: 0}
   <MatchClip>k__BackingField: {fileID: 0}
   <MismatchClip>k__BackingField: {fileID: 0}

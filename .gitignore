@@ -98,3 +98,10 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+# Firebase & Heavy Native Plugins
+/[Aa]ssets/Firebase/Plugins/
+*.bundle
+*.so
+*.dll
+*.dylib
+*.a

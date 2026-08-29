@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MahjongOut3D.Core;
 using MahjongOut3D.Data;
 using MahjongOut3D.Gameplay;
@@ -18,7 +19,7 @@ namespace MahjongOut3D.Managers
         [SerializeField] private AudioSource sfxSource;
         [SerializeField] private AudioSource ambientSource;
 
-        private static AudioManager persistentInstance;
+        public  static AudioManager persistentInstance;
         private AudioClip activeGameplayMusic;
         private bool hasStartedEarlyAudio;
 
@@ -48,6 +49,7 @@ namespace MahjongOut3D.Managers
 
             DontDestroyOnLoad(gameObject);
             StartEarlyAudio();
+             UnityEngine.Debug.Log("AudioManager: Awake complete.");
         }
 
         /// <summary>
@@ -86,6 +88,7 @@ namespace MahjongOut3D.Managers
             EnsureAudioSources();
             ApplyLegacyAudioSettings();
             PlayMenuMusic();
+            UnityEngine.Debug.Log("AudioManager: Started early audio playback.");
         }
 
         private void EnsureAudioSources()
@@ -213,7 +216,24 @@ namespace MahjongOut3D.Managers
         /// </summary>
         public void PlayMismatch()
         {
+            PlayTileSmash();
+            UnityEngine.Debug.Log("AudioManager: Played mismatch sound effect.");
+        }
+
+        /// <summary>
+        /// Plays the tile smash impact sound effect.
+        /// </summary>
+        public void PlayTileSmash()
+        {
             PlaySfx(audioSettings != null && audioSettings.TileSmashClip != null ? audioSettings.TileSmashClip : audioSettings != null ? audioSettings.MismatchClip : null);
+        }
+
+        /// <summary>
+        /// Plays the tile appear sound effect.
+        /// </summary>
+        public void PlayTileAppear()
+        {
+            PlaySfx(audioSettings != null ? audioSettings.TileAppearClip : null);
         }
 
         /// <summary>
@@ -240,6 +260,11 @@ namespace MahjongOut3D.Managers
         public void PlayCombo(int combo)
         {
             if (audioSettings == null)
+            {
+                return;
+            }
+
+            if (combo < 5 || combo % 5 != 0)
             {
                 return;
             }
@@ -291,6 +316,10 @@ namespace MahjongOut3D.Managers
         {
             PlayMusic(audioSettings != null ? audioSettings.MenuMusicClip : null);
             StopAmbient();
+        }
+        public void PlayUISfx()
+        {
+            PlaySfx(audioSettings != null ? audioSettings.uiClikClip : null);
         }
 
         private void PlayGameplayMusic()

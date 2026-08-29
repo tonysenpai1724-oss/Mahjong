@@ -13,6 +13,7 @@ namespace MahjongOut3D.Data
         [field: SerializeField] public AudioClip FlipTileClip { get; private set; }
         [field: SerializeField] public AudioClip TileMatchClip { get; private set; }
         [field: SerializeField] public AudioClip TileSmashClip { get; private set; }
+        [field: SerializeField] public AudioClip TileAppearClip { get; private set; }
 
         [field: Header("Combo SFX")]
         [field: SerializeField] public AudioClip GoodClip { get; private set; }
@@ -38,6 +39,7 @@ namespace MahjongOut3D.Data
         [field: SerializeField] public AudioClip ShuffleClip { get; private set; }
         [field: SerializeField] public AudioClip BombClip { get; private set; }
         [field: SerializeField] public AudioClip XRayClip { get; private set; }
+        [field: SerializeField] public AudioClip uiClikClip { get; private set; }
 
         [field: Header("Legacy aliases")]
         [field: SerializeField] public AudioClip SelectClip { get; private set; }

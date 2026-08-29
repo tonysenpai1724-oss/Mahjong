@@ -18,36 +18,12 @@ MonoBehaviour:
     textures:
     - {fileID: 2800000, guid: 0bd7c7c0d4afe4e33bf45fb5e9eaf02d, type: 3}
     - {fileID: 2800000, guid: f22c98b99c151d4ab8c74ca4142fb0bd, type: 3}
-    - {fileID: 2800000, guid: 3fd4f0998fcb67bcd9062c2a8532705c, type: 3}
-    - {fileID: 2800000, guid: ede84862a876b6852922c19ea01cdf51, type: 3}
-    - {fileID: 2800000, guid: 51f4d07194d295412a5995c12f2f757e, type: 3}
-    - {fileID: 2800000, guid: 849e69a11edac020ba3dddb974729710, type: 3}
-    - {fileID: 2800000, guid: 982580cac418c0bcd83593eb29812b67, type: 3}
-    - {fileID: 2800000, guid: c203bcd05933e9bdfa38b5e0570e0fd3, type: 3}
-    - {fileID: 2800000, guid: 7bdfee9648966c348aad4519f737d1b2, type: 3}
-    - {fileID: 2800000, guid: 7d090c89264696739b8fcb344de0c25a, type: 3}
-    - {fileID: 2800000, guid: e8476f936ad40c5479c0d11eec4e2842, type: 3}
-    - {fileID: 2800000, guid: 4d6ba5ea4c370b9e193a0c0e39f8753d, type: 3}
-    - {fileID: 2800000, guid: b3f60c8a4b70482ce9aefb72d62dbf84, type: 3}
-    - {fileID: 2800000, guid: ef5d9e3e097d2b102a22589d54beb7f4, type: 3}
-    - {fileID: 2800000, guid: 150ff2fbf09056744949ffce7becdf01, type: 3}
-    - {fileID: 2800000, guid: 1891090ddef52dfb7b7299fa58ccfe15, type: 3}
-    - {fileID: 2800000, guid: 82b83e10ec193ec2abfa12a4f59c5856, type: 3}
-    - {fileID: 2800000, guid: ee030053385faf54e80ea427373ec02b, type: 3}
-    - {fileID: 2800000, guid: c923fb685299b7414b742113edd20d4e, type: 3}
-    - {fileID: 2800000, guid: c04b22877273f784dab126f0fa4e6e44, type: 3}
-    - {fileID: 2800000, guid: beab90922e67e7893bdaad78b72ea64f, type: 3}
-    - {fileID: 2800000, guid: ff0c0d0916d727bf980e799aaf6bd4a0, type: 3}
-    - {fileID: 2800000, guid: 4785c8c11f7bd747f9288f26c9215650, type: 3}
-    - {fileID: 2800000, guid: 1718092e4e4c905759869658efa98d51, type: 3}
-    - {fileID: 2800000, guid: d3a0523795ec0384a8821d6840d5f075, type: 3}
-    - {fileID: 2800000, guid: 7cb2b129ba084230b8043adde4ba6f4f, type: 3}
-    - {fileID: 2800000, guid: cb5a45b78175f02ecbbd3444a90df996, type: 3}
-    - {fileID: 2800000, guid: 051e837b837d71f2d9175d57db46952e, type: 3}
-    - {fileID: 2800000, guid: a08c48b9ee8def352881070ff856ba59, type: 3}
-    - {fileID: 2800000, guid: a31c02c01e48ca2c687703dc954faf0e, type: 3}
-    - {fileID: 2800000, guid: d60d9daeb5ac4fc44880632072c69553, type: 3}
     - {fileID: 2800000, guid: 8ab22d824ffbe4d87921a8df4f793c33, type: 3}
+    - {fileID: 2800000, guid: c04b22877273f784dab126f0fa4e6e44, type: 3}
+    - {fileID: 2800000, guid: ff0c0d0916d727bf980e799aaf6bd4a0, type: 3}
+    - {fileID: 2800000, guid: 7cb2b129ba084230b8043adde4ba6f4f, type: 3}
+    - {fileID: 2800000, guid: a08c48b9ee8def352881070ff856ba59, type: 3}
+    - {fileID: 2800000, guid: c203bcd05933e9bdfa38b5e0570e0fd3, type: 3}
   fillBaseMaterial: {fileID: 2100000, guid: 331e6e224da8eaac2a6e5d9d31298dbb, type: 2}
   fillCategories:
   - categoryName: Bamboo

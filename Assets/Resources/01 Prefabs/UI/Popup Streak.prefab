@@ -4194,6 +4194,7 @@ GameObject:
   - component: {fileID: 1391447050859508256}
   - component: {fileID: 2449375074384910549}
   - component: {fileID: 8539440660668510987}
+  - component: {fileID: 5826350948980435628}
   m_Layer: 5
   m_Name: Close
   m_TagString: Untagged
@@ -4303,6 +4304,19 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5826350948980435628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7732290256090398188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913334ebd487e764b9083acdf346d4cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonClick
+  button: {fileID: 0}
 --- !u!1 &7843687871491921568
 GameObject:
   m_ObjectHideFlags: 0

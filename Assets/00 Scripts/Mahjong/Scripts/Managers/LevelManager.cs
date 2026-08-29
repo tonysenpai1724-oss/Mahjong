@@ -129,6 +129,11 @@ namespace MahjongOut3D.Managers
             SetCurrentLevel(levelIndex);
             SetActiveLevelDefinition(definition, definition != null && definition.UseSurfaceTilePlacement);
             Debug.Log($"[Mahjong] LoadLevel success path. Generating level '{definition.name}' at index {levelIndex}.");
+            if (Context.Services.TryGet(out AudioManager audioManager))
+            {
+                audioManager.PlayTileAppear();
+            }
+
             generator.GenerateFromDefinition(definition);
             return true;
         }

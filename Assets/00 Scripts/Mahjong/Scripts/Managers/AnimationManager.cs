@@ -143,10 +143,11 @@ namespace MahjongOut3D.Managers
         /// <param name="firstTile">First tile to animate.</param>
         /// <param name="secondTile">Second tile to animate.</param>
         /// <param name="onCompleted">Optional callback invoked when the animation completes.</param>
+        /// <param name="onImpact">Optional callback invoked when the tiles collide and feedback spawns.</param>
         /// <returns>Running coroutine instance.</returns>
-        public Coroutine PlayMatchSequence(MahjongTile firstTile, MahjongTile secondTile, Action onCompleted = null)
+        public Coroutine PlayMatchSequence(MahjongTile firstTile, MahjongTile secondTile, Action onCompleted = null, Action onImpact = null)
         {
-            return StartCoroutine(PlayMatchSequenceRoutine(firstTile, secondTile, onCompleted));
+            return StartCoroutine(PlayMatchSequenceRoutine(firstTile, secondTile, onCompleted, onImpact));
         }
 
         /// <summary>
@@ -486,7 +487,7 @@ namespace MahjongOut3D.Managers
         /// <summary>
         /// Executes the full match animation and camera shake sequence.
         /// </summary>
-        private IEnumerator PlayMatchSequenceRoutine(MahjongTile firstTile, MahjongTile secondTile, Action onCompleted)
+        private IEnumerator PlayMatchSequenceRoutine(MahjongTile firstTile, MahjongTile secondTile, Action onCompleted, Action onImpact)
         {
             if (firstTile == null || secondTile == null)
             {
@@ -513,7 +514,7 @@ namespace MahjongOut3D.Managers
 
             if (firstPreview != null || secondPreview != null)
             {
-                yield return PlayTrayPreviewMatchSequenceRoutine(firstTile, secondTile, firstPreview, secondPreview);
+                yield return PlayTrayPreviewMatchSequenceRoutine(firstTile, secondTile, firstPreview, secondPreview, onImpact);
                 PlayCameraShake();
                 onCompleted?.Invoke();
                 SetAnimationLock(false);
@@ -593,6 +594,7 @@ namespace MahjongOut3D.Managers
             secondTile.transform.SetPositionAndRotation(secondImpactWorld, secondImpactRotation);
 
             PlayMatchFeedback(firstTile, secondTile, impactWorld);
+            onImpact?.Invoke();
             firstTile.SetVisible(false);
             secondTile.SetVisible(false);
             PlayCameraShake();
@@ -1260,7 +1262,8 @@ namespace MahjongOut3D.Managers
             MahjongTile firstTile,
             MahjongTile secondTile,
             RuntimeTrayPreview firstPreview,
-            RuntimeTrayPreview secondPreview)
+            RuntimeTrayPreview secondPreview,
+            Action onImpact)
         {
             Camera activeCamera = null;
             if (Context.Services.TryGet(out CameraManager cameraManager))
@@ -1296,13 +1299,13 @@ namespace MahjongOut3D.Managers
 
             if (firstPreview?.RectTransform == null)
             {
-                yield return AnimateSingleTrayPreviewMatch(secondTile, secondPreview, firstTile);
+                yield return AnimateSingleTrayPreviewMatch(secondTile, secondPreview, firstTile, onImpact);
                 yield break;
             }
 
             if (secondPreview?.RectTransform == null)
             {
-                yield return AnimateSingleTrayPreviewMatch(firstTile, firstPreview, secondTile);
+                yield return AnimateSingleTrayPreviewMatch(firstTile, firstPreview, secondTile, onImpact);
                 yield break;
             }
 
@@ -1374,6 +1377,7 @@ namespace MahjongOut3D.Managers
 
             Vector2 effectCenter = (firstRect.anchoredPosition + secondRect.anchoredPosition) * 0.5f;
             PlayMatchFeedbackUi(firstTile, secondTile, effectCenter, firstPreview, secondPreview);
+            onImpact?.Invoke();
             firstTile?.SetVisible(false);
             secondTile?.SetVisible(false);
 
@@ -1451,7 +1455,7 @@ namespace MahjongOut3D.Managers
                 + (t * t * t * end);
         }
 
-        private IEnumerator AnimateSingleTrayPreviewMatch(MahjongTile tileWithPreview, RuntimeTrayPreview preview, MahjongTile otherTile)
+        private IEnumerator AnimateSingleTrayPreviewMatch(MahjongTile tileWithPreview, RuntimeTrayPreview preview, MahjongTile otherTile, Action onImpact)
         {
             if (preview?.RectTransform == null)
             {
@@ -1496,6 +1500,7 @@ namespace MahjongOut3D.Managers
             rect.localScale = landingScale;
 
             PlayMatchFeedbackUi(tileWithPreview, otherTile, rect.anchoredPosition, preview, null);
+            onImpact?.Invoke();
             tileWithPreview?.SetVisible(false);
             otherTile?.SetVisible(false);
 

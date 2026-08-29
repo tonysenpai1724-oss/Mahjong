@@ -37,11 +37,11 @@ public class CommonButton : MonoBehaviour
         DisableAll -= DisableButton;
         EnableAll -= EnableButton;
     }
-    void DisableButton()
+   protected virtual void DisableButton()
     {
         button.interactable = false;
     }
-    void EnableButton()
+    protected virtual void EnableButton()
     {
         button.interactable = true;
     }

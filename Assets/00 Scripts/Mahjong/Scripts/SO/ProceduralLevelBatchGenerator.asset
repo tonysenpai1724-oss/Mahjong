@@ -30,30 +30,30 @@ MonoBehaviour:
     levelCount: 0
     minLayerCount: 1
     maxLayerCount: 1
-    minPairCount: 12
-    maxPairCount: 28
+    minPairCount: 15
+    maxPairCount: 70
     flippedTileChance: 0.35
     shape: 0
-    allowedShapes: 00000000
+    allowedShapes: 0d000000
     difficulty: 0
   normalSettings:
     label: Normal
-    levelCount: 1
+    levelCount: 0
     minLayerCount: 1
-    maxLayerCount: 2
-    minPairCount: 45
-    maxPairCount: 72
+    maxLayerCount: 1
+    minPairCount: 25
+    maxPairCount: 70
     flippedTileChance: 0.45
     shape: 4
-    allowedShapes: 0d000000
+    allowedShapes: 00000000
     difficulty: 1
   hardSettings:
     label: Hard
-    levelCount: 0
+    levelCount: 2
     minLayerCount: 2
     maxLayerCount: 2
     minPairCount: 40
-    maxPairCount: 70
+    maxPairCount: 100
     flippedTileChance: 0.55
     shape: 0
     allowedShapes: 00000000
@@ -61,10 +61,10 @@ MonoBehaviour:
   superHardSettings:
     label: SuperHard
     levelCount: 0
-    minLayerCount: 2
+    minLayerCount: 3
     maxLayerCount: 3
     minPairCount: 30
-    maxPairCount: 100
+    maxPairCount: 200
     flippedTileChance: 0.65
     shape: 0
     allowedShapes: 00000000

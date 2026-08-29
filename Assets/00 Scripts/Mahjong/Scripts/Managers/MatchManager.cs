@@ -271,10 +271,11 @@ namespace MahjongOut3D.Managers
                 }
             }
 
+            GetAudioManager()?.PlayPowerUp(PowerUpType.Shuffle);
+            GetAudioManager()?.PlayTileAppear();
             ShuffleTileMatches(remainingTiles);
 
             tileManager.RefreshTileExposure();
-            GetAudioManager()?.PlayPowerUp(PowerUpType.Shuffle);
             Context.EventBus.Publish(new PowerUpUsedEvent(PowerUpType.Shuffle));
             IAchievementController.Instance?.UpdateAchievementProgress(EAchievementType.UseBooster);
             EvaluateBoardState();
@@ -784,10 +785,11 @@ namespace MahjongOut3D.Managers
                         yield return MoveAutoMatchedPairIntoTray(firstTile, secondTile, animationManager);
                     }
 
-                    animationManager.PlayMatchSequence(firstTile, secondTile, () => completed = true);
+                    animationManager.PlayMatchSequence(firstTile, secondTile, () => completed = true, () => GetAudioManager()?.PlayTileSmash());
                 }
                 else
                 {
+                    GetAudioManager()?.PlayTileSmash();
                     completed = true;
                 }
 
