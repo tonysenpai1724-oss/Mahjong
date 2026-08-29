@@ -69,8 +69,8 @@ PlayOpenThenIdle();
             btnPlay = FindButton("Next") ?? FindButton("Button");
         if (btnAds == null)
             btnAds = FindButton("AdsBtn") ?? FindButton("Button (1)");
-        if (titleText == null)
-            titleText = FindText("Completed");
+        // Luôn tìm lại titleText để cập nhật lúc popup show
+        titleText = FindText("Completed");
         if (skeletonGraphic == null)
             skeletonGraphic = GetComponentInChildren<SkeletonAnimation>(true);
     }

@@ -5,6 +5,7 @@ using MahjongOut3D.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 using Sirenix.OdinInspector;
+using System;
 public class HomePlayButton : HomeFeatureButton
 {
     public TMPro.TextMeshProUGUI txtLevel;
@@ -12,6 +13,20 @@ public class HomePlayButton : HomeFeatureButton
     public LevelCatalog levelCatalog;
     public Image difficultyImage;
     //public LevelDefinitionsUI levelDefinitionsUI;
+    
+    protected override void Start()
+    {
+        if (button == null)
+            button = GetComponent<Button>();
+        TigerForge.EventManager.StartListening(Constant.EVENT_ON_BUTTON_STATE_CHANGE, OnButtonStateChange);
+        if(notiObj != null)
+            notiObj.SetActive(false);
+        DisableAll += DisableButton;
+        EnableAll += EnableButton;
+          button.onClick.AddListener(OnClick);
+        TigerForge.EventManager.StartListening(Constant.EVENT_TIMER_TICK, OnTick);
+        OnTick();
+    }
     void OnEnable()
     {
         txtLevel.text ="Level " + IPlayerInfoController.Instance.CurrentLevel().ToString();
