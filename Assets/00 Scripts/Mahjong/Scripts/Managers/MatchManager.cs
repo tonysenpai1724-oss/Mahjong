@@ -662,7 +662,7 @@ namespace MahjongOut3D.Managers
             ClearMemorySelectionOriginalFaceState(previewTile);
             previewTile.Deselect();
 
-            QueueMatchedPairForResolution(previewTile, tappedTile, true);
+            QueueMatchedPairForResolution(previewTile, tappedTile, true, true);
         }
 
         private IEnumerator CollapsePreviewedFaceDownTiles(MahjongTile referenceTile)

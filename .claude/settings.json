@@ -11,7 +11,11 @@
       "Bash(command -v UnityHub)",
       "Bash(python3 -m py_compile /dev/null)",
       "Bash(git --git-dir=/home/sudv/Mahjong/.git --work-tree=/home/sudv/Mahjong status --short)",
-      "Bash(git --git-dir=/home/sudv/Mahjong/.git --work-tree=/home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs' 'Assets/00 Scripts/Mahjong/Scripts/Managers/AnimationManager.cs')"
+      "Bash(git --git-dir=/home/sudv/Mahjong/.git --work-tree=/home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs' 'Assets/00 Scripts/Mahjong/Scripts/Managers/AnimationManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong diff --stat)",
+      "Bash(git -C /home/sudv/Mahjong diff --numstat -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong ls-files -v -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')"
     ]
   }
 }
