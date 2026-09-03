@@ -833,6 +833,7 @@ namespace MahjongOut3D.Managers
             Vector3 originalPosition = tile.transform.position;
             Quaternion originalRotation = tile.transform.rotation;
             Transform originalParent = tile.transform.parent;
+            Vector3 originalPieceScale = tile.PieceLocalScale;
             bool originalWorldPositionStays = true;
             Texture2D texture = null;
             try
@@ -843,10 +844,12 @@ namespace MahjongOut3D.Managers
                     tile.transform.SetPositionAndRotation(capturePosition, captureRotation);
                 }
 
+                tile.RestorePieceLocalScale();
                 texture = previewGenerator.CaptureExisting(tile.gameObject, activeCamera, true);
             }
             finally
             {
+                tile.SetPieceLocalScale(originalPieceScale);
                 tile.transform.SetParent(originalParent, originalWorldPositionStays);
                 tile.transform.SetPositionAndRotation(originalPosition, originalRotation);
             }

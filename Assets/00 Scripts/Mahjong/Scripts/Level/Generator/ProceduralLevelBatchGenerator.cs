@@ -2764,6 +2764,7 @@ namespace MahjongOut3D.LevelSystem
 
         /// <summary>
         /// Chooses a partner for the exposed tile using the scoring profile of the current difficulty tier.
+        /// Easy prefers a different face whenever one is available, then keeps the pair close and on the same shell when possible.
         /// </summary>
         private TilePlacementData FindBestPairCandidate(TilePlacementData first, List<TilePlacementData> exposedPlacements, Dictionary<TilePlacementData, Vector3> localPositionsByPlacement, LevelDifficulty difficulty, System.Random random)
         {
@@ -2772,12 +2773,18 @@ namespace MahjongOut3D.LevelSystem
                 return null;
             }
 
+            bool requireDifferentFace = difficulty == LevelDifficulty.Easy && HasDifferentFaceCandidate(first, exposedPlacements);
             TilePlacementData bestCandidate = null;
             float bestScore = float.MinValue;
             for (int index = 0; index < exposedPlacements.Count; index++)
             {
                 TilePlacementData candidate = exposedPlacements[index];
                 if (candidate == null || candidate == first || !localPositionsByPlacement.TryGetValue(candidate, out Vector3 candidatePosition))
+                {
+                    continue;
+                }
+
+                if (requireDifferentFace && ArePlacementsFacingSimilar(first, candidate))
                 {
                     continue;
                 }
@@ -2795,9 +2802,28 @@ namespace MahjongOut3D.LevelSystem
             return bestCandidate;
         }
 
+        private static bool HasDifferentFaceCandidate(TilePlacementData first, List<TilePlacementData> exposedPlacements)
+        {
+            if (first == null || exposedPlacements == null)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < exposedPlacements.Count; index++)
+            {
+                TilePlacementData candidate = exposedPlacements[index];
+                if (candidate != null && candidate != first && !ArePlacementsFacingSimilar(first, candidate))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Scores a candidate pair based on the configured difficulty tier.
-        /// Easy keeps pairs close and often on one face, while harder tiers increasingly split matches across faces and shell layers.
+        /// Easy keeps pairs close and on different faces when possible, while harder tiers increasingly split matches across faces and shell layers.
         /// </summary>
         private static float ScorePairCandidate(TilePlacementData first, TilePlacementData candidate, float distance, LevelDifficulty difficulty)
         {

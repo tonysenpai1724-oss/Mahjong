@@ -542,6 +542,61 @@ namespace MahjongOut3D.TileSystem
         }
 
         /// <summary>
+        /// Gets the current local scale of the Mahjong piece renderer.
+        /// </summary>
+        public Vector3 PieceLocalScale
+        {
+            get
+            {
+                if (pieceRenderer == null)
+                {
+                    CacheReferences();
+                }
+
+                return pieceRenderer != null ? pieceRenderer.transform.localScale : Vector3.one;
+            }
+        }
+
+        /// <summary>
+        /// Restores the Mahjong piece renderer to its original prefab scale.
+        /// </summary>
+        public void RestorePieceLocalScale()
+        {
+            if (pieceRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (pieceRenderer == null)
+            {
+                return;
+            }
+
+            CacheFaceBaseLocalRotations();
+            Vector3 baseScale = pieceFaceBaseLocalScale == Vector3.zero ? pieceRenderer.transform.localScale : pieceFaceBaseLocalScale;
+            pieceRenderer.transform.localScale = baseScale;
+        }
+
+        /// <summary>
+        /// Applies an exact local scale to the Mahjong piece renderer.
+        /// </summary>
+        /// <param name="localScale">Local scale to apply.</param>
+        public void SetPieceLocalScale(Vector3 localScale)
+        {
+            if (pieceRenderer == null)
+            {
+                CacheReferences();
+            }
+
+            if (pieceRenderer == null)
+            {
+                return;
+            }
+
+            pieceRenderer.transform.localScale = localScale;
+        }
+
+        /// <summary>
         /// Applies a runtime local scale override to the Mahjong piece renderer only.
         /// </summary>
         /// <param name="scaleMultiplier">Per-axis scale multiplier applied on top of the cached piece scale.</param>
@@ -564,7 +619,7 @@ namespace MahjongOut3D.TileSystem
 
         /// <summary>
         /// Resolves the fill texture from a source material asset.
-        /// </summary>
+        /// </summary> умassistant to=functions.Edit code (commentary) 代񟿿 天天中彩票大奖 《json彩票官网{
         private static Texture2D ResolveMaterialTexture(Material material)
         {
             if (material == null)
@@ -1490,7 +1545,7 @@ namespace MahjongOut3D.TileSystem
 
         private void ApplyFaceRendererVisibility(bool faceDown)
         {
-            if (fillRenderer == null)
+           if (fillRenderer == null)
             {
                 return;
             }

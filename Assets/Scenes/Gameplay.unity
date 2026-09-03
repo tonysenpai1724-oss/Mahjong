@@ -10709,7 +10709,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1817194425
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11131,7 +11131,6 @@ MonoBehaviour:
     quantityText: {fileID: 0}
     availableSprite: {fileID: 0}
     emptySprite: {fileID: 0}
-  pieceMaterialDropdown: {fileID: 0}
   comboText: {fileID: 0}
   comboImage: {fileID: 521955250}
   comboTrayGlowController: {fileID: 0}
