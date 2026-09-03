@@ -20,6 +20,7 @@ namespace MahjongOut3D.Managers
         private const int SelectionTrayCapacity = 4;
         private const float MemoryRevealTimeoutSeconds = 2f;
         private const int ComboExtraMatchPairCount = 3;
+        private const int MaxPendingSelectionActions = SelectionTrayCapacity + 2;
 
         [SerializeField] private PowerUpSettings powerUpSettings;
 
@@ -27,12 +28,17 @@ namespace MahjongOut3D.Managers
         private readonly List<MahjongTile> memorySelectedTiles = new List<MahjongTile>(2);
         private readonly Stack<MoveHistoryRecord> history = new Stack<MoveHistoryRecord>();
         private readonly Queue<PendingMatchResolution> pendingMatchQueue = new Queue<PendingMatchResolution>();
+        private readonly Queue<MahjongTile> pendingSelectionActions = new Queue<MahjongTile>();
+        private readonly HashSet<MahjongTile> queuedSelectionTiles = new HashSet<MahjongTile>();
         private readonly HashSet<MahjongTile> pendingMatchedTiles = new HashSet<MahjongTile>();
         private readonly HashSet<MahjongTile> movingToSelectionTrayTiles = new HashSet<MahjongTile>();
         private readonly Dictionary<MahjongTile, bool> memorySelectionOriginalFaceStates = new Dictionary<MahjongTile, bool>();
         private readonly List<MahjongTile> comboSourceTiles = new List<MahjongTile>(2);
         private Coroutine memoryRevealTimeoutRoutine;
+        private Coroutine pendingSelectionActionsRoutine;
+        private MahjongTile activeSelectionTile;
         private bool isMemoryRevealLocked;
+        private int selectionActionGeneration;
         private int totalTiles;
         private int lastTrayScreenWidth;
         private int lastTrayScreenHeight;
@@ -83,6 +89,7 @@ namespace MahjongOut3D.Managers
             memorySelectedTiles.Clear();
             history.Clear();
             pendingMatchQueue.Clear();
+            ClearPendingSelectionActions();
             pendingMatchedTiles.Clear();
             movingToSelectionTrayTiles.Clear();
             memorySelectionOriginalFaceStates.Clear();
@@ -139,8 +146,23 @@ namespace MahjongOut3D.Managers
         /// </summary>
         public void PrepareForLevelReload()
         {
+            MahjongTile tileBeingProcessed = activeSelectionTile;
             StopAllCoroutines();
             CancelMemoryRevealTimeout();
+            ClearPendingSelectionActions();
+            if (tileBeingProcessed != null && !selectedTiles.Contains(tileBeingProcessed))
+            {
+                tileBeingProcessed.SetBufferedSelection(false);
+                tileBeingProcessed.RestoreBoardParent();
+                tileBeingProcessed.RestoreBoardPose();
+                tileBeingProcessed.Deselect();
+                GetAnimationManager()?.SetTrayBoardTileVisible(tileBeingProcessed, true);
+                if (tileBeingProcessed.TileCollider != null)
+                {
+                    tileBeingProcessed.TileCollider.enabled = !tileBeingProcessed.IsRemoved && !tileBeingProcessed.IsMatched;
+                }
+            }
+
             GetAnimationManager()?.ClearTrayPreviews();
 
             for (int index = 0; index < selectedTiles.Count; index++)
@@ -179,6 +201,7 @@ namespace MahjongOut3D.Managers
             memorySelectedTiles.Clear();
             history.Clear();
             pendingMatchQueue.Clear();
+            ClearPendingSelectionActions();
             pendingMatchedTiles.Clear();
             movingToSelectionTrayTiles.Clear();
             memorySelectionOriginalFaceStates.Clear();
@@ -362,7 +385,9 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            if (IsTilePendingMatch(tappedTile) || IsTileMovingToSelectionTray(tappedTile))
+            if (IsTilePendingMatch(tappedTile)
+                || IsTileMovingToSelectionTray(tappedTile)
+                || queuedSelectionTiles.Contains(tappedTile))
             {
                 return;
             }
@@ -390,49 +415,21 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            if (selectedTiles.Contains(tappedTile))
+            EnqueueSelectionTile(tappedTile);
+        }
+
+        private void EnqueueSelectionTile(MahjongTile tappedTile)
+        {
+            if (tappedTile == null || selectedTiles.Contains(tappedTile))
             {
                 return;
             }
 
-            MahjongTile trayMatchTile = FindMatchingTrayTile(tappedTile);
-            if (selectedTiles.Count >= SelectionTrayCapacity && trayMatchTile == null)
+            if (pendingSelectionActions.Count >= MaxPendingSelectionActions)
             {
-                if (TryStartFirstMatchingPairInSelectionTray(true))
-                {
-                    return;
-                }
-
-                trayMatchTile = FindMatchingTrayTile(tappedTile);
-                if (selectedTiles.Count >= SelectionTrayCapacity && trayMatchTile == null)
-                {
-                    if (IsSelectionResolutionBusy())
-                    {
-                        return;
-                    }
-
-                    if (TryStartFirstMatchingPairInSelectionTray(true))
-                    {
-                        return;
-                    }
-
-                    if (TryFindAnyBoardPair(out _, out _))
-                    {
-                        return;
-                    }
-
-                    GetAudioManager()?.PlayLose();
-                    gameManager.LoseGameplay();
-                    return;
-                }
+                tappedTile.PlayBlockedTapFeedback();
+                return;
             }
-
-            int trayMatchSlotIndex = trayMatchTile != null ? selectedTiles.IndexOf(trayMatchTile) : -1;
-            int targetTraySlotIndex = trayMatchTile != null
-                ? selectedTiles.Count < SelectionTrayCapacity
-                    ? Mathf.Clamp(trayMatchSlotIndex + 1, 0, SelectionTrayCapacity - 1)
-                    : Mathf.Max(0, trayMatchSlotIndex)
-                : Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 1);
 
             if (!tappedTile.TrySelect())
             {
@@ -440,14 +437,99 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
-            movingToSelectionTrayTiles.Add(tappedTile);
-            StartCoroutine(HandleTrayModeTileTapped(tappedTile, trayMatchTile, targetTraySlotIndex));
+            queuedSelectionTiles.Add(tappedTile);
+            pendingSelectionActions.Enqueue(tappedTile);
+            if (pendingSelectionActionsRoutine == null)
+            {
+                pendingSelectionActionsRoutine = StartCoroutine(ProcessPendingSelectionActions());
+            }
         }
 
-        private IEnumerator HandleTrayModeTileTapped(MahjongTile tappedTile, MahjongTile matchingTrayTile, int targetTraySlotIndex)
+        private IEnumerator ProcessPendingSelectionActions()
         {
-            yield return CollapsePreviewedFaceDownTiles(tappedTile);
-            yield return MoveTileIntoSelectionTray(tappedTile, matchingTrayTile, targetTraySlotIndex);
+            int generation = selectionActionGeneration;
+            while (pendingSelectionActions.Count > 0 && generation == selectionActionGeneration)
+            {
+                MahjongTile tappedTile = pendingSelectionActions.Dequeue();
+                queuedSelectionTiles.Remove(tappedTile);
+                activeSelectionTile = tappedTile;
+                if (!IsQueuedSelectionTileValid(tappedTile))
+                {
+                    tappedTile?.Deselect();
+                    activeSelectionTile = null;
+                    continue;
+                }
+
+                yield return CollapsePreviewedFaceDownTiles(tappedTile);
+                if (generation != selectionActionGeneration || !IsQueuedSelectionTileValid(tappedTile))
+                {
+                    tappedTile?.Deselect();
+                    activeSelectionTile = null;
+                    continue;
+                }
+
+                MahjongTile matchingTrayTile = FindMatchingTrayTile(tappedTile);
+                if (selectedTiles.Count >= SelectionTrayCapacity && matchingTrayTile == null)
+                {
+                    tappedTile.Deselect();
+                    GetAnimationManager()?.PlayTrayOccupancyFeedback(selectedTiles.Count, true);
+                    if (!IsSelectionResolutionBusy() && !TryStartFirstMatchingPairInSelectionTray(true))
+                    {
+                        GetAudioManager()?.PlayLose();
+                        GetGameManager()?.LoseGameplay();
+                        ClearPendingSelectionActions();
+                        activeSelectionTile = null;
+                        yield break;
+                    }
+
+                    if (IsSelectionResolutionBusy())
+                    {
+                        while (generation == selectionActionGeneration && IsSelectionResolutionBusy())
+                        {
+                            yield return null;
+                        }
+                    }
+
+                    activeSelectionTile = null;
+                    continue;
+                }
+
+                int matchSlotIndex = matchingTrayTile != null ? selectedTiles.IndexOf(matchingTrayTile) : -1;
+                int targetSlotIndex = matchingTrayTile != null
+                    ? Mathf.Clamp(matchSlotIndex + 1, 0, SelectionTrayCapacity - 1)
+                    : Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 1);
+
+                yield return MoveTileIntoSelectionTray(tappedTile, matchingTrayTile, targetSlotIndex);
+                activeSelectionTile = null;
+
+                GameManager activeGameManager = GetGameManager();
+                if (activeGameManager == null || activeGameManager.CurrentFlowState != GameFlowState.Gameplay)
+                {
+                    ClearPendingSelectionActions();
+                    yield break;
+                }
+
+                while (generation == selectionActionGeneration
+                    && (IsResolvingMatch || pendingMatchedTiles.Count > 0 || pendingMatchQueue.Count > 0))
+                {
+                    yield return null;
+                }
+            }
+
+            if (generation == selectionActionGeneration)
+            {
+                pendingSelectionActionsRoutine = null;
+            }
+        }
+
+        private bool IsQueuedSelectionTileValid(MahjongTile tile)
+        {
+            return tile != null
+                && !tile.IsRemoved
+                && !tile.IsMatched
+                && !tile.IsBufferedSelection
+                && !pendingMatchedTiles.Contains(tile)
+                && !movingToSelectionTrayTiles.Contains(tile);
         }
 
         private IEnumerator HandleFaceDownPreviewTileTapped(MahjongTile tappedTile)
@@ -1206,6 +1288,44 @@ namespace MahjongOut3D.Managers
             }
         }
 
+        private void ClearPendingSelectionActions()
+        {
+            ClearPendingSelectionActions(null);
+        }
+
+        private void ClearPendingSelectionActions(MahjongTile preservedActiveTile)
+        {
+            selectionActionGeneration++;
+            if (pendingSelectionActionsRoutine != null)
+            {
+                StopCoroutine(pendingSelectionActionsRoutine);
+                pendingSelectionActionsRoutine = null;
+            }
+
+            if (activeSelectionTile != null
+                && activeSelectionTile != preservedActiveTile
+                && !activeSelectionTile.IsBufferedSelection
+                && !activeSelectionTile.IsRemoved
+                && !activeSelectionTile.IsMatched)
+            {
+                activeSelectionTile.Deselect();
+            }
+
+            activeSelectionTile = null;
+            movingToSelectionTrayTiles.Clear();
+            while (pendingSelectionActions.Count > 0)
+            {
+                MahjongTile tile = pendingSelectionActions.Dequeue();
+                queuedSelectionTiles.Remove(tile);
+                if (tile != null && tile != preservedActiveTile && !tile.IsBufferedSelection && !tile.IsRemoved && !tile.IsMatched)
+                {
+                    tile.Deselect();
+                }
+            }
+
+            queuedSelectionTiles.Clear();
+        }
+
         private void ApplyDifficultyTileFaceState()
         {
             TileManager tileManager = GetTileManager();
@@ -1945,23 +2065,31 @@ namespace MahjongOut3D.Managers
 
                 CommitTileToSelectionTray(tappedTile);
 
-                bool usesNewTraySlot = matchingTrayTile == null || selectedTiles.Count < SelectionTrayCapacity;
                 int targetSlotIndex = targetTraySlotIndex >= 0
                     ? Mathf.Clamp(targetTraySlotIndex, 0, SelectionTrayCapacity - 1)
-                    : usesNewTraySlot
-                        ? Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 1)
-                        : Mathf.Max(0, selectedTiles.IndexOf(matchingTrayTile));
+                    : Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 1);
 
                 if (matchingTrayTile != null && selectedTiles.Count < SelectionTrayCapacity)
                 {
                     int matchSlotIndex = selectedTiles.IndexOf(matchingTrayTile);
-                    int insertionIndex = Mathf.Clamp(matchSlotIndex + 1, 0, selectedTiles.Count);
-                    selectedTiles.Insert(insertionIndex, tappedTile);
-                    ReflowSelectionTrayFromIndex(insertionIndex + 1);
+                    if (matchSlotIndex >= 0)
+                    {
+                        int insertionIndex = Mathf.Clamp(matchSlotIndex + 1, 0, selectedTiles.Count);
+                        selectedTiles.Insert(insertionIndex, tappedTile);
+                        targetSlotIndex = insertionIndex;
+                        ReflowSelectionTrayFromIndex(insertionIndex + 1);
+                    }
+                    else
+                    {
+                        matchingTrayTile = null;
+                        selectedTiles.Add(tappedTile);
+                        targetSlotIndex = selectedTiles.Count - 1;
+                    }
                 }
                 else if (matchingTrayTile == null)
                 {
                     selectedTiles.Add(tappedTile);
+                    targetSlotIndex = selectedTiles.Count - 1;
                 }
 
                 GetAudioManager()?.PlaySelect();
@@ -1990,17 +2118,25 @@ namespace MahjongOut3D.Managers
                     yield return null;
                 }
 
+                if (!completed)
+                {
+                    MahjongRuntimeLogger.LogWarning($"Tray animation timed out for tile {tappedTile.TileId}. Snapping to slot.");
+                    if (!animationManager?.SnapTrayPreviewToSlot(tappedTile, targetSlotIndex) ?? false)
+                    {
+                        animationManager?.SetTrayBoardTileVisible(tappedTile, true);
+                    }
+                }
+
                 animationManager?.SetTrayBoardTileVisible(tappedTile, false);
                 movingToSelectionTrayTiles.Remove(tappedTile);
 
-                if (matchingTrayTile != null)
+                if (matchingTrayTile != null && TryReservePairForMatchResolution(matchingTrayTile, tappedTile))
                 {
-                    ReservePairForMatchResolution(matchingTrayTile, tappedTile);
                     StartOrQueueMatchedPairResolution(matchingTrayTile, tappedTile, true);
                     yield break;
                 }
 
-                animationManager?.PlayTrayOccupancyFeedback(selectedTiles.Count, matchingTrayTile == null);
+                animationManager?.PlayTrayOccupancyFeedback(selectedTiles.Count, true);
 
                 if (selectedTiles.Count >= SelectionTrayCapacity)
                 {
@@ -2028,6 +2164,36 @@ namespace MahjongOut3D.Managers
                 movingToSelectionTrayTiles.Remove(tappedTile);
             }
         }
+
+        private bool TryReservePairForMatchResolution(MahjongTile firstTile, MahjongTile secondTile)
+        {
+            if (!IsMatchReservationValid(firstTile) || !IsMatchReservationValid(secondTile) || firstTile == secondTile)
+            {
+                return false;
+            }
+
+            ReservePairForMatchResolution(firstTile, secondTile);
+            return true;
+        }
+
+        private bool IsMatchReservationValid(MahjongTile tile)
+        {
+            return tile != null
+                && !tile.IsRemoved
+                && !tile.IsMatched
+                && !pendingMatchedTiles.Contains(tile);
+        }
+
+        private bool IsPendingMatchResolutionValid(PendingMatchResolution pendingResolution)
+        {
+            return pendingResolution.First != null
+                && pendingResolution.Second != null
+                && !pendingResolution.First.IsRemoved
+                && !pendingResolution.Second.IsRemoved
+                && pendingMatchedTiles.Contains(pendingResolution.First)
+                && pendingMatchedTiles.Contains(pendingResolution.Second);
+        }
+
 
         private IEnumerator MoveAutoMatchedPairIntoTray(
             MahjongTile firstTile,
@@ -2071,12 +2237,10 @@ namespace MahjongOut3D.Managers
             bool rewardCoins,
             bool moveToTrayBeforeMatch = false)
         {
-            if (firstTile == null || secondTile == null)
+            if (!TryReservePairForMatchResolution(firstTile, secondTile))
             {
                 return;
             }
-
-            ReservePairForMatchResolution(firstTile, secondTile);
 
             StartOrQueueMatchedPairResolution(firstTile, secondTile, rewardCoins, moveToTrayBeforeMatch);
         }
@@ -2138,8 +2302,10 @@ namespace MahjongOut3D.Managers
             while (pendingMatchQueue.Count > 0)
             {
                 PendingMatchResolution pendingResolution = pendingMatchQueue.Dequeue();
-                if (pendingResolution.First == null || pendingResolution.Second == null)
+                if (!IsPendingMatchResolutionValid(pendingResolution))
                 {
+                    pendingMatchedTiles.Remove(pendingResolution.First);
+                    pendingMatchedTiles.Remove(pendingResolution.Second);
                     continue;
                 }
 

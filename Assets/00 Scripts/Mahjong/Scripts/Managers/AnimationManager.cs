@@ -222,7 +222,6 @@ namespace MahjongOut3D.Managers
             preview.TargetSize = ResolveTraySlotSize(slotIndex, fallbackSize);
             if (preview.IsEnteringTray)
             {
-                onCompleted?.Invoke();
                 return true;
             }
 
@@ -429,6 +428,7 @@ namespace MahjongOut3D.Managers
                 return;
             }
 
+            FinalizeTrayPreview(preview);
             DestroyTrayPreview(preview);
             trayPreviewsByTile.Remove(tile);
         }
@@ -440,6 +440,7 @@ namespace MahjongOut3D.Managers
         {
             foreach (RuntimeTrayPreview preview in trayPreviewsByTile.Values)
             {
+                FinalizeTrayPreview(preview);
                 DestroyTrayPreview(preview);
             }
 
@@ -495,112 +496,120 @@ namespace MahjongOut3D.Managers
             }
 
             SetAnimationLock(true);
-
-            Camera activeCamera = null;
-            if (Context.Services.TryGet(out CameraManager cameraManager))
+            bool completed = false;
+            try
             {
-                activeCamera = cameraManager.ActiveCamera;
-            }
+                Camera activeCamera = null;
+                if (Context.Services.TryGet(out CameraManager cameraManager))
+                {
+                    activeCamera = cameraManager.ActiveCamera;
+                }
 
-            if (!trayPreviewsByTile.TryGetValue(firstTile, out RuntimeTrayPreview firstPreview) && firstTile != null)
-            {
-                TryCreateTrayPreview(firstTile, activeCamera, -1, out firstPreview);
-            }
+                if (!trayPreviewsByTile.TryGetValue(firstTile, out RuntimeTrayPreview firstPreview) && firstTile != null)
+                {
+                    TryCreateTrayPreview(firstTile, activeCamera, -1, out firstPreview);
+                }
 
-            if (!trayPreviewsByTile.TryGetValue(secondTile, out RuntimeTrayPreview secondPreview) && secondTile != null)
-            {
-                TryCreateTrayPreview(secondTile, activeCamera, -1, out secondPreview);
-            }
+                if (!trayPreviewsByTile.TryGetValue(secondTile, out RuntimeTrayPreview secondPreview) && secondTile != null)
+                {
+                    TryCreateTrayPreview(secondTile, activeCamera, -1, out secondPreview);
+                }
 
-            if (firstPreview != null || secondPreview != null)
-            {
-                yield return PlayTrayPreviewMatchSequenceRoutine(firstTile, secondTile, firstPreview, secondPreview, onImpact);
+                if (firstPreview != null || secondPreview != null)
+                {
+                    yield return PlayTrayPreviewMatchSequenceRoutine(firstTile, secondTile, firstPreview, secondPreview, onImpact);
+                    PlayCameraShake();
+                    completed = true;
+                    yield break;
+                }
+
+                Vector3 firstStart = firstTile.transform.position;
+                Vector3 secondStart = secondTile.transform.position;
+                Quaternion firstRotationStart = firstTile.transform.rotation;
+                Quaternion secondRotationStart = secondTile.transform.rotation;
+
+                Vector3 cameraRight = GetCameraRight();
+                Vector3 cameraForward = GetCameraForward();
+                if (cameraForward.sqrMagnitude <= Mathf.Epsilon)
+                {
+                    cameraForward = Vector3.forward;
+                }
+
+                cameraForward.Normalize();
+
+                Quaternion uprightCardRotation = GetTrayFacingRotation(cameraForward, Vector3.up);
+
+                float slideDistance = GetMatchSlideDistance();
+                float contactOffset = GetMatchContactCenterOffset(firstTile, secondTile, uprightCardRotation, cameraRight);
+                float visibleImpactOffset = contactOffset + (GetMatchDisappearGap() * 0.5f);
+                float stageOffset = Mathf.Max(visibleImpactOffset + 0.18f, slideDistance * 0.45f);
+
+                Vector3 impactWorld = GetMatchCenterWorldPosition(firstTile, secondTile);
+                Vector3 firstStageWorld = impactWorld - (cameraRight * stageOffset);
+                Vector3 secondStageWorld = impactWorld + (cameraRight * stageOffset);
+
+                Quaternion firstStageRotation = uprightCardRotation;
+                Quaternion secondStageRotation = uprightCardRotation;
+
+                Vector3 firstImpactWorld = impactWorld - (cameraRight * visibleImpactOffset);
+                Vector3 secondImpactWorld = impactWorld + (cameraRight * visibleImpactOffset);
+                Quaternion firstImpactRotation = uprightCardRotation;
+                Quaternion secondImpactRotation = uprightCardRotation;
+
+                float duration = GetMatchDurationSeconds();
+                float elapsed = 0f;
+                float liftPhaseDuration = duration * 0.6f;
+                float collidePhaseDuration = Mathf.Max(0.05f, duration - liftPhaseDuration);
+
+                while (elapsed < liftPhaseDuration)
+                {
+                    elapsed += GetDeltaTime();
+                    float t = Mathf.Clamp01(elapsed / liftPhaseDuration);
+                    float easedT = 1f - Mathf.Pow(1f - t, 3f);
+
+                    firstTile.transform.SetPositionAndRotation(
+                        Vector3.LerpUnclamped(firstStart, firstStageWorld, easedT),
+                        Quaternion.SlerpUnclamped(firstRotationStart, firstStageRotation, easedT));
+                    secondTile.transform.SetPositionAndRotation(
+                        Vector3.LerpUnclamped(secondStart, secondStageWorld, easedT),
+                        Quaternion.SlerpUnclamped(secondRotationStart, secondStageRotation, easedT));
+                    yield return null;
+                }
+
+                elapsed = 0f;
+                while (elapsed < collidePhaseDuration)
+                {
+                    elapsed += GetDeltaTime();
+                    float t = Mathf.Clamp01(elapsed / collidePhaseDuration);
+                    float easedT = 1f - Mathf.Pow(1f - t, 4f);
+
+                    firstTile.transform.SetPositionAndRotation(
+                        Vector3.LerpUnclamped(firstStageWorld, firstImpactWorld, easedT),
+                        Quaternion.SlerpUnclamped(firstStageRotation, firstImpactRotation, easedT));
+                    secondTile.transform.SetPositionAndRotation(
+                        Vector3.LerpUnclamped(secondStageWorld, secondImpactWorld, easedT),
+                        Quaternion.SlerpUnclamped(secondStageRotation, secondImpactRotation, easedT));
+                    yield return null;
+                }
+
+                firstTile.transform.SetPositionAndRotation(firstImpactWorld, firstImpactRotation);
+                secondTile.transform.SetPositionAndRotation(secondImpactWorld, secondImpactRotation);
+
+                PlayMatchFeedback(firstTile, secondTile, impactWorld);
+                onImpact?.Invoke();
+                firstTile.SetVisible(false);
+                secondTile.SetVisible(false);
                 PlayCameraShake();
-                onCompleted?.Invoke();
+                completed = true;
+            }
+            finally
+            {
                 SetAnimationLock(false);
-                yield break;
+                if (completed)
+                {
+                    onCompleted?.Invoke();
+                }
             }
-
-            Vector3 firstStart = firstTile.transform.position;
-            Vector3 secondStart = secondTile.transform.position;
-            Quaternion firstRotationStart = firstTile.transform.rotation;
-            Quaternion secondRotationStart = secondTile.transform.rotation;
-
-            Vector3 cameraRight = GetCameraRight();
-            Vector3 cameraForward = GetCameraForward();
-            if (cameraForward.sqrMagnitude <= Mathf.Epsilon)
-            {
-                cameraForward = Vector3.forward;
-            }
-
-            cameraForward.Normalize();
-
-            Quaternion uprightCardRotation = GetTrayFacingRotation(cameraForward, Vector3.up);
-
-            float slideDistance = GetMatchSlideDistance();
-            float contactOffset = GetMatchContactCenterOffset(firstTile, secondTile, uprightCardRotation, cameraRight);
-            float visibleImpactOffset = contactOffset + (GetMatchDisappearGap() * 0.5f);
-            float stageOffset = Mathf.Max(visibleImpactOffset + 0.18f, slideDistance * 0.45f);
-
-            Vector3 impactWorld = GetMatchCenterWorldPosition(firstTile, secondTile);
-            Vector3 firstStageWorld = impactWorld - (cameraRight * stageOffset);
-            Vector3 secondStageWorld = impactWorld + (cameraRight * stageOffset);
-
-            Quaternion firstStageRotation = uprightCardRotation;
-            Quaternion secondStageRotation = uprightCardRotation;
-
-            Vector3 firstImpactWorld = impactWorld - (cameraRight * visibleImpactOffset);
-            Vector3 secondImpactWorld = impactWorld + (cameraRight * visibleImpactOffset);
-            Quaternion firstImpactRotation = uprightCardRotation;
-            Quaternion secondImpactRotation = uprightCardRotation;
-
-            float duration = GetMatchDurationSeconds();
-            float elapsed = 0f;
-            float liftPhaseDuration = duration * 0.6f;
-            float collidePhaseDuration = Mathf.Max(0.05f, duration - liftPhaseDuration);
-
-            while (elapsed < liftPhaseDuration)
-            {
-                elapsed += GetDeltaTime();
-                float t = Mathf.Clamp01(elapsed / liftPhaseDuration);
-                float easedT = 1f - Mathf.Pow(1f - t, 3f);
-
-                firstTile.transform.SetPositionAndRotation(
-                    Vector3.LerpUnclamped(firstStart, firstStageWorld, easedT),
-                    Quaternion.SlerpUnclamped(firstRotationStart, firstStageRotation, easedT));
-                secondTile.transform.SetPositionAndRotation(
-                    Vector3.LerpUnclamped(secondStart, secondStageWorld, easedT),
-                    Quaternion.SlerpUnclamped(secondRotationStart, secondStageRotation, easedT));
-                yield return null;
-            }
-
-            elapsed = 0f;
-            while (elapsed < collidePhaseDuration)
-            {
-                elapsed += GetDeltaTime();
-                float t = Mathf.Clamp01(elapsed / collidePhaseDuration);
-                float easedT = 1f - Mathf.Pow(1f - t, 4f);
-
-                firstTile.transform.SetPositionAndRotation(
-                    Vector3.LerpUnclamped(firstStageWorld, firstImpactWorld, easedT),
-                    Quaternion.SlerpUnclamped(firstStageRotation, firstImpactRotation, easedT));
-                secondTile.transform.SetPositionAndRotation(
-                    Vector3.LerpUnclamped(secondStageWorld, secondImpactWorld, easedT),
-                    Quaternion.SlerpUnclamped(secondStageRotation, secondImpactRotation, easedT));
-                yield return null;
-            }
-
-            firstTile.transform.SetPositionAndRotation(firstImpactWorld, firstImpactRotation);
-            secondTile.transform.SetPositionAndRotation(secondImpactWorld, secondImpactRotation);
-
-            PlayMatchFeedback(firstTile, secondTile, impactWorld);
-            onImpact?.Invoke();
-            firstTile.SetVisible(false);
-            secondTile.SetVisible(false);
-            PlayCameraShake();
-
-            onCompleted?.Invoke();
-            SetAnimationLock(false);
         }
 
         /// <summary>
@@ -609,17 +618,28 @@ namespace MahjongOut3D.Managers
         private IEnumerator PlayMismatchDelayRoutine(Action onCompleted)
         {
             SetAnimationLock(true);
-            float duration = GetMismatchDelaySeconds();
-            float elapsed = 0f;
-
-            while (elapsed < duration)
+            bool completed = false;
+            try
             {
-                elapsed += GetDeltaTime();
-                yield return null;
-            }
+                float duration = GetMismatchDelaySeconds();
+                float elapsed = 0f;
 
-            onCompleted?.Invoke();
-            SetAnimationLock(false);
+                while (elapsed < duration)
+                {
+                    elapsed += GetDeltaTime();
+                    yield return null;
+                }
+
+                completed = true;
+            }
+            finally
+            {
+                SetAnimationLock(false);
+                if (completed)
+                {
+                    onCompleted?.Invoke();
+                }
+            }
         }
 
         /// <summary>
@@ -694,43 +714,106 @@ namespace MahjongOut3D.Managers
                 yield break;
             }
 
-            Vector2 startPosition = preview.RectTransform.anchoredPosition;
             Vector2 startSize = preview.RectTransform.sizeDelta;
             preview.TargetSlotIndex = slotIndex;
             preview.TargetPosition = ResolveTrayAnchoredPosition(slotIndex);
             preview.TargetSize = ResolveTraySlotSize(slotIndex, startSize);
             preview.IsEnteringTray = true;
             preview.AnimationRoutine = StartCoroutine(TrackTrayMoveRoutine(preview, onCompleted));
-            yield break;
         }
 
         private IEnumerator TrackTrayMoveRoutine(RuntimeTrayPreview preview, Action onCompleted)
         {
+            if (preview?.RectTransform == null)
+            {
+                SetAnimationLock(false);
+                onCompleted?.Invoke();
+                yield break;
+            }
+
             Vector2 startPosition = preview.RectTransform.anchoredPosition;
             Vector2 startSize = preview.RectTransform.sizeDelta;
             Vector2 targetPosition = preview.TargetPosition;
             Vector2 targetSize = preview.TargetSize;
             float duration = GetTrayMoveDurationSeconds();
             float elapsed = 0f;
+            bool completed = false;
 
-            while (elapsed < duration)
+            try
             {
-                elapsed += GetDeltaTime();
-                float t = Mathf.Clamp01(elapsed / duration);
-                float easedT = 1f - Mathf.Pow(1f - t, 3f);
-                targetPosition = preview.TargetPosition;
-                targetSize = preview.TargetSize.sqrMagnitude > Mathf.Epsilon ? preview.TargetSize : targetSize;
-                preview.RectTransform.anchoredPosition = Vector2.LerpUnclamped(startPosition, targetPosition, easedT);
-                preview.RectTransform.sizeDelta = Vector2.LerpUnclamped(startSize, targetSize, easedT);
-                yield return null;
+                while (elapsed < duration)
+                {
+                    elapsed += GetDeltaTime();
+                    float t = Mathf.Clamp01(elapsed / duration);
+                    float easedT = 1f - Mathf.Pow(1f - t, 3f);
+                    targetPosition = preview.TargetPosition;
+                    targetSize = preview.TargetSize.sqrMagnitude > Mathf.Epsilon ? preview.TargetSize : targetSize;
+                    preview.RectTransform.anchoredPosition = Vector2.LerpUnclamped(startPosition, targetPosition, easedT);
+                    preview.RectTransform.sizeDelta = Vector2.LerpUnclamped(startSize, targetSize, easedT);
+                    yield return null;
+                }
+
+                preview.RectTransform.anchoredPosition = preview.TargetPosition;
+                preview.RectTransform.sizeDelta = preview.TargetSize.sqrMagnitude > Mathf.Epsilon ? preview.TargetSize : targetSize;
+                completed = true;
+            }
+            finally
+            {
+                preview.AnimationRoutine = null;
+                preview.IsEnteringTray = false;
+                SetAnimationLock(false);
+                if (completed)
+                {
+                    onCompleted?.Invoke();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Immediately finalizes an active tray preview at its latest target.
+        /// </summary>
+        public bool SnapTrayPreviewToSlot(MahjongTile tile, int slotIndex)
+        {
+            if (tile == null || !trayPreviewsByTile.TryGetValue(tile, out RuntimeTrayPreview preview) || preview?.RectTransform == null)
+            {
+                return false;
+            }
+
+            preview.TargetSlotIndex = slotIndex;
+            preview.TargetPosition = ResolveTrayAnchoredPosition(slotIndex);
+            preview.TargetSize = ResolveTraySlotSize(slotIndex, preview.RectTransform.sizeDelta);
+            if (preview.AnimationRoutine != null)
+            {
+                StopCoroutine(preview.AnimationRoutine);
+                preview.AnimationRoutine = null;
+                preview.IsEnteringTray = false;
+                SetAnimationLock(false);
             }
 
             preview.RectTransform.anchoredPosition = preview.TargetPosition;
-            preview.RectTransform.sizeDelta = preview.TargetSize.sqrMagnitude > Mathf.Epsilon ? preview.TargetSize : targetSize;
-            preview.AnimationRoutine = null;
+            preview.RectTransform.sizeDelta = preview.TargetSize;
+            preview.RectTransform.localScale = Vector3.one;
+            return true;
+        }
+
+        private void FinalizeTrayPreview(RuntimeTrayPreview preview)
+        {
+            if (preview == null)
+            {
+                return;
+            }
+
+            if (preview.AnimationRoutine != null)
+            {
+                StopCoroutine(preview.AnimationRoutine);
+                preview.AnimationRoutine = null;
+                if (preview.IsEnteringTray)
+                {
+                    SetAnimationLock(false);
+                }
+            }
+
             preview.IsEnteringTray = false;
-            onCompleted?.Invoke();
-            SetAnimationLock(false);
         }
 
         private bool TryCreateTrayPreview(MahjongTile tile, Camera activeCamera, int slotIndex, out RuntimeTrayPreview preview)
@@ -1607,7 +1690,7 @@ namespace MahjongOut3D.Managers
 
             if (preview.AnimationRoutine != null)
             {
-                StopCoroutine(preview.AnimationRoutine);
+                FinalizeTrayPreview(preview);
             }
 
             if (preview.GameObject != null)
