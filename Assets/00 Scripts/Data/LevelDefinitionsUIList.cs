@@ -1,5 +1,6 @@
 
 using  System.Collections.Generic;
+using MahjongOut3D.LevelSystem;
 using Sirenix.OdinInspector;
 using UnityEngine;
 [System.Serializable]
@@ -8,3 +9,9 @@ public class LevelDefinitionsUIList : SerializedScriptableObject
 {
     public List<LevelDefinitionsUI> LevelDefinitions;
 } 
+[System.Serializable]
+public class  LevelDefinitionsUI
+{
+    public Sprite HeaderImg,BodyImg;
+    public LevelDifficulty Difficulty;
+}

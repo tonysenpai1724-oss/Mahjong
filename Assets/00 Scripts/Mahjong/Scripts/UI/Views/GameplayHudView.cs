@@ -250,7 +250,7 @@ namespace MahjongOut3D.UI
             }
 
             int popupVersion = comboPopupVersion;
-            targetText.text = $"COMBO x{combo}";
+            targetText.text = $"COMBO {combo}";
             targetText.color = new Color(targetText.color.r, targetText.color.g, targetText.color.b, 1f);
             targetText.rectTransform.localScale = Vector3.one * 0.7f;
             targetText.rectTransform.anchoredPosition = new Vector2(0f, 300f);
@@ -587,7 +587,7 @@ namespace MahjongOut3D.UI
             textRect.anchoredPosition = new Vector2(0f, 180f);
 
             comboText = textObject.AddComponent<TextMeshProUGUI>();
-            comboText.text = "COMBO x1";
+            comboText.text = "COMBO 1";
             comboText.fontSize = 54;
             comboText.fontStyle = FontStyles.Bold;
             comboText.alignment = TextAlignmentOptions.Center;
