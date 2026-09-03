@@ -1,11 +1,11 @@
 {
 "skeleton": {
-	"hash": "s4G7xhXL9GE",
+	"hash": "l7+2e4DAW9s",
 	"spine": "4.3.23",
 	"x": -530.1548,
-	"y": -497.4899,
+	"y": -495.2326,
 	"width": 1068.5007,
-	"height": 944.1305,
+	"height": 941.8731,
 	"images": "./images/",
 	"audio": "./audio"
 },
@@ -239,10 +239,7 @@
 	{ "name": "sparkle8", "bone": "sparkle8", "color": "ffdf73ff", "attachment": "sparkle3", "blend": "additive" },
 	{ "name": "sparkle9", "bone": "sparkle9", "color": "ffdf73ff", "attachment": "sparkle3", "blend": "additive" },
 	{ "name": "sparkle14", "bone": "sparkle14", "color": "ffdf73ff", "attachment": "sparkle3", "blend": "additive" },
-	{ "name": "sparkle10", "bone": "sparkle10", "color": "ffdf73ff", "attachment": "sparkle3", "blend": "additive" },
-	{ "name": "aw-goldenmahjong", "bone": "root" },
-	{ "name": "text", "bone": "root" },
-	{ "name": "ribbon", "bone": "root" }
+	{ "name": "sparkle10", "bone": "sparkle10", "color": "ffdf73ff", "attachment": "sparkle3", "blend": "additive" }
 ],
 "constraints": [
 	{
@@ -328,7 +325,7 @@
 				}
 			},
 			"bg": {
-				"bg": { "name": "text", "x": 3.620056, "y": -60.98987, "width": 828, "height": 873 }
+				"bg": { "name": "text1", "x": 5.625854, "y": -69.73262, "width": 827, "height": 851 }
 			},
 			"lose_1": {
 				"lose_1": { "x": 0.6592254, "y": 1.1490784, "width": 78, "height": 60 }
@@ -531,7 +528,7 @@
 				}
 			},
 			"bg": {
-				"bg": { "name": "text", "x": 3.7926636, "y": -60.45882, "width": 828, "height": 873 }
+				"bg": { "name": "text", "x": 3.7926636, "y": -60.45882, "width": 827, "height": 871 }
 			},
 			"sparkle3": {
 				"sparkle3": { "scaleX": 0.1787362, "scaleY": 0.1787362, "width": 256, "height": 256 }

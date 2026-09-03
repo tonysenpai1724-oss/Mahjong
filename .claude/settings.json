@@ -15,7 +15,9 @@
       "Bash(git -C /home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
       "Bash(git -C /home/sudv/Mahjong diff --stat)",
       "Bash(git -C /home/sudv/Mahjong diff --numstat -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
-      "Bash(git -C /home/sudv/Mahjong ls-files -v -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')"
+      "Bash(git -C /home/sudv/Mahjong ls-files -v -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/TileManager.cs')",
+      "Bash(xargs -r -n1 basename)"
     ]
   }
 }
