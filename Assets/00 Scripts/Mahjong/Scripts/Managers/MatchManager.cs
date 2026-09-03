@@ -2130,10 +2130,28 @@ namespace MahjongOut3D.Managers
                 animationManager?.SetTrayBoardTileVisible(tappedTile, false);
                 movingToSelectionTrayTiles.Remove(tappedTile);
 
-                if (matchingTrayTile != null && TryReservePairForMatchResolution(matchingTrayTile, tappedTile))
+                if (matchingTrayTile != null)
                 {
-                    StartOrQueueMatchedPairResolution(matchingTrayTile, tappedTile, true);
-                    yield break;
+                    // The tray can change while the tile is travelling to it. Resolve the
+                    // current tray reference again before applying the capacity failure rule.
+                    MahjongTile currentMatchingTrayTile = FindMatchingTrayTile(tappedTile);
+                    if (currentMatchingTrayTile != null)
+                    {
+                        matchingTrayTile = currentMatchingTrayTile;
+                    }
+
+                    if (TryReservePairForMatchResolution(matchingTrayTile, tappedTile))
+                    {
+                        StartOrQueueMatchedPairResolution(matchingTrayTile, tappedTile, true);
+                        yield break;
+                    }
+
+                    // A pair may already be reserved by another queued selection. Do not
+                    // turn that transient state into a false full-tray loss.
+                    if (IsSelectionResolutionBusy())
+                    {
+                        yield break;
+                    }
                 }
 
                 animationManager?.PlayTrayOccupancyFeedback(selectedTiles.Count, true);
