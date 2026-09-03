@@ -3567,8 +3567,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -8389,8 +8389,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -9443,8 +9443,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -10194,16 +10194,24 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1611671147440391488, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: m_fontSize
-      value: 54
+      value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 1611671147440391488, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: m_fontAsset
       value: 
       objectReference: {fileID: 11400000, guid: 5a555c0affec81e3186e517960ef6155, type: 2}
     - target: {fileID: 1611671147440391488, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 70
+      objectReference: {fileID: 0}
+    - target: {fileID: 1611671147440391488, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: -9167997947334667528, guid: 5a555c0affec81e3186e517960ef6155, type: 2}
+    - target: {fileID: 1611671147440391488, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1611671147440391488, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
       value: 1801810542
@@ -10355,7 +10363,19 @@ PrefabInstance:
     - target: {fileID: 6144526356549880572, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: levelDefinitionsUI
       value: 
-      objectReference: {fileID: 11400000, guid: 9d39015d4795cc2758a5896e8e4288ef, type: 2}
+      objectReference: {fileID: 11400000, guid: 805421160fde996b0b30037d6f780fbf, type: 2}
+    - target: {fileID: 6144526356549880572, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
+      propertyPath: difficultyBodyImage
+      value: 
+      objectReference: {fileID: 1203511147}
+    - target: {fileID: 6144526356549880572, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
+      propertyPath: difficultyHeaderImage
+      value: 
+      objectReference: {fileID: 1639287567}
+    - target: {fileID: 6144526356549880572, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
+      propertyPath: levelDefinitionsUI.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6756423421928423102, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: m_Name
       value: Home Panel

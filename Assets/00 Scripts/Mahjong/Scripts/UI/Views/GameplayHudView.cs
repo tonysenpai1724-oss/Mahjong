@@ -32,13 +32,23 @@ namespace MahjongOut3D.UI
         [SerializeField] private BoosterHudBinding xrayBooster;
         //[SerializeField] private TMP_Dropdown pieceMaterialDropdown;
         [SerializeField] private TMP_Text comboText;
+        [SerializeField] private Image comboMilestoneImage;
+        [SerializeField] private Sprite combo5Sprite;
+        [SerializeField] private Sprite combo10Sprite;
+        [SerializeField] private Sprite combo15Sprite;
+        [SerializeField] private Sprite combo20Sprite;
+        [SerializeField] private Sprite combo25Sprite;
+        [SerializeField] private Sprite combo30Sprite;
+        [SerializeField] private Sprite combo35Sprite;
         [SerializeField] private Image comboImage;
         [SerializeField] private ComboTrayGlowController comboTrayGlowController;
 
         private Action<int> pieceMaterialChangedCallback;
         private bool suppressPieceMaterialDropdownCallback;
         private Sequence comboPopupSequence;
+        private Sequence comboMilestoneImageSequence;
         private Sequence comboImageSequence;
+        private int comboPopupVersion;
 
         /// <summary>
         /// Binds HUD buttons to runtime callbacks.
@@ -190,20 +200,46 @@ namespace MahjongOut3D.UI
         }
 
         /// <summary>
-        /// Shows a floating combo popup. If no combo text is assigned, it creates one automatically.
+        /// Shows a floating combo popup. Milestone combos use their configured image instead of text.
         /// </summary>
         public void ShowComboText(int combo)
+        {
+            comboPopupVersion++;
+            if (combo <= 1)
+            {
+                HideComboText();
+                HideComboMilestoneImage();
+                HideComboBurstImage();
+                return;
+            }
+
+            Sprite milestoneSprite = GetComboMilestoneSprite(combo);
+            if (milestoneSprite != null)
+            {
+                HideComboText();
+                ShowComboMilestoneImage(milestoneSprite);
+            }
+            else
+            {
+                HideComboMilestoneImage();
+                ShowComboTextPopup(combo);
+            }
+
+            if (combo % 5 == 0)
+            {
+                ShowComboBurstImage();
+            }
+            else
+            {
+                HideComboBurstImage();
+            }
+        }
+
+        private void ShowComboTextPopup(int combo)
         {
             TMP_Text targetText = EnsureComboText();
             if (targetText == null)
             {
-                return;
-            }
-
-            if (combo <= 1)
-            {
-                targetText.gameObject.SetActive(false);
-                HideComboBurstImage();
                 return;
             }
 
@@ -213,6 +249,7 @@ namespace MahjongOut3D.UI
                 comboPopupSequence = null;
             }
 
+            int popupVersion = comboPopupVersion;
             targetText.text = $"COMBO x{combo}";
             targetText.color = new Color(targetText.color.r, targetText.color.g, targetText.color.b, 1f);
             targetText.rectTransform.localScale = Vector3.one * 0.7f;
@@ -231,6 +268,11 @@ namespace MahjongOut3D.UI
             }, 0f, 0.65f).SetDelay(0.18f));
             comboPopupSequence.OnComplete(() =>
             {
+                if (popupVersion != comboPopupVersion)
+                {
+                    return;
+                }
+
                 targetText.gameObject.SetActive(false);
                 Color hideColor = targetText.color;
                 hideColor.a = 1f;
@@ -238,80 +280,148 @@ namespace MahjongOut3D.UI
                 targetText.rectTransform.localScale = Vector3.one;
                 comboPopupSequence = null;
             });
+        }
 
-            if (combo % 5 == 0)
+        private void ShowComboMilestoneImage(Sprite milestoneSprite)
+        {
+            if (comboMilestoneImage == null || milestoneSprite == null)
             {
-                ShowComboBurstImage();
+                return;
             }
-            else
+
+            if (comboMilestoneImageSequence != null)
             {
-                HideComboBurstImage();
+                comboMilestoneImageSequence.Kill(true);
+                comboMilestoneImageSequence = null;
+            }
+
+            comboMilestoneImage.sprite = milestoneSprite;
+            comboMilestoneImage.gameObject.SetActive(true);
+            comboMilestoneImage.rectTransform.localScale = Vector3.one * 0.7f;
+
+            Color color = comboMilestoneImage.color;
+            color.a = 0f;
+            comboMilestoneImage.color = color;
+
+            comboMilestoneImageSequence = DOTween.Sequence();
+            comboMilestoneImageSequence.Append(comboMilestoneImage.DOFade(1f, 0.15f).SetEase(Ease.OutQuad));
+            comboMilestoneImageSequence.Join(comboMilestoneImage.rectTransform.DOScale(Vector3.one * 1.15f, 0.42f).SetEase(Ease.OutBack));
+            comboMilestoneImageSequence.AppendInterval(1.1f);
+            comboMilestoneImageSequence.Append(comboMilestoneImage.DOFade(0f, 0.75f).SetEase(Ease.InOutQuad));
+            int popupVersion = comboPopupVersion;
+            comboMilestoneImageSequence.OnComplete(() =>
+            {
+                if (popupVersion != comboPopupVersion)
+                {
+                    return;
+                }
+
+                comboMilestoneImage.gameObject.SetActive(false);
+                Color resetColor = comboMilestoneImage.color;
+                resetColor.a = 1f;
+                comboMilestoneImage.color = resetColor;
+                comboMilestoneImage.rectTransform.localScale = Vector3.one;
+                comboMilestoneImageSequence = null;
+            });
+        }
+
+        private Sprite GetComboMilestoneSprite(int combo)
+        {
+            if (combo <= 0 || combo % 5 != 0)
+            {
+                return null;
+            }
+
+            switch (combo / 5)
+            {
+                case 1:
+                    return combo5Sprite;
+                case 2:
+                    return combo10Sprite;
+                case 3:
+                    return combo15Sprite;
+                case 4:
+                    return combo20Sprite;
+                case 5:
+                    return combo25Sprite;
+                case 6:
+                    return combo30Sprite;
+                default:
+                    return combo35Sprite;
             }
         }
 
-private void ShowComboBurstImage()
-{
-    if (comboImage == null)
-    {
-        return;
-    }
+        private void HideComboText()
+        {
+            if (comboPopupSequence != null)
+            {
+                comboPopupSequence.Kill(true);
+                comboPopupSequence = null;
+            }
 
-    if (comboImageSequence != null)
-    {
-        comboImageSequence.Kill(true);
-        comboImageSequence = null;
-    }
+            if (comboText != null)
+            {
+                comboText.gameObject.SetActive(false);
+                Color color = comboText.color;
+                color.a = 1f;
+                comboText.color = color;
+                comboText.rectTransform.localScale = Vector3.one;
+            }
+        }
 
-    comboImage.gameObject.SetActive(true);
+        private void HideComboMilestoneImage()
+        {
+            if (comboMilestoneImageSequence != null)
+            {
+                comboMilestoneImageSequence.Kill(true);
+                comboMilestoneImageSequence = null;
+            }
 
-    // Reset alpha
-    Color color = comboImage.color;
-    color.a = 0f;
-    comboImage.color = color;
+            if (comboMilestoneImage != null)
+            {
+                comboMilestoneImage.gameObject.SetActive(false);
+                Color color = comboMilestoneImage.color;
+                color.a = 1f;
+                comboMilestoneImage.color = color;
+                comboMilestoneImage.rectTransform.localScale = Vector3.one;
+            }
+        }
 
-    comboImageSequence = DOTween.Sequence();
+        private void ShowComboBurstImage()
+        {
+            if (comboImage == null)
+            {
+                return;
+            }
 
-    // =========================
-    // FADE IN - 0.15s
-    // =========================
+            if (comboImageSequence != null)
+            {
+                comboImageSequence.Kill(true);
+                comboImageSequence = null;
+            }
 
-    comboImageSequence.Append(
-        comboImage
-            .DOFade(1f, 0.15f)
-            .SetEase(Ease.OutQuad)
-    );
+            comboImage.gameObject.SetActive(true);
 
-    // =========================
-    // GIỮ - 1.1s
-    // =========================
+            Color color = comboImage.color;
+            color.a = 0f;
+            comboImage.color = color;
 
-    comboImageSequence.AppendInterval(1.1f);
+            comboImageSequence = DOTween.Sequence();
+            comboImageSequence.Append(comboImage.DOFade(1f, 0.15f).SetEase(Ease.OutQuad));
+            comboImageSequence.AppendInterval(1.1f);
+            comboImageSequence.Append(comboImage.DOFade(0f, 0.75f).SetEase(Ease.InOutQuad));
+            comboImageSequence.OnComplete(() =>
+            {
+                comboImage.gameObject.SetActive(false);
 
-    // =========================
-    // FADE OUT - 0.75s
-    // =========================
+                Color resetColor = comboImage.color;
+                resetColor.a = 1f;
+                comboImage.color = resetColor;
 
-    comboImageSequence.Append(
-        comboImage
-            .DOFade(0f, 0.75f)
-            .SetEase(Ease.InOutQuad)
-    );
+                comboImageSequence = null;
+            });
+        }
 
-    // =========================
-    // TẮT
-    // =========================
-
-    comboImageSequence.OnComplete(() =>
-    {
-        comboImage.gameObject.SetActive(false);
-
-        Color resetColor = comboImage.color;
-        resetColor.a = 1f;
-        comboImage.color = resetColor;
-
-        comboImageSequence = null;
-    });
-}
         private void HideComboBurstImage()
         {
             if (comboImageSequence != null)

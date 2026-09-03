@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: LevelDefinitionsUIList
+  m_EditorClassIdentifier: Assembly-CSharp::LevelDefinitionsUIList
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  LevelDefinitions:
+  - HeaderImg: {fileID: 21300000, guid: 61565700b85aa929abc7b59744dd5231, type: 3}
+    BodyImg: {fileID: 21300000, guid: bf607c546b1e2e40eb69a0c2e2b92a8b, type: 3}
+    Difficulty: 0
+  - HeaderImg: {fileID: 21300000, guid: 3e753d8bf8b022ffdb0083d53a93ac06, type: 3}
+    BodyImg: {fileID: 21300000, guid: 547244abcbd2bf4f3822ddcf20e6414e, type: 3}
+    Difficulty: 1
+  - HeaderImg: {fileID: 21300000, guid: c395bc07f3f1bca79a17c3b394111610, type: 3}
+    BodyImg: {fileID: 21300000, guid: ac301ff75475a4255b8a0974bfab3b00, type: 3}
+    Difficulty: 2
+  - HeaderImg: {fileID: 21300000, guid: c395bc07f3f1bca79a17c3b394111610, type: 3}
+    BodyImg: {fileID: 21300000, guid: ac301ff75475a4255b8a0974bfab3b00, type: 3}
+    Difficulty: 3

@@ -11,8 +11,9 @@ public class HomePlayButton : HomeFeatureButton
     public TMPro.TextMeshProUGUI txtLevel;
     public TMPro.TextMeshProUGUI txtDifficulty;
     public LevelCatalog levelCatalog;
-    public Image difficultyImage;
-    //public LevelDefinitionsUI levelDefinitionsUI;
+    public Image difficultyHeaderImage;
+    public Image difficultyBodyImage;
+    public LevelDefinitionsUIList levelDefinitionsUI;
     
     protected override void Start()
     {
@@ -32,20 +33,20 @@ public class HomePlayButton : HomeFeatureButton
         txtLevel.text ="Level " + IPlayerInfoController.Instance.CurrentLevel().ToString();
          LevelDefinition levelDef = levelCatalog.TryGetLevel(IPlayerInfoController.Instance.CurrentLevel() - 1, 
          out LevelDefinition def) ? def : null;
-         Sprite difficultySprite = null;
          txtDifficulty.text = levelDef != null ? levelDef.Difficulty.ToString() : "Unknown";
-        // if (levelDef != null)
-        // {
-        //     foreach (var kvp in levelDefinitionsUI.levelDefinitions)
-        //     {
-        //         if (kvp.Value == levelDef.Difficulty)
-        //         {
-        //             difficultySprite = kvp.Key;
-        //             break;
-        //         }
-        //     }
-        // }
-        difficultyImage.sprite = difficultySprite;
+        if (levelDef != null)
+        {
+            foreach (var levelUI in levelDefinitionsUI.LevelDefinitions)
+            {
+                if (levelUI.Difficulty == levelDef.Difficulty)
+                {
+
+                    difficultyHeaderImage.sprite = levelUI.HeaderImg;
+                    difficultyBodyImage.sprite = levelUI.BodyImg;
+                    break;
+                }
+            }
+        }
       
 
         // txtDifficulty.text = levelDef != null ? levelDef.Difficulty.ToString() : "Unknown";
@@ -65,8 +66,15 @@ public class HomePlayButton : HomeFeatureButton
 }
 
 [System.Serializable]
-[CreateAssetMenu(menuName = "Mahjong Out 3D/Level/Level Definitions UI", fileName = "LevelDefinitionsUI")]
-public class  LevelDefinitionsUI:SerializedScriptableObject
+public class  LevelDefinitionsUI
 {
-    public Dictionary<Sprite, LevelDifficulty> levelDefinitions = new Dictionary<Sprite, LevelDifficulty>();
+    public Sprite HeaderImg,BodyImg;
+    public LevelDifficulty Difficulty;
 }
+
+[System.Serializable]
+[CreateAssetMenu(menuName = "Mahjong Out 3D/Level/Level Definitions UI List", fileName = "LevelDefinitionsUIList")]
+public class LevelDefinitionsUIList : SerializedScriptableObject
+{
+    public List<LevelDefinitionsUI> LevelDefinitions;
+} 
