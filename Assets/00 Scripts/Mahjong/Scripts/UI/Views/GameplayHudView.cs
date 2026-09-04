@@ -33,6 +33,8 @@ namespace MahjongOut3D.UI
         //[SerializeField] private TMP_Dropdown pieceMaterialDropdown;
         [SerializeField] private TMP_Text comboText;
         [SerializeField] private Image comboMilestoneImage;
+        [SerializeField] private Sprite comboTitleSprite;
+        [SerializeField] private Sprite[] comboDigitSprites;
         [SerializeField] private Sprite combo5Sprite;
         [SerializeField] private Sprite combo10Sprite;
         [SerializeField] private Sprite combo15Sprite;
@@ -48,6 +50,10 @@ namespace MahjongOut3D.UI
         private Sequence comboPopupSequence;
         private Sequence comboMilestoneImageSequence;
         private Sequence comboImageSequence;
+        private RectTransform comboGraphicRoot;
+        private CanvasGroup comboGraphicCanvasGroup;
+        private RectTransform comboDigitsRoot;
+        private Image comboPraiseImage;
         private int comboPopupVersion;
 
         /// <summary>
@@ -213,17 +219,8 @@ namespace MahjongOut3D.UI
                 return;
             }
 
-            Sprite milestoneSprite = GetComboMilestoneSprite(combo);
-            if (milestoneSprite != null)
-            {
-                HideComboText();
-                ShowComboMilestoneImage(milestoneSprite);
-            }
-            else
-            {
-                HideComboMilestoneImage();
-                ShowComboTextPopup(combo);
-            }
+            HideComboMilestoneImage();
+            ShowComboTextPopup(combo);
 
             if (combo % 5 == 0)
             {
@@ -237,8 +234,8 @@ namespace MahjongOut3D.UI
 
         private void ShowComboTextPopup(int combo)
         {
-            TMP_Text targetText = EnsureComboText();
-            if (targetText == null)
+            RectTransform root = EnsureComboGraphicRoot();
+            if (root == null)
             {
                 return;
             }
@@ -249,23 +246,23 @@ namespace MahjongOut3D.UI
                 comboPopupSequence = null;
             }
 
+            BuildComboGraphic(combo);
             int popupVersion = comboPopupVersion;
-            targetText.text = $"COMBO {combo}";
-            targetText.color = new Color(targetText.color.r, targetText.color.g, targetText.color.b, 1f);
-            targetText.rectTransform.localScale = Vector3.one * 0.7f;
-            targetText.rectTransform.anchoredPosition = new Vector2(0f, 300f);
-            targetText.gameObject.SetActive(true);
+            root.localScale = Vector3.one * 0.7f;
+            root.anchoredPosition = new Vector2(0f, 300f);
+            comboGraphicCanvasGroup.alpha = 1f;
+            root.gameObject.SetActive(true);
 
             comboPopupSequence = DOTween.Sequence();
-            comboPopupSequence.Append(targetText.rectTransform.DOAnchorPosY(500f, 0.42f).SetEase(Ease.OutCubic));
-            comboPopupSequence.Join(targetText.rectTransform.DOScale(Vector3.one * 1.65f, 0.42f).SetEase(Ease.OutBack));
-            comboPopupSequence.Append(targetText.rectTransform.DOScale(Vector3.one * 1.15f, 0.18f).SetEase(Ease.Linear));
-            comboPopupSequence.Join(DOTween.To(() => targetText.color.a, alpha =>
+            comboPopupSequence.Append(root.DOAnchorPosY(500f, 0.42f).SetEase(Ease.OutCubic));
+            comboPopupSequence.Join(root.DOScale(Vector3.one * 1.65f, 0.42f).SetEase(Ease.OutBack));
+            comboPopupSequence.Append(root.DOScale(Vector3.one * 1.15f, 0.18f).SetEase(Ease.Linear));
+            if (comboPraiseImage != null)
             {
-                Color color = targetText.color;
-                color.a = alpha;
-                targetText.color = color;
-            }, 0f, 0.65f).SetDelay(0.18f));
+                comboPopupSequence.Insert(0.3f, comboPraiseImage.DOFade(1f, 0.2f));
+            }
+
+            comboPopupSequence.Join(comboGraphicCanvasGroup.DOFade(0f, 0.65f).SetDelay(0.18f));
             comboPopupSequence.OnComplete(() =>
             {
                 if (popupVersion != comboPopupVersion)
@@ -273,13 +270,123 @@ namespace MahjongOut3D.UI
                     return;
                 }
 
-                targetText.gameObject.SetActive(false);
-                Color hideColor = targetText.color;
-                hideColor.a = 1f;
-                targetText.color = hideColor;
-                targetText.rectTransform.localScale = Vector3.one;
+                root.gameObject.SetActive(false);
+                comboGraphicCanvasGroup.alpha = 1f;
+                root.localScale = Vector3.one;
                 comboPopupSequence = null;
             });
+        }
+
+        private RectTransform EnsureComboGraphicRoot()
+        {
+            if (comboGraphicRoot != null)
+            {
+                return comboGraphicRoot;
+            }
+
+            RectTransform parent = transform as RectTransform;
+            if (parent == null)
+            {
+                return null;
+            }
+
+            GameObject rootObject = new GameObject("ComboGraphicRoot", typeof(RectTransform), typeof(CanvasGroup));
+            comboGraphicRoot = rootObject.transform as RectTransform;
+            comboGraphicRoot.SetParent(parent, false);
+            comboGraphicRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            comboGraphicRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            comboGraphicRoot.pivot = new Vector2(0.5f, 0.5f);
+            comboGraphicRoot.sizeDelta = new Vector2(500f, 260f);
+            comboGraphicCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            comboGraphicCanvasGroup.interactable = false;
+            comboGraphicCanvasGroup.blocksRaycasts = false;
+            rootObject.SetActive(false);
+            return comboGraphicRoot;
+        }
+
+        private void BuildComboGraphic(int combo)
+        {
+            if (comboGraphicRoot == null)
+            {
+                return;
+            }
+
+            ClearComboGraphicChildren();
+            string comboDigits = Mathf.Max(0, combo).ToString();
+            float digitWidth = 58f;
+            float digitSpacing = 46f;
+            float digitsWidth = digitWidth + (Mathf.Max(0, comboDigits.Length - 1) * digitSpacing);
+            float titleWidth = 190f;
+            float totalWidth = titleWidth + digitsWidth + 12f;
+            float titleX = -((totalWidth - titleWidth) * 0.5f);
+            CreateComboImage("ComboTitle", comboTitleSprite, comboGraphicRoot, new Vector2(titleX, 35f), new Vector2(titleWidth, 78f));
+            comboDigitsRoot = CreateComboChildRoot("Digits", comboGraphicRoot, new Vector2(titleX + (titleWidth * 0.5f) + 6f + (digitsWidth * 0.5f), 35f), new Vector2(digitsWidth, 100f));
+
+            for (int index = 0; index < comboDigits.Length; index++)
+            {
+                int digitIndex = comboDigits[index] - '0';
+                if (comboDigitSprites == null || digitIndex < 0 || digitIndex >= comboDigitSprites.Length)
+                {
+                    continue;
+                }
+
+                CreateComboImage($"Digit{index}", comboDigitSprites[digitIndex], comboDigitsRoot,
+                    new Vector2((index * digitSpacing) - ((comboDigits.Length - 1) * digitSpacing * 0.5f), 0f), new Vector2(digitWidth, 88f));
+            }
+
+            Sprite praiseSprite = GetComboMilestoneSprite(combo);
+            if (praiseSprite != null)
+            {
+                comboPraiseImage = CreateComboImage("Praise", praiseSprite, comboGraphicRoot, new Vector2(0f, -66f), new Vector2(300f, 72f));
+                comboPraiseImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+        }
+
+        private void ClearComboGraphicChildren()
+        {
+            if (comboGraphicRoot == null)
+            {
+                return;
+            }
+
+            for (int index = comboGraphicRoot.childCount - 1; index >= 0; index--)
+            {
+                Destroy(comboGraphicRoot.GetChild(index).gameObject);
+            }
+
+            comboDigitsRoot = null;
+            comboPraiseImage = null;
+        }
+
+        private static RectTransform CreateComboChildRoot(string objectName, RectTransform parent, Vector2 position, Vector2 size)
+        {
+            GameObject child = new GameObject(objectName, typeof(RectTransform));
+            RectTransform rect = child.transform as RectTransform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            return rect;
+        }
+
+        private static Image CreateComboImage(string objectName, Sprite sprite, RectTransform parent, Vector2 position, Vector2 size)
+        {
+            GameObject child = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RectTransform rect = child.transform as RectTransform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+
+            Image image = child.GetComponent<Image>();
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            return image;
         }
 
         private void ShowComboMilestoneImage(Sprite milestoneSprite)
@@ -362,10 +469,17 @@ namespace MahjongOut3D.UI
             if (comboText != null)
             {
                 comboText.gameObject.SetActive(false);
-                Color color = comboText.color;
-                color.a = 1f;
-                comboText.color = color;
-                comboText.rectTransform.localScale = Vector3.one;
+            }
+
+            if (comboGraphicRoot != null)
+            {
+                comboGraphicRoot.gameObject.SetActive(false);
+                comboGraphicRoot.localScale = Vector3.one;
+            }
+
+            if (comboGraphicCanvasGroup != null)
+            {
+                comboGraphicCanvasGroup.alpha = 1f;
             }
         }
 

@@ -41,6 +41,11 @@ namespace MahjongOut3D.GameplayInput
         public event Action<ZoomInputEvent> ZoomChanged;
 
         /// <summary>
+        /// Occurs when the player begins any pointer or touch interaction.
+        /// </summary>
+        public event Action<ScreenActivityInputEvent> ScreenActivity;
+
+        /// <summary>
         /// Enables or disables raw input polling.
         /// </summary>
         /// <param name="isEnabled">True to enable input polling; otherwise false.</param>
@@ -200,6 +205,7 @@ namespace MahjongOut3D.GameplayInput
         /// <param name="blockedByUi">True when the pointer started on UI.</param>
         private void BeginPointer(Vector2 screenPosition, int pointerId, bool blockedByUi)
         {
+            ScreenActivity?.Invoke(new ScreenActivityInputEvent(pointerId));
             currentPointerId = pointerId;
             pointerStartPosition = screenPosition;
             pointerLastPosition = screenPosition;

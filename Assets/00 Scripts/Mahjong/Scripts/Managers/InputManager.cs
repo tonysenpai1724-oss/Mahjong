@@ -44,6 +44,7 @@ namespace MahjongOut3D.Managers
                 inputSource.TileTapped += HandleTileTapped;
                 inputSource.OrbitDragged += HandleOrbitDragged;
                 inputSource.ZoomChanged += HandleZoomChanged;
+                inputSource.ScreenActivity += HandleScreenActivity;
             }
 
             GameManager gameManager = GameManager.Instance;
@@ -73,6 +74,7 @@ namespace MahjongOut3D.Managers
                 inputSource.TileTapped -= HandleTileTapped;
                 inputSource.OrbitDragged -= HandleOrbitDragged;
                 inputSource.ZoomChanged -= HandleZoomChanged;
+                inputSource.ScreenActivity -= HandleScreenActivity;
                 inputSource.SetInputEnabled(false);
             }
 
@@ -126,6 +128,16 @@ namespace MahjongOut3D.Managers
         /// Republishes tile tap input through the shared event bus.
         /// </summary>
         /// <param name="eventData">Tap input payload.</param>
+        private void HandleScreenActivity(ScreenActivityInputEvent eventData)
+        {
+            if (!IsInputEnabled)
+            {
+                return;
+            }
+
+            Context.EventBus.Publish(eventData);
+        }
+
         private void HandleTileTapped(TileTapInputEvent eventData)
         {
             if (!IsInputEnabled)

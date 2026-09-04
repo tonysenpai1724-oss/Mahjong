@@ -3,6 +3,19 @@ using UnityEngine;
 namespace MahjongOut3D.GameplayInput
 {
     /// <summary>
+    /// Published when the player begins a pointer or touch interaction.
+    /// </summary>
+    public readonly struct ScreenActivityInputEvent
+    {
+        public ScreenActivityInputEvent(int pointerId)
+        {
+            PointerId = pointerId;
+        }
+
+        public int PointerId { get; }
+    }
+
+    /// <summary>
     /// Published when the player drags to rotate the orbit camera.
     /// </summary>
     public readonly struct OrbitDragInputEvent

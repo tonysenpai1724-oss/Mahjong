@@ -1,4 +1,6 @@
 using MahjongOut3D.Core;
+using MahjongOut3D.Gameplay;
+using MahjongOut3D.GameplayInput;
 using MahjongOut3D.TileSystem;
 using UnityEngine;
 
@@ -18,8 +20,12 @@ namespace MahjongOut3D.CameraSystem
         [SerializeField] private OrbitCameraSettings settings;
         [SerializeField] private Transform rotationTarget;
         [SerializeField] private bool resetRotationWhenTargetChanges = true;
+        [SerializeField, Min(0f)] private float idleRotationDelaySeconds = 15f;
+        [SerializeField] private float idleRotationSpeedDegrees = 3f;
 
         private bool isInitialized;
+        private float lastActivityTime;
+        private EventBus eventBus;
         private Transform contentTarget;
         private Transform contentOriginalParent;
         private Transform dynamicPivot;
@@ -46,6 +52,13 @@ namespace MahjongOut3D.CameraSystem
             }
 
             isInitialized = true;
+            eventBus = context?.EventBus;
+            if (eventBus != null)
+            {
+                eventBus.Subscribe<ScreenActivityInputEvent>(HandleScreenActivity);
+            }
+
+            lastActivityTime = GetCurrentTime();
             ApplyTargetRotation(true);
         }
 
@@ -54,6 +67,8 @@ namespace MahjongOut3D.CameraSystem
         /// </summary>
         public void Shutdown()
         {
+            eventBus?.Unsubscribe<ScreenActivityInputEvent>(HandleScreenActivity);
+            eventBus = null;
             RestoreContentParent();
             if (dynamicPivot != null)
             {
@@ -69,6 +84,7 @@ namespace MahjongOut3D.CameraSystem
             currentRotationOffset = Quaternion.identity;
             inertialRotationVelocity = Vector2.zero;
             lastDragFrame = -1;
+            lastActivityTime = 0f;
         }
 
         /// <summary>
@@ -131,6 +147,7 @@ namespace MahjongOut3D.CameraSystem
             Vector2 scaledDelta = screenDelta * GetRotationSpeed();
             scaledDelta.y *= GetVerticalRotationMultiplier();
 
+            StopIdleRotation();
             ApplyRotationDelta(scaledDelta);
 
             inertialRotationVelocity = scaledDelta / deltaTime;
@@ -148,7 +165,30 @@ namespace MahjongOut3D.CameraSystem
             }
 
             ApplyRotationInertia();
+            ApplyIdleRotation();
             ApplyTargetRotation(false);
+        }
+
+        private void HandleScreenActivity(ScreenActivityInputEvent eventData)
+        {
+            lastActivityTime = GetCurrentTime();
+            StopIdleRotation();
+            inertialRotationVelocity = Vector2.zero;
+        }
+
+        private void ApplyIdleRotation()
+        {
+            if (idleRotationDelaySeconds <= 0f || GetCurrentTime() - lastActivityTime < idleRotationDelaySeconds)
+            {
+                return;
+            }
+
+            targetRotationOffset = Quaternion.AngleAxis(-idleRotationSpeedDegrees * GetDeltaTime(), Vector3.up) * targetRotationOffset;
+        }
+
+        private void StopIdleRotation()
+        {
+            lastActivityTime = GetCurrentTime();
         }
 
         /// <summary>
@@ -353,6 +393,16 @@ namespace MahjongOut3D.CameraSystem
             }
 
             return Time.deltaTime;
+        }
+
+        private float GetCurrentTime()
+        {
+            if (settings != null && settings.UseUnscaledTime)
+            {
+                return Time.unscaledTime;
+            }
+
+            return Time.time;
         }
 
         /// <summary>

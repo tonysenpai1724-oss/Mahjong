@@ -92,6 +92,7 @@ namespace MahjongOut3D.Managers
         /// </summary>
         protected override void OnShutdown()
         {
+            HideMatchingTraySlot();
             ClearHintHighlight();
             if (trayShakeRoutine != null)
             {
@@ -185,6 +186,16 @@ namespace MahjongOut3D.Managers
         public bool SnapToTray(MahjongTile tile, int slotIndex)
         {
             return AnimateTrayTileToSlot(tile, slotIndex, null);
+        }
+
+        public void ShowMatchingTraySlot(int slotIndex)
+        {
+            ResolveTraySlotAnchorProvider()?.ShowMatchingSlotOutline(slotIndex);
+        }
+
+        public void HideMatchingTraySlot()
+        {
+            ResolveTraySlotAnchorProvider()?.StopMatchingSlotOutline();
         }
 
         /// <summary>
@@ -479,6 +490,7 @@ namespace MahjongOut3D.Managers
         public void CancelTransientAnimations()
         {
             StopAllCoroutines();
+            HideMatchingTraySlot();
             ClearHintHighlight();
             ClearTrayPreviews();
             animationLockCount = 0;

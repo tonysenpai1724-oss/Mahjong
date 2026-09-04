@@ -23,6 +23,11 @@ namespace MahjongOut3D.GameplayInput
         event Action<ZoomInputEvent> ZoomChanged;
 
         /// <summary>
+        /// Occurs when the player begins any pointer or touch interaction.
+        /// </summary>
+        event Action<ScreenActivityInputEvent> ScreenActivity;
+
+        /// <summary>
         /// Enables or disables raw input polling.
         /// </summary>
         /// <param name="isEnabled">True to enable polling; otherwise false.</param>
