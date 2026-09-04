@@ -719,15 +719,26 @@ namespace MahjongOut3D.LevelSystem
             {
                 yield break;
             }
+            // Try to match the assemble timing to the tile appear audio clip so the
+            // visual assembly feels synced to the sound effect. Fall back to the
+            // configured max stagger when the clip isn't available.
+            MahjongOut3D.Data.MahjongAudioSettings audioSettings = Resources.Load<MahjongOut3D.Data.MahjongAudioSettings>("MahjongAudioSettings");
+            AudioClip appearClip = audioSettings != null ? audioSettings.TileAppearClip : null;
 
-            List<TileAssemblePose> poses = BuildTileAssemblePoses(grid);
+            float duration = Mathf.Max(0.05f, assembleDurationSeconds);
+            float clipLength = (appearClip != null && appearClip.length > 0f) ? appearClip.length : (duration + assembleMaxStaggerSeconds);
+            float maxStagger = Mathf.Max(0f, clipLength - duration);
+
+            List<TileAssemblePose> poses = BuildTileAssemblePoses(grid, maxStagger);
             if (poses.Count == 0)
             {
                 yield break;
             }
 
-            float duration = Mathf.Max(0.05f, assembleDurationSeconds);
-            float totalDuration = duration;
+            // Ensure the entire assemble sequence spans the clip length (or
+            // computed total based on delays) so the animation completes with the
+            // audio.
+            float totalDuration = Mathf.Max(duration, clipLength);
             for (int index = 0; index < poses.Count; index++)
             {
                 TileAssemblePose pose = poses[index];
@@ -772,7 +783,7 @@ namespace MahjongOut3D.LevelSystem
             }
         }
 
-        private List<TileAssemblePose> BuildTileAssemblePoses(VoxelGridData grid)
+        private List<TileAssemblePose> BuildTileAssemblePoses(VoxelGridData grid, float maxStagger)
         {
             List<TileAssemblePose> poses = new List<TileAssemblePose>(spawnedTiles.Count);
             if (!TryBuildSpawnedTileBounds(out Bounds worldBounds))
@@ -801,7 +812,6 @@ namespace MahjongOut3D.LevelSystem
             Vector3 cameraUp = activeCamera != null ? activeCamera.transform.up.normalized : Vector3.up;
             float distanceToCenter = Vector3.Distance(cameraPosition, center);
             Vector3 assembleOrigin = cameraPosition + (cameraForward * Mathf.Max(1.6f, distanceToCenter * 0.32f));
-            float maxStagger = assembleMaxStaggerSeconds;
             int poseCount = Mathf.Max(1, spawnedTiles.Count - 1);
 
             for (int index = 0; index < spawnedTiles.Count; index++)

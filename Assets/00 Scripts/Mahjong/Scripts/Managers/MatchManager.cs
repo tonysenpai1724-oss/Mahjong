@@ -472,7 +472,7 @@ namespace MahjongOut3D.Managers
                 if (selectedTiles.Count >= SelectionTrayCapacity && matchingTrayTile == null)
                 {
                     tappedTile.Deselect();
-                    GetAnimationManager()?.PlayTrayOccupancyFeedback(selectedTiles.Count, true);
+                    GetAnimationManager()?.PlayTrayOccupancyFeedback(selectedTiles.Count, false);
                     if (!IsSelectionResolutionBusy() && !TryStartFirstMatchingPairInSelectionTray(true))
                     {
                         GetAudioManager()?.PlayLose();
@@ -2156,7 +2156,7 @@ namespace MahjongOut3D.Managers
                     }
                 }
 
-                animationManager?.PlayTrayOccupancyFeedback(selectedTiles.Count, true);
+                animationManager?.PlayTrayOccupancyFeedback(selectedTiles.Count, false);
 
                 if (selectedTiles.Count >= SelectionTrayCapacity)
                 {
