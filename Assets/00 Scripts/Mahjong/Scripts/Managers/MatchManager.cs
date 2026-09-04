@@ -499,11 +499,6 @@ namespace MahjongOut3D.Managers
                     ? Mathf.Clamp(matchSlotIndex + 1, 0, SelectionTrayCapacity - 1)
                     : Mathf.Clamp(selectedTiles.Count, 0, SelectionTrayCapacity - 1);
 
-                if (matchingTrayTile != null)
-                {
-                    GetAnimationManager()?.ShowMatchingTraySlot(targetSlotIndex);
-                }
-
                 yield return MoveTileIntoSelectionTray(tappedTile, matchingTrayTile, targetSlotIndex);
                 activeSelectionTile = null;
 
@@ -2097,6 +2092,7 @@ namespace MahjongOut3D.Managers
                     targetSlotIndex = selectedTiles.Count - 1;
                 }
 
+                GetAnimationManager()?.ShowMatchingTraySlot(targetSlotIndex);
                 GetAudioManager()?.PlaySelect();
 
                 bool completed = false;

@@ -1660,12 +1660,8 @@ namespace MahjongOut3D.Managers
 
             matchUiShardEffect?.Prewarm();
 
-            Vector2 firstUiPosition = firstPreview?.RectTransform != null
-                ? firstPreview.RectTransform.anchoredPosition
-                : impactPosition;
-            Vector2 secondUiPosition = secondPreview?.RectTransform != null
-                ? secondPreview.RectTransform.anchoredPosition
-                : impactPosition;
+            Vector2 firstUiPosition = impactPosition;
+            Vector2 secondUiPosition = impactPosition;
             Vector2 firstScreenPosition = TrayOverlayToScreenPosition(firstUiPosition);
             Vector2 secondScreenPosition = TrayOverlayToScreenPosition(secondUiPosition);
             Vector2 firstSize = firstPreview?.RectTransform != null
