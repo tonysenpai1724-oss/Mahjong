@@ -334,6 +334,11 @@ namespace MahjongOut3D.LevelSystem
             public int TargetLayerCount { get; set; }
 
             /// <summary>
+            /// Gets or sets the selected complete-shell tile count.
+            /// </summary>
+            public int TargetTileCount { get; set; }
+
+            /// <summary>
             /// Gets or sets the shell list from outside to inside.
             /// </summary>
             public List<List<TilePlacementData>> Shells { get; set; } = new List<List<TilePlacementData>>();
@@ -773,7 +778,12 @@ namespace MahjongOut3D.LevelSystem
                 for (int attempt = 0; attempt < MaxSolvableGenerationAttemptsPerLevel; attempt++)
                 {
                     candidate = CreateShapeCandidate(settings, random);
-                    int tileCount = GetTargetTileCount(settings, candidate);
+                    if (candidate == null)
+                    {
+                        continue;
+                    }
+
+                    int tileCount = candidate.TargetTileCount;
                     List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shape, candidate.Shells, tileCount, random);
                     logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
@@ -932,7 +942,12 @@ namespace MahjongOut3D.LevelSystem
             for (int attempt = 0; attempt < MaxSolvableGenerationAttemptsPerLevel; attempt++)
             {
                 candidate = CreateShapeCandidate(settings, random);
-                int tileCount = GetTargetTileCount(settings, candidate);
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                int tileCount = candidate.TargetTileCount;
                 List<TilePlacementData> occupiedCoordinates = BuildOccupiedCoordinates(candidate.Shape, candidate.Shells, tileCount, random);
                 logicalGridSize = BuildLogicalGridSize(occupiedCoordinates.Count);
 
@@ -1475,39 +1490,57 @@ namespace MahjongOut3D.LevelSystem
         }
 
         /// <summary>
-        /// Chooses a compact tile count that preserves full outer layers whenever possible.
+        /// Chooses a tile count represented by complete shell layers inside the pair bounds.
         /// </summary>
         private static int GetTargetTileCount(DifficultyBatchDefinition settings, ShapeCandidate candidate)
         {
-            if (candidate == null)
-            {
-                return 0;
-            }
-
-            List<List<TilePlacementData>> shells = candidate.Shells;
-            if (shells == null || shells.Count == 0)
+            if (candidate == null || candidate.Shells == null || candidate.Shells.Count == 0)
             {
                 return 0;
             }
 
             int maxTileCount = settings != null ? Mathf.Max(2, settings.MaxPairCount * 2) : int.MaxValue;
             int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
-            int total = GetShellTileCapacity(shells);
+            return GetPreferredCompleteShellTileCount(candidate.Shells, candidate.TargetLayerCount, minTileCount, maxTileCount);
+        }
 
-            if (ShouldKeepShapeSelectionCompact(candidate.Shape))
+        private static int GetPreferredCompleteShellTileCount(List<List<TilePlacementData>> shells, int minimumLayerCount, int minTileCount, int maxTileCount)
+        {
+            if (shells == null || shells.Count == 0)
             {
-                int clamped1Total = Mathf.Min(total, maxTileCount);
-                return clamped1Total % 2 == 0 ? clamped1Total : Mathf.Max(2, clamped1Total - 1);
+                return 0;
             }
 
-            int preferredCount = GetPreferredCubeTileCount(shells, candidate.TargetLayerCount, minTileCount, maxTileCount);
-            if (preferredCount >= 2)
+            int cumulativeCount = 0;
+            int bestCount = 0;
+            int bestLayerCount = 0;
+            for (int index = 0; index < shells.Count; index++)
             {
-                return preferredCount;
+                if (shells[index] == null || shells[index].Count == 0)
+                {
+                    return bestCount;
+                }
+
+                cumulativeCount += shells[index].Count;
+                if (cumulativeCount < minTileCount || cumulativeCount > maxTileCount || cumulativeCount % 2 != 0)
+                {
+                    continue;
+                }
+
+                int layerCount = index + 1;
+                if (layerCount >= Mathf.Max(1, minimumLayerCount))
+                {
+                    return cumulativeCount;
+                }
+
+                if (layerCount > bestLayerCount)
+                {
+                    bestCount = cumulativeCount;
+                    bestLayerCount = layerCount;
+                }
             }
 
-            int clampedTotal = Mathf.Min(total, maxTileCount);
-            return clampedTotal % 2 == 0 ? clampedTotal : Mathf.Max(2, clampedTotal - 1);
+            return bestCount;
         }
 
         /// <summary>
@@ -1571,6 +1604,11 @@ namespace MahjongOut3D.LevelSystem
             {
                 LevelShapeType selectedShape = settings.GetRandomShape(random);
                 int targetLayerCount = GetRandomLayerCount(settings, random);
+                if (selectedShape == LevelShapeType.Cylinder)
+                {
+                    targetLayerCount = Mathf.Clamp(targetLayerCount, 1, 3);
+                }
+
                 VoxelGridSize gridSize = BuildGridSizeForShape(targetLayerCount, selectedShape);
                 List<List<TilePlacementData>> shells = BuildShapeShells(gridSize, selectedShape, targetLayerCount, settings, random);
                 if (GetShellTileCapacity(shells) < 2)
@@ -1583,8 +1621,14 @@ namespace MahjongOut3D.LevelSystem
                     GridSize = gridSize,
                     Shape = selectedShape,
                     TargetLayerCount = targetLayerCount,
+                    TargetTileCount = GetTargetTileCount(settings, new ShapeCandidate { Shells = shells, TargetLayerCount = targetLayerCount }),
                     Shells = shells,
                 };
+
+                if (candidate.TargetTileCount <= 0)
+                {
+                    continue;
+                }
 
                 if (bestCandidate == null || candidate.TileCapacity > bestCandidate.TileCapacity)
                 {
@@ -1597,20 +1641,7 @@ namespace MahjongOut3D.LevelSystem
                 }
             }
 
-            if (bestCandidate != null)
-            {
-                return bestCandidate;
-            }
-
-            int fallbackLayerCount = GetRandomLayerCount(settings, random);
-            VoxelGridSize fallbackGridSize = BuildGridSizeForShape(fallbackLayerCount, LevelShapeType.Cube);
-            return new ShapeCandidate
-            {
-                GridSize = fallbackGridSize,
-                Shape = LevelShapeType.Cube,
-                TargetLayerCount = fallbackLayerCount,
-                Shells = BuildShapeShells(fallbackGridSize, LevelShapeType.Cube, fallbackLayerCount, settings, random),
-            };
+            return bestCandidate;
         }
 
         /// <summary>
@@ -1623,21 +1654,26 @@ namespace MahjongOut3D.LevelSystem
                 return BuildCompactOccupiedCoordinates(shells, tileCount);
             }
 
+            return BuildCompleteShellOccupiedCoordinates(shells, tileCount, random);
+        }
+
+        private static List<TilePlacementData> BuildCompleteShellOccupiedCoordinates(List<List<TilePlacementData>> shells, int tileCount, System.Random random)
+        {
             List<TilePlacementData> orderedCoordinates = new List<TilePlacementData>(tileCount);
             for (int shellIndex = 0; shellIndex < shells.Count && orderedCoordinates.Count < tileCount; shellIndex++)
             {
-                List<TilePlacementData> shellCoordinates = new List<TilePlacementData>(shells[shellIndex]);
-                Shuffle(shellCoordinates, random);
-
-                for (int coordinateIndex = 0; coordinateIndex < shellCoordinates.Count && orderedCoordinates.Count < tileCount; coordinateIndex++)
+                List<TilePlacementData> shellCoordinates = shells[shellIndex];
+                if (shellCoordinates == null || orderedCoordinates.Count + shellCoordinates.Count > tileCount)
                 {
-                    orderedCoordinates.Add(ClonePlacement(shellCoordinates[coordinateIndex], shellIndex));
+                    break;
                 }
-            }
 
-            if (orderedCoordinates.Count % 2 != 0)
-            {
-                orderedCoordinates.RemoveAt(orderedCoordinates.Count - 1);
+                List<TilePlacementData> shuffledShell = new List<TilePlacementData>(shellCoordinates);
+                Shuffle(shuffledShell, random);
+                for (int coordinateIndex = 0; coordinateIndex < shuffledShell.Count; coordinateIndex++)
+                {
+                    orderedCoordinates.Add(ClonePlacement(shuffledShell[coordinateIndex], shellIndex));
+                }
             }
 
             return orderedCoordinates;
@@ -1833,19 +1869,39 @@ namespace MahjongOut3D.LevelSystem
                 }
 
                 case LevelShapeType.Rectangle:
-                    return new RectangleShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+                {
+                    int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+                    int maxTileCount = settings != null ? Mathf.Max(minTileCount, settings.MaxPairCount * 2) : minTileCount;
+                    return new RectangleShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize, targetLayerCount, minTileCount, maxTileCount, random);
+                }
 
                 case LevelShapeType.T:
-                    return new TShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+                {
+                    int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+                    int maxTileCount = settings != null ? Mathf.Max(minTileCount, settings.MaxPairCount * 2) : minTileCount;
+                    return new TShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize, targetLayerCount, minTileCount, maxTileCount, random);
+                }
 
                 case LevelShapeType.H:
-                    return new HShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+                {
+                    int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+                    int maxTileCount = settings != null ? Mathf.Max(minTileCount, settings.MaxPairCount * 2) : minTileCount;
+                    return new HShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize, targetLayerCount, minTileCount, maxTileCount, random);
+                }
 
                 case LevelShapeType.I:
-                    return new IShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+                {
+                    int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+                    int maxTileCount = settings != null ? Mathf.Max(minTileCount, settings.MaxPairCount * 2) : minTileCount;
+                    return new IShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize, targetLayerCount, minTileCount, maxTileCount, random);
+                }
 
                 case LevelShapeType.L:
-                    return new LShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);
+                {
+                    int minTileCount = settings != null ? Mathf.Max(2, settings.MinPairCount * 2) : 2;
+                    int maxTileCount = settings != null ? Mathf.Max(minTileCount, settings.MaxPairCount * 2) : minTileCount;
+                    return new LShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize, targetLayerCount, minTileCount, maxTileCount, random);
+                }
 
                 case LevelShapeType.Pyramid:
                     return new PyramidShellLayoutBuilder(ResolveCubeTileMetrics(), Mathf.Max(0f, surfaceTileGap)).Build(gridSize);

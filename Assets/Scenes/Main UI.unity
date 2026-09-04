@@ -10363,7 +10363,7 @@ PrefabInstance:
     - target: {fileID: 6144526356549880572, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: levelDefinitionsUI
       value: 
-      objectReference: {fileID: 11400000, guid: 805421160fde996b0b30037d6f780fbf, type: 2}
+      objectReference: {fileID: 11400000, guid: 90d843f4c9fa6b44d9f02e3063db64bd, type: 2}
     - target: {fileID: 6144526356549880572, guid: 98ee11318ab1e824fbc708e61eceb163, type: 3}
       propertyPath: difficultyBodyImage
       value: 

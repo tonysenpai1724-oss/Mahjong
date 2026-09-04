@@ -273,7 +273,7 @@ PlayerSettings:
   AndroidTargetArchitectures: 3
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: C:/Users/Tony/Downloads/com.oc.mahjong.blast.keystore
+  AndroidKeystoreName: /home/sudv/Downloads/Telegram Desktop/com.oc.mahjong.blast.keystore
   AndroidKeyaliasName: com.oc.mahjong.blast
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0

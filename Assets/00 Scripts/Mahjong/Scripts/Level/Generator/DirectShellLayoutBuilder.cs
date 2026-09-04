@@ -48,13 +48,41 @@ namespace MahjongOut3D.LevelSystem
             float frontBackNormalClearance = 0f,
             float upDownNormalClearance = 0f)
         {
+            if (occupiedCells == null || occupiedCells.Count == 0)
+            {
+                return new List<ProceduralLevelBatchGenerator.TilePlacementData>();
+            }
+
+            GetBounds(occupiedCells, out int minX, out int maxX, out int minY, out int maxY, out int minZ, out int maxZ);
+            Vector3 center = new Vector3(
+                (minX + maxX) * 0.5f,
+                (minY + maxY) * 0.5f,
+                (minZ + maxZ) * 0.5f);
+            return BuildSurfaceShell(
+                occupiedCells,
+                metrics,
+                cellStep,
+                sideNormalClearance,
+                frontBackNormalClearance,
+                upDownNormalClearance,
+                center);
+        }
+
+        public static List<ProceduralLevelBatchGenerator.TilePlacementData> BuildSurfaceShell(
+            HashSet<Vector3Int> occupiedCells,
+            ProceduralLevelBatchGenerator.CubeTileMetrics metrics,
+            Vector3 cellStep,
+            float sideNormalClearance,
+            float frontBackNormalClearance,
+            float upDownNormalClearance,
+            Vector3 center)
+        {
             List<ProceduralLevelBatchGenerator.TilePlacementData> shell = new List<ProceduralLevelBatchGenerator.TilePlacementData>();
             if (occupiedCells == null || occupiedCells.Count == 0)
             {
                 return shell;
             }
 
-            GetBounds(occupiedCells, out int minX, out int maxX, out int minY, out int maxY, out int minZ, out int maxZ);
             float faceWidth = Mathf.Max(0.01f, metrics.FaceWidth);
             float faceHeight = Mathf.Max(0.01f, metrics.FaceHeight);
             float thickness = Mathf.Max(0.01f, metrics.Thickness);
@@ -64,10 +92,6 @@ namespace MahjongOut3D.LevelSystem
             float sideClearance = Mathf.Max(0f, sideNormalClearance);
             float frontBackClearance = Mathf.Max(0f, frontBackNormalClearance);
             float upDownClearance = Mathf.Max(0f, upDownNormalClearance);
-            Vector3 center = new Vector3(
-                (minX + maxX) * 0.5f,
-                (minY + maxY) * 0.5f,
-                (minZ + maxZ) * 0.5f);
 
             foreach (Vector3Int coordinate in occupiedCells)
             {

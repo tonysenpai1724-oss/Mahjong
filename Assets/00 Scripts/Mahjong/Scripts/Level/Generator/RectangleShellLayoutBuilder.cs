@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MahjongOut3D.LevelSystem
 {
     /// <summary>
-    /// Builds a direct rectangular block shell.
+    /// Builds concentric direct rectangular shells.
     /// </summary>
     internal sealed class RectangleShellLayoutBuilder
     {
@@ -17,17 +17,31 @@ namespace MahjongOut3D.LevelSystem
             this.inPlaneGap = Mathf.Max(0f, inPlaneGap);
         }
 
-        public List<List<ProceduralLevelBatchGenerator.TilePlacementData>> Build(VoxelGridSize gridSize)
+        public List<List<ProceduralLevelBatchGenerator.TilePlacementData>> Build(
+            VoxelGridSize gridSize,
+            int targetLayerCount,
+            int minTileCount,
+            int maxTileCount,
+            System.Random random)
         {
-            int widthCount = Mathf.Max(2, gridSize.Width);
-            int heightCount = Mathf.Max(2, gridSize.Height);
-            int depthCount = Mathf.Max(2, gridSize.Depth);
+            return NestedDirectShellLayoutBuilder.Build(
+                gridSize,
+                new VoxelGridSize(2, 2, 2),
+                targetLayerCount,
+                minTileCount,
+                maxTileCount,
+                tileMetrics,
+                inPlaneGap,
+                random,
+                CreateOccupancy,
+                ResolveCellStep);
+        }
 
-            HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>(gridSize.Volume);
-            DirectShellLayoutBuilder.AddBox(occupiedCells, 0, widthCount - 1, 0, heightCount - 1, 0, depthCount - 1);
-
-            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep(), 0f, tileMetrics.Thickness + inPlaneGap, tileMetrics.Thickness + inPlaneGap);
-            return new List<List<ProceduralLevelBatchGenerator.TilePlacementData>> { shell };
+        private static HashSet<Vector3Int> CreateOccupancy(VoxelGridSize size)
+        {
+            HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>(size.Volume);
+            DirectShellLayoutBuilder.AddBox(occupiedCells, 0, Mathf.Max(2, size.Width) - 1, 0, Mathf.Max(2, size.Height) - 1, 0, Mathf.Max(2, size.Depth) - 1);
+            return occupiedCells;
         }
 
         private Vector3 ResolveCellStep()

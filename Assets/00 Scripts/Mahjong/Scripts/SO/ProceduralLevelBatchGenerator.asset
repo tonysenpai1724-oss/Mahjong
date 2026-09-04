@@ -24,28 +24,28 @@ MonoBehaviour:
   seed: 20260730
   jsonGenerationConfig: {fileID: 4900000, guid: 1547903db31cab876875504492ec5a70, type: 3}
   googleSheetUrl: https://docs.google.com/spreadsheets/d/1Op3SijuPKQVv2yrRks8Z0CcG1vfnuUz7Yb33g7PVNG8/edit?gid=0#gid=0
-  generationWriteMode: 1
+  generationWriteMode: 0
   easySettings:
     label: Easy
-    levelCount: 3
+    levelCount: 1
     minLayerCount: 1
     maxLayerCount: 1
-    minPairCount: 15
-    maxPairCount: 30
+    minPairCount: 1
+    maxPairCount: 40
     flippedTileChance: 0.35
     shape: 0
-    allowedShapes: 00000000
+    allowedShapes: 02000000
     difficulty: 0
   normalSettings:
     label: Normal
     levelCount: 0
     minLayerCount: 1
     maxLayerCount: 1
-    minPairCount: 25
+    minPairCount: 15
     maxPairCount: 70
     flippedTileChance: 0.45
-    shape: 4
-    allowedShapes: 00000000
+    shape: 0
+    allowedShapes: 0d000000
     difficulty: 1
   hardSettings:
     label: Hard
@@ -53,10 +53,10 @@ MonoBehaviour:
     minLayerCount: 2
     maxLayerCount: 2
     minPairCount: 40
-    maxPairCount: 100
+    maxPairCount: 90
     flippedTileChance: 0.55
-    shape: 0
-    allowedShapes: 00000000
+    shape: 2
+    allowedShapes: 0d000000
     difficulty: 2
   superHardSettings:
     label: SuperHard

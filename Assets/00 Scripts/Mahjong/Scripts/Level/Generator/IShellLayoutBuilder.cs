@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MahjongOut3D.LevelSystem
 {
     /// <summary>
-    /// Builds a tall 3D I-shaped block from rectangular segments.
+    /// Builds concentric direct I-shaped shells.
     /// </summary>
     internal sealed class IShellLayoutBuilder
     {
@@ -17,30 +17,28 @@ namespace MahjongOut3D.LevelSystem
             this.inPlaneGap = Mathf.Max(0f, inPlaneGap);
         }
 
-        public List<List<ProceduralLevelBatchGenerator.TilePlacementData>> Build(VoxelGridSize gridSize)
+        public List<List<ProceduralLevelBatchGenerator.TilePlacementData>> Build(VoxelGridSize gridSize, int targetLayerCount, int minTileCount, int maxTileCount, System.Random random)
         {
-            int widthCount = Mathf.Max(3, gridSize.Width);
-            int heightCount = Mathf.Max(3, gridSize.Height);
-            int depthCount = Mathf.Max(2, gridSize.Depth);
+            return NestedDirectShellLayoutBuilder.Build(gridSize, new VoxelGridSize(3, 3, 2), targetLayerCount, minTileCount, maxTileCount, tileMetrics, inPlaneGap, random, CreateOccupancy, ResolveCellStep);
+        }
 
+        private static HashSet<Vector3Int> CreateOccupancy(VoxelGridSize size)
+        {
+            int widthCount = Mathf.Max(3, size.Width);
+            int heightCount = Mathf.Max(3, size.Height);
+            int depthCount = Mathf.Max(2, size.Depth);
             HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>();
             int barWidth = Mathf.Max(1, Mathf.CeilToInt(widthCount * 0.33f));
             int barDepth = Mathf.Max(1, Mathf.CeilToInt(depthCount * 0.5f));
             int startX = Mathf.Clamp((widthCount - barWidth) / 2, 0, Mathf.Max(0, widthCount - barWidth));
             int startZ = Mathf.Clamp((depthCount - barDepth) / 2, 0, Mathf.Max(0, depthCount - barDepth));
-
             DirectShellLayoutBuilder.AddBox(occupiedCells, startX, startX + barWidth - 1, 0, heightCount - 1, startZ, startZ + barDepth - 1);
-
-            List<ProceduralLevelBatchGenerator.TilePlacementData> shell = DirectShellLayoutBuilder.BuildSurfaceShell(occupiedCells, tileMetrics, ResolveCellStep(), 0f, tileMetrics.Thickness + inPlaneGap, tileMetrics.Thickness + inPlaneGap);
-            return new List<List<ProceduralLevelBatchGenerator.TilePlacementData>> { shell };
+            return occupiedCells;
         }
 
         private Vector3 ResolveCellStep()
         {
-            return new Vector3(
-                tileMetrics.FaceWidth + inPlaneGap,
-                tileMetrics.FaceHeight + inPlaneGap,
-                tileMetrics.FaceHeight + inPlaneGap);
+            return new Vector3(tileMetrics.FaceWidth + inPlaneGap, tileMetrics.FaceHeight + inPlaneGap, tileMetrics.FaceHeight + inPlaneGap);
         }
     }
 }
