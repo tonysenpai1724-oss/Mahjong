@@ -473,16 +473,35 @@ namespace MahjongOut3D.Managers
                 {
                     tappedTile.Deselect();
                     GetAnimationManager()?.PlayTrayOccupancyFeedback(selectedTiles.Count, false);
-                    if (!IsSelectionResolutionBusy() && !TryStartFirstMatchingPairInSelectionTray(true))
-                    {
-                        GetAudioManager()?.PlayLose();
-                        GetGameManager()?.LoseGameplay();
-                        ClearPendingSelectionActions();
-                        activeSelectionTile = null;
-                        yield break;
-                    }
 
-                    if (IsSelectionResolutionBusy())
+                    if (!IsSelectionResolutionBusy())
+                    {
+                        if (!TryStartFirstMatchingPairInSelectionTray(true))
+                        {
+                            float wait = 0f;
+                            float timeout = 0.25f;
+                            bool started = false;
+                            while (wait < timeout)
+                            {
+                                wait += GetResolutionDeltaTime();
+                                yield return null;
+                                if (TryStartFirstMatchingPairInSelectionTray(true))
+                                {
+                                    started = true;
+                                    break;
+                                }
+                            }
+
+                            if (!started)
+                            {
+                                TriggerLoseWithDebug("TrayFull_MoveTileIntoSelectionTray");
+                                ClearPendingSelectionActions();
+                                activeSelectionTile = null;
+                                yield break;
+                            }
+                        }
+                    }
+                    else
                     {
                         while (generation == selectionActionGeneration && IsSelectionResolutionBusy())
                         {
@@ -557,19 +576,37 @@ namespace MahjongOut3D.Managers
                             yield break;
                         }
 
-                        if (TryStartFirstMatchingPairInSelectionTray(true))
+                        if (!TryStartFirstMatchingPairInSelectionTray(true))
+                        {
+                            float wait = 0f;
+                            float timeout = 0.25f;
+                            bool started = false;
+                            while (wait < timeout)
+                            {
+                                wait += GetResolutionDeltaTime();
+                                yield return null;
+                                if (TryStartFirstMatchingPairInSelectionTray(true))
+                                {
+                                    started = true;
+                                    break;
+                                }
+                            }
+
+                            if (!started)
+                            {
+                                if (TryFindAnyBoardPair(out _, out _))
+                                {
+                                    yield break;
+                                }
+
+                                TriggerLoseWithDebug("TrayFull_FaceDownPreviewPath");
+                                yield break;
+                            }
+                        }
+                        else
                         {
                             yield break;
                         }
-
-                        if (TryFindAnyBoardPair(out _, out _))
-                        {
-                            yield break;
-                        }
-
-                        GetAudioManager()?.PlayLose();
-                        GetGameManager()?.LoseGameplay();
-                        yield break;
                     }
                 }
 
@@ -1652,16 +1689,14 @@ namespace MahjongOut3D.Managers
             {
                 MahjongRuntimeLogger.Log($"[Mahjong] No valid pairs (strict) detected. Remaining={remainingTileCount}");
                 Context.EventBus.Publish(new NoMovesRemainingEvent());
-                GetAudioManager()?.PlayLose();
-                gameManager.LoseGameplay();
+                TriggerLoseWithDebug("BoardNoValidPairs_StrictCheck");
                 return;
             }
 
             if (!TryFindAnyBoardPair(out _, out _))
             {
                 Context.EventBus.Publish(new NoMovesRemainingEvent());
-                GetAudioManager()?.PlayLose();
-                gameManager.LoseGameplay();
+                TriggerLoseWithDebug("BoardNoValidPairs_TryFindAnyBoardPair");
             }
         }
 
@@ -2165,18 +2200,32 @@ namespace MahjongOut3D.Managers
                         yield break;
                     }
 
-                    if (TryStartFirstMatchingPairInSelectionTray(true))
+                    if (!TryStartFirstMatchingPairInSelectionTray(true))
+                    {
+                        float wait = 0f;
+                        float timeout = 0.25f;
+                        bool started = false;
+                        while (wait < timeout)
+                        {
+                            wait += GetResolutionDeltaTime();
+                            yield return null;
+                            if (TryStartFirstMatchingPairInSelectionTray(true))
+                            {
+                                started = true;
+                                break;
+                            }
+                        }
+
+                        if (!started)
+                        {
+                            TriggerLoseWithDebug("TrayFull_ProcessPendingSelectionActions");
+                            yield break;
+                        }
+                    }
+                    else
                     {
                         yield break;
                     }
-
-                    if (IsSelectionResolutionBusy())
-                    {
-                        yield break;
-                    }
-
-                    GetAudioManager()?.PlayLose();
-                    GetGameManager()?.LoseGameplay();
                 }
             }
             finally
@@ -2739,5 +2788,44 @@ namespace MahjongOut3D.Managers
         private AnimationManager GetAnimationManager() => Context.Services.Get<AnimationManager>();
         private AudioManager GetAudioManager() => Context.Services.Get<AudioManager>();
         private SaveManager GetSaveManager() => Context.Services.Get<SaveManager>();
+
+        private void TriggerLoseWithDebug(string reason)
+        {
+            MahjongRuntimeLogger.LogWarning($"[MatchManager] TriggerLose (requested): {reason} Selected={selectedTiles.Count} Moving={movingToSelectionTrayTiles.Count} PendingMatched={pendingMatchedTiles.Count} PendingQueue={pendingMatchQueue.Count} IsResolving={IsResolvingMatch} TotalTiles={totalTiles}");
+            if (!IsInvoking(nameof(ConfirmAndTriggerLose)))
+            {
+                StartCoroutine(ConfirmAndTriggerLose(reason));
+            }
+        }
+
+        private IEnumerator ConfirmAndTriggerLose(string reason)
+        {
+            float wait = 0f;
+            float timeout = 0.25f;
+            while (wait < timeout)
+            {
+                wait += GetResolutionDeltaTime();
+                yield return null;
+                // If resolution is busy, abort early — let resolution finish.
+                if (IsSelectionResolutionBusy())
+                {
+                    MahjongRuntimeLogger.Log($"[MatchManager] AbortLose: resolution busy during confirmation ({reason})");
+                    yield break;
+                }
+            }
+
+            // Re-evaluate: lose if tray still full without resolution, or if no board pairs remain.
+            if ((selectedTiles.Count >= SelectionTrayCapacity && !IsSelectionResolutionBusy())
+                || (!TryFindAnyBoardPair(out _, out _) && !IsSelectionResolutionBusy()))
+            {
+                MahjongRuntimeLogger.LogWarning($"[MatchManager] Confirmed Lose: {reason} Selected={selectedTiles.Count} Moving={movingToSelectionTrayTiles.Count} PendingMatched={pendingMatchedTiles.Count} PendingQueue={pendingMatchQueue.Count} IsResolving={IsResolvingMatch} TotalTiles={totalTiles}");
+                GetAudioManager()?.PlayLose();
+                GetGameManager()?.LoseGameplay();
+            }
+            else
+            {
+                MahjongRuntimeLogger.Log($"[MatchManager] Lose aborted after confirmation: {reason}");
+            }
+        }
     }
 }
