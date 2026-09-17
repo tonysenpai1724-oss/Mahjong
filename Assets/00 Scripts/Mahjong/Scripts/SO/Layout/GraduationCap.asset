@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424c3f822e972368d87a7eebcb266b72, type: 3}
   m_Name: GraduationCap
   m_EditorClassIdentifier: Assembly-CSharp::MahjongOut3D.LevelSystem.TileLayoutAuthoring
-  layoutName: Lantern
+  layoutName: GraduationCap
   gridSize:
     width: 8
     height: 8
