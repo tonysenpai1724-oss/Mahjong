@@ -1,0 +1,1255 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75f4a32c516a394428e8062db0edb5af, type: 3}
+  m_Name: Data Shop
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes:
+    - Name: dicShopIAP
+      Entry: 7
+      Data: 0|System.Collections.Generic.Dictionary`2[[EIAPPackType, Assembly-CSharp],[IAPShopItem,
+        Assembly-CSharp]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 1|System.Collections.Generic.EnumEqualityComparer`1[[EIAPPackType, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 13
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 0
+    - Name: $v
+      Entry: 7
+      Data: 2|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Starter
+    - Name: rewardStrings
+      Entry: 7
+      Data: 3|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|1000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 0
+    - Name: packId
+      Entry: 1
+      Data: Starter_pack
+    - Name: starCost
+      Entry: 3
+      Data: 50
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 1
+    - Name: $v
+      Entry: 7
+      Data: 4|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Trainee
+    - Name: rewardStrings
+      Entry: 7
+      Data: 5|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|2000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 1
+    - Name: packId
+      Entry: 1
+      Data: Trainee_pack
+    - Name: starCost
+      Entry: 3
+      Data: 250
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 2
+    - Name: $v
+      Entry: 7
+      Data: 6|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Carpenter
+    - Name: rewardStrings
+      Entry: 7
+      Data: 7|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|5000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|2
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|2
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|2
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|2
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 2
+    - Name: packId
+      Entry: 1
+      Data: Carpenter_pack
+    - Name: starCost
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 3
+    - Name: $v
+      Entry: 7
+      Data: 8|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Professional
+    - Name: rewardStrings
+      Entry: 7
+      Data: 9|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|10000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|4
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|4
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|4
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|4
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 3
+    - Name: packId
+      Entry: 1
+      Data: Professional_pack
+    - Name: starCost
+      Entry: 3
+      Data: 1000
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 4
+    - Name: $v
+      Entry: 7
+      Data: 10|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Engineer
+    - Name: rewardStrings
+      Entry: 7
+      Data: 11|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|25000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|10
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|10
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|10
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|10
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 4
+    - Name: packId
+      Entry: 1
+      Data: Engineer_pack
+    - Name: starCost
+      Entry: 3
+      Data: 2500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 5
+    - Name: $v
+      Entry: 7
+      Data: 12|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Master
+    - Name: rewardStrings
+      Entry: 7
+      Data: 13|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|50000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|20
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|20
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|20
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|20
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 5
+    - Name: packId
+      Entry: 1
+      Data: Master_pack
+    - Name: starCost
+      Entry: 3
+      Data: 4000
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 6
+    - Name: $v
+      Entry: 7
+      Data: 14|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Legend
+    - Name: rewardStrings
+      Entry: 7
+      Data: 15|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|65000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|25
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|25
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|25
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|25
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 6
+    - Name: packId
+      Entry: 1
+      Data: Legend_pack
+    - Name: starCost
+      Entry: 3
+      Data: 5000
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 7
+    - Name: $v
+      Entry: 7
+      Data: 16|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Gem1
+    - Name: rewardStrings
+      Entry: 7
+      Data: 17|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|80
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 7
+    - Name: packId
+      Entry: 1
+      Data: Gem1_pack
+    - Name: starCost
+      Entry: 3
+      Data: 50
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 8
+    - Name: $v
+      Entry: 7
+      Data: 18|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Gem2
+    - Name: rewardStrings
+      Entry: 7
+      Data: 19|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|500
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 8
+    - Name: packId
+      Entry: 1
+      Data: Gem2_pack
+    - Name: starCost
+      Entry: 3
+      Data: 250
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 9
+    - Name: $v
+      Entry: 7
+      Data: 20|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Gem3
+    - Name: rewardStrings
+      Entry: 7
+      Data: 21|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|1200
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 9
+    - Name: packId
+      Entry: 1
+      Data: Gem3_pack
+    - Name: starCost
+      Entry: 3
+      Data: 500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 10
+    - Name: $v
+      Entry: 7
+      Data: 22|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Gem4
+    - Name: rewardStrings
+      Entry: 7
+      Data: 23|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|2500
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 10
+    - Name: packId
+      Entry: 1
+      Data: Gem4_pack
+    - Name: starCost
+      Entry: 3
+      Data: 1000
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 11
+    - Name: $v
+      Entry: 7
+      Data: 24|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Gem5
+    - Name: rewardStrings
+      Entry: 7
+      Data: 25|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|6500
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 11
+    - Name: packId
+      Entry: 1
+      Data: Gem5_pack
+    - Name: starCost
+      Entry: 3
+      Data: 2500
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 12
+    - Name: $v
+      Entry: 7
+      Data: 26|IAPShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Gem6
+    - Name: rewardStrings
+      Entry: 7
+      Data: 27|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 4
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|14000
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 1
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: packType
+      Entry: 3
+      Data: 12
+    - Name: packId
+      Entry: 1
+      Data: Gem6_pack
+    - Name: starCost
+      Entry: 3
+      Data: 5000
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: dicShopEnergy
+      Entry: 7
+      Data: 28|System.Collections.Generic.Dictionary`2[[EShopEnergy, Assembly-CSharp],[CommonShopItem,
+        Assembly-CSharp]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 29|System.Collections.Generic.EnumEqualityComparer`1[[EShopEnergy, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 3
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 0
+    - Name: $v
+      Entry: 7
+      Data: 30|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: ShopEnergy1
+    - Name: rewardStrings
+      Entry: 7
+      Data: 31|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Energy|2
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 1
+    - Name: costValue
+      Entry: 3
+      Data: 50
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 1
+    - Name: $v
+      Entry: 7
+      Data: 32|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: ShopEnergy2
+    - Name: rewardStrings
+      Entry: 7
+      Data: 33|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Energy|5
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 1
+    - Name: costValue
+      Entry: 3
+      Data: 120
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 2
+    - Name: $v
+      Entry: 7
+      Data: 34|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: ShopEnergy3
+    - Name: rewardStrings
+      Entry: 7
+      Data: 35|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Energy|10
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 1
+    - Name: costValue
+      Entry: 3
+      Data: 240
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: dicShopCoin
+      Entry: 7
+      Data: 36|System.Collections.Generic.Dictionary`2[[EShopCoin, Assembly-CSharp],[CommonShopItem,
+        Assembly-CSharp]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 37|System.Collections.Generic.EnumEqualityComparer`1[[EShopCoin, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 3
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 0
+    - Name: $v
+      Entry: 7
+      Data: 38|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: ShopCoin1
+    - Name: rewardStrings
+      Entry: 7
+      Data: 39|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|3000
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 1
+    - Name: costValue
+      Entry: 3
+      Data: 80
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 1
+    - Name: $v
+      Entry: 7
+      Data: 40|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: ShopCoin2
+    - Name: rewardStrings
+      Entry: 7
+      Data: 41|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|6000
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 1
+    - Name: costValue
+      Entry: 3
+      Data: 150
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 2
+    - Name: $v
+      Entry: 7
+      Data: 42|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: ShopCoin3
+    - Name: rewardStrings
+      Entry: 7
+      Data: 43|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|12000
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 1
+    - Name: costValue
+      Entry: 3
+      Data: 280
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: dicShopBooster
+      Entry: 7
+      Data: 44|System.Collections.Generic.Dictionary`2[[EBooster, Assembly-CSharp],[CommonShopItem,
+        Assembly-CSharp]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 45|System.Collections.Generic.EnumEqualityComparer`1[[EBooster, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 0
+    - Name: $v
+      Entry: 7
+      Data: 46|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: RemovePin
+    - Name: rewardStrings
+      Entry: 7
+      Data: 47|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 0
+    - Name: costValue
+      Entry: 3
+      Data: 150
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 1
+    - Name: $v
+      Entry: 7
+      Data: 48|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Undo
+    - Name: rewardStrings
+      Entry: 7
+      Data: 49|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 0
+    - Name: costValue
+      Entry: 3
+      Data: 120
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 2
+    - Name: $v
+      Entry: 7
+      Data: 50|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: Hammer
+    - Name: rewardStrings
+      Entry: 7
+      Data: 51|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 0
+    - Name: costValue
+      Entry: 3
+      Data: 200
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 3
+    - Name: $v
+      Entry: 7
+      Data: 52|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: HoleKey
+    - Name: rewardStrings
+      Entry: 7
+      Data: 53|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 0
+    - Name: costValue
+      Entry: 3
+      Data: 100
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 4
+    - Name: $v
+      Entry: 7
+      Data: 54|CommonShopItem, Assembly-CSharp
+    - Name: itemName
+      Entry: 1
+      Data: BonusTime
+    - Name: rewardStrings
+      Entry: 7
+      Data: 55|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|BonusTime|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: costType
+      Entry: 3
+      Data: 0
+    - Name: costValue
+      Entry: 3
+      Data: 300
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 

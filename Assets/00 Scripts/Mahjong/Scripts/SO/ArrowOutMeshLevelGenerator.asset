@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29de348ce0aafd39bb2df6649fac94c3, type: 3}
+  m_Name: ArrowOutMeshLevelGenerator
+  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.ArrowOutGeneration.ArrowOutMeshLevelGenerator
+  targetCatalog: {fileID: 11400000, guid: f8b473ff57de4323baabdd6333f902f1, type: 2}
+  layoutOverride: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
+  profile: {fileID: 11400000, guid: c1a6cc90d68a4b95acfdb0cfe8af21f1, type: 2}
+  outputFolder: Assets/00 Scripts/Mahjong/Generated ArrowOut Levels
+  overwriteExistingAssets: 1
+  replaceCatalogEntries: 0
+  requests:
+  - levelName: ArrowOut_Cube_Normal
+    tilePrefab: {fileID: 2112072835, guid: 6e5d8adad2fe4d1bb20f57ce3cb1648c, type: 3}
+    mesh: {fileID: 0}
+    shape: 8
+    difficulty: 1
+    seedOffset: 0
+    targetPairCountOverride: 18
+    addToCatalog: 1

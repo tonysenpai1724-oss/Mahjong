@@ -1,0 +1,1109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 499a28cfa2b284d4a815465bef5eb129, type: 3}
+  m_Name: Data IAP
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes:
+    - Name: dicConfigs
+      Entry: 7
+      Data: 0|System.Collections.Generic.Dictionary`2[[EIAPPackType, Assembly-CSharp],[IAPConfig,
+        Assembly-CSharp]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 1|System.Collections.Generic.EnumEqualityComparer`1[[EIAPPackType, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 13
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 0
+    - Name: $v
+      Entry: 7
+      Data: 2|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 0
+    - Name: packID
+      Entry: 1
+      Data: Starter_pack
+    - Name: packName
+      Entry: 1
+      Data: Starter Pack
+    - Name: maxBuy
+      Entry: 3
+      Data: 1
+    - Name: price
+      Entry: 3
+      Data: 1
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$lbLf0XXU0Fb0AQAAoeN8zq97pAQ
+    - Name: lstReward
+      Entry: 7
+      Data: 3|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|1000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 1
+    - Name: $v
+      Entry: 7
+      Data: 4|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 1
+    - Name: packID
+      Entry: 1
+      Data: Trainee_pack
+    - Name: packName
+      Entry: 1
+      Data: Trainee Pack
+    - Name: maxBuy
+      Entry: 3
+      Data: 1
+    - Name: price
+      Entry: 3
+      Data: 250
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$8DAqMHXU0Fb1AQAAWMeUeQ0yVxU
+    - Name: lstReward
+      Entry: 7
+      Data: 5|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|2000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|1
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|1
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 2
+    - Name: $v
+      Entry: 7
+      Data: 6|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 2
+    - Name: packID
+      Entry: 1
+      Data: Carpenter_pack
+    - Name: packName
+      Entry: 1
+      Data: Carpenter Pack
+    - Name: maxBuy
+      Entry: 3
+      Data: 1
+    - Name: price
+      Entry: 3
+      Data: 500
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$6jM0THXU0Fb2AQAASDM7ZT2xf_w
+    - Name: lstReward
+      Entry: 7
+      Data: 7|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|5000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|2
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|2
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|2
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|2
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 3
+    - Name: $v
+      Entry: 7
+      Data: 8|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 3
+    - Name: packID
+      Entry: 1
+      Data: Professional_pack
+    - Name: packName
+      Entry: 1
+      Data: Professional Pack
+    - Name: maxBuy
+      Entry: 3
+      Data: 1
+    - Name: price
+      Entry: 3
+      Data: 1000
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$EAqk_XXU0Fb3AQAAgp637SEB1eE
+    - Name: lstReward
+      Entry: 7
+      Data: 9|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|10000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|4
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|4
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|4
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|4
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 4
+    - Name: $v
+      Entry: 7
+      Data: 10|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 4
+    - Name: packID
+      Entry: 1
+      Data: Engineer_pack
+    - Name: packName
+      Entry: 1
+      Data: Engineer Pack
+    - Name: maxBuy
+      Entry: 3
+      Data: 1
+    - Name: price
+      Entry: 3
+      Data: 2500
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$_EOI_HXU0Fb4AQAACGRvgVnczj0
+    - Name: lstReward
+      Entry: 7
+      Data: 11|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|25000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|10
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|10
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|10
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|10
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 5
+    - Name: $v
+      Entry: 7
+      Data: 12|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 5
+    - Name: packID
+      Entry: 1
+      Data: Master_pack
+    - Name: packName
+      Entry: 1
+      Data: Master Pack
+    - Name: maxBuy
+      Entry: 3
+      Data: 1
+    - Name: price
+      Entry: 3
+      Data: 4000
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$yOHs63XU0Fb5AQAARGI99Niby-I
+    - Name: lstReward
+      Entry: 7
+      Data: 13|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|50000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|20
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|20
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|20
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|20
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 6
+    - Name: $v
+      Entry: 7
+      Data: 14|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 6
+    - Name: packID
+      Entry: 1
+      Data: Legend_pack
+    - Name: packName
+      Entry: 1
+      Data: Legend Pack
+    - Name: maxBuy
+      Entry: 3
+      Data: 1
+    - Name: price
+      Entry: 3
+      Data: 5000
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$LqB2gHXU0Fb6AQAAReesH4ECQJc
+    - Name: lstReward
+      Entry: 7
+      Data: 15|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Coin|65000
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|RemovePin|25
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Undo|25
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|Hammer|25
+    - Name: 
+      Entry: 1
+      Data: BoosterResource|HoleKey|25
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 7
+    - Name: $v
+      Entry: 7
+      Data: 16|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 7
+    - Name: packID
+      Entry: 1
+      Data: Gem1_pack
+    - Name: packName
+      Entry: 1
+      Data: Gem Pack 1
+    - Name: maxBuy
+      Entry: 3
+      Data: 0
+    - Name: price
+      Entry: 3
+      Data: 50
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$HmoT1HXU0Fb7AQAAqM8J5ECB9Qs
+    - Name: lstReward
+      Entry: 7
+      Data: 17|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|80
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 8
+    - Name: $v
+      Entry: 7
+      Data: 18|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 8
+    - Name: packID
+      Entry: 1
+      Data: Gem2_pack
+    - Name: packName
+      Entry: 1
+      Data: Gem Pack 2
+    - Name: maxBuy
+      Entry: 3
+      Data: 0
+    - Name: price
+      Entry: 3
+      Data: 250
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$-gw0lHXU0Fb8AQAA9XBNBDb4oEw
+    - Name: lstReward
+      Entry: 7
+      Data: 19|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|500
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 9
+    - Name: $v
+      Entry: 7
+      Data: 20|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 9
+    - Name: packID
+      Entry: 1
+      Data: Gem3_pack
+    - Name: packName
+      Entry: 1
+      Data: Gem Pack 3
+    - Name: maxBuy
+      Entry: 3
+      Data: 0
+    - Name: price
+      Entry: 3
+      Data: 500
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$FFSYynXU0Fb9AQAA9zBC1BSHEjI
+    - Name: lstReward
+      Entry: 7
+      Data: 21|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|1200
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 10
+    - Name: $v
+      Entry: 7
+      Data: 22|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 10
+    - Name: packID
+      Entry: 1
+      Data: Gem4_pack
+    - Name: packName
+      Entry: 1
+      Data: Gem Pack 4
+    - Name: maxBuy
+      Entry: 3
+      Data: 0
+    - Name: price
+      Entry: 3
+      Data: 1000
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$Ce2i6HXU0Fb-AQAAAzaI3-4kaCs
+    - Name: lstReward
+      Entry: 7
+      Data: 23|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|2500
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 11
+    - Name: $v
+      Entry: 7
+      Data: 24|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 11
+    - Name: packID
+      Entry: 1
+      Data: Gem5_pack
+    - Name: packName
+      Entry: 1
+      Data: Gem Pack 5
+    - Name: maxBuy
+      Entry: 3
+      Data: 0
+    - Name: price
+      Entry: 3
+      Data: 2500
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$WNxLiXXU0Fb_AQAA4OfeEBCEAHU
+    - Name: lstReward
+      Entry: 7
+      Data: 25|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|6500
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 12
+    - Name: $v
+      Entry: 7
+      Data: 26|IAPConfig, Assembly-CSharp
+    - Name: packType
+      Entry: 3
+      Data: 12
+    - Name: packID
+      Entry: 1
+      Data: Gem6_pack
+    - Name: packName
+      Entry: 1
+      Data: Gem Pack 6
+    - Name: maxBuy
+      Entry: 3
+      Data: 0
+    - Name: price
+      Entry: 3
+      Data: 5000
+    - Name: invoiceUrl
+      Entry: 1
+      Data: https://t.me/$-mp8I3XU0FYAAgAAcpbURx3WiHI
+    - Name: lstReward
+      Entry: 7
+      Data: 27|System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 1
+      Data: CommonResource|Gem|14000
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: dicId
+      Entry: 7
+      Data: 28|System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[EIAPPackType,
+        Assembly-CSharp]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 29|System.Collections.Generic.GenericEqualityComparer`1[[System.String,
+        mscorlib]], mscorlib
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 13
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Starter_pack
+    - Name: $v
+      Entry: 3
+      Data: 0
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Trainee_pack
+    - Name: $v
+      Entry: 3
+      Data: 1
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Carpenter_pack
+    - Name: $v
+      Entry: 3
+      Data: 2
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Professional_pack
+    - Name: $v
+      Entry: 3
+      Data: 3
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Engineer_pack
+    - Name: $v
+      Entry: 3
+      Data: 4
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Master_pack
+    - Name: $v
+      Entry: 3
+      Data: 5
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Legend_pack
+    - Name: $v
+      Entry: 3
+      Data: 6
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem1_pack
+    - Name: $v
+      Entry: 3
+      Data: 7
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem2_pack
+    - Name: $v
+      Entry: 3
+      Data: 8
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem3_pack
+    - Name: $v
+      Entry: 3
+      Data: 9
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem4_pack
+    - Name: $v
+      Entry: 3
+      Data: 10
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem5_pack
+    - Name: $v
+      Entry: 3
+      Data: 11
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem6_pack
+    - Name: $v
+      Entry: 3
+      Data: 12
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: dicInvoice
+      Entry: 7
+      Data: 30|System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[System.String,
+        mscorlib]], mscorlib
+    - Name: comparer
+      Entry: 9
+      Data: 29
+    - Name: 
+      Entry: 12
+      Data: 13
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Starter_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$lbLf0XXU0Fb0AQAAoeN8zq97pAQ
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Trainee_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$8DAqMHXU0Fb1AQAAWMeUeQ0yVxU
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Carpenter_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$6jM0THXU0Fb2AQAASDM7ZT2xf_w
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Professional_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$EAqk_XXU0Fb3AQAAgp637SEB1eE
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Engineer_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$_EOI_HXU0Fb4AQAACGRvgVnczj0
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Master_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$yOHs63XU0Fb5AQAARGI99Niby-I
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Legend_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$LqB2gHXU0Fb6AQAAReesH4ECQJc
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem1_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$HmoT1HXU0Fb7AQAAqM8J5ECB9Qs
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem2_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$-gw0lHXU0Fb8AQAA9XBNBDb4oEw
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem3_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$FFSYynXU0Fb9AQAA9zBC1BSHEjI
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem4_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$Ce2i6HXU0Fb-AQAAAzaI3-4kaCs
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem5_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$WNxLiXXU0Fb_AQAA4OfeEBCEAHU
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Gem6_pack
+    - Name: $v
+      Entry: 1
+      Data: https://t.me/$-mp8I3XU0FYAAgAAcpbURx3WiHI
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+  packPromote: 00000000010000000200000003000000040000000500000006000000
+  packGem: 0700000008000000090000000a0000000b0000000c000000
+  configString: H4sIAAAAAAAACnXRyXKCQBSF4XehsoyRSQR3DbaCJRoEHLKhwFwIDswVgVTePTSdJT7AV/+5dX8Yu/KLCgov889XZsZ8VVVWzsbj6u0O45dbsA7Z49FlFwGLLIRS2MhtrkwzZDGvjFP4cQIwTOU5yk29pxyhBxNcsNhmX7sd1fwig+RpV7qYrEMxT7A9N6cfDl+H3qPD70UaQlnGaeLfhj1G+dWjuwXio0wSpjZWOcCdx0lEdj9pe3hreLQtEqstd9/RPjm3F7azpl8+Xd1s9VISejkhcrc0FGUTB83I6OQaIkg+h+U6V/mINqVeApS6iDVrde7kEu7csNPvqcNRNyUuN+XVBGuqYpXU8cNuFD3YG3UyccpR3ajzQEzxgzph2C0W9qlJeqf0rlU1TrV1fDGoE4edBnws0d6IONT6hjASr772v3My7A6beh3TP3rEidsQsKphpLvUSU/uu2ey0X/i1D0foXMWuLtaOMS6wfz+Acp9imb0AgAA
+  keyConfig: iap_config

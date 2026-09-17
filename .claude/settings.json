@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /home/sudv/Mahjong status --short -- \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/RampShellLayoutBuilder.cs\")",
+      "Bash(git -C /home/sudv/Mahjong diff -- \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/DirectShellLayoutBuilder.cs\" \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/RampShellLayoutBuilder.cs\")",
+      "Read(//dev/**)",
+      "Bash(git -C /home/sudv/Mahjong status --short -- \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator\")",
+      "Bash(git -C /home/sudv/Mahjong status --short -- \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/PyramidShellLayoutBuilder.cs\" \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/DomeShellLayoutBuilder.cs\" \"Assets/00 Scripts/Mahjong/Scripts/Level/Generator/ProceduralLevelBatchGenerator.cs\")",
+      "Bash(rg -n \"--|garbage|Yo|{2,}\" \"/home/sudv/Mahjong/Assets/00 Scripts/Mahjong/Scripts/Level/Generator/DirectShellLayoutBuilder.cs\" \"/home/sudv/Mahjong/Assets/00 Scripts/Mahjong/Scripts/Level/Generator/HShellLayoutBuilder.cs\")",
+      "Bash(rg -n -C 2 \"BuildSurfaceShell\\\\\\(\" \"/home/sudv/Mahjong/Assets/00 Scripts/Mahjong/Scripts/Level/Generator/{RectangleShellLayoutBuilder,TShellLayoutBuilder,HShellLayoutBuilder,IShellLayoutBuilder,LShellLayoutBuilder,PyramidShellLayoutBuilder,DomeShellLayoutBuilder,RampShellLayoutBuilder}.cs\")",
+      "Bash(command -v UnityHub)",
+      "Bash(python3 -m py_compile /dev/null)",
+      "Bash(git --git-dir=/home/sudv/Mahjong/.git --work-tree=/home/sudv/Mahjong status --short)",
+      "Bash(git --git-dir=/home/sudv/Mahjong/.git --work-tree=/home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs' 'Assets/00 Scripts/Mahjong/Scripts/Managers/AnimationManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong diff --stat)",
+      "Bash(git -C /home/sudv/Mahjong diff --numstat -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong ls-files -v -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/MatchManager.cs')",
+      "Bash(git -C /home/sudv/Mahjong diff -- 'Assets/00 Scripts/Mahjong/Scripts/Managers/TileManager.cs')",
+      "Bash(xargs -r -n1 basename)"
+    ]
+  }
+}

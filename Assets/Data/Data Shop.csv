@@ -1,0 +1,14 @@
+Pack Type,Pack ID,Fake Cost,StarsCost,Reward,,,,
+Starter,Starter_pack,"1,99$",50,CommonResource|Coin|1000,BoosterResource|RemovePin|1,BoosterResource|Undo|1,BoosterResource|Hammer|1,BoosterResource|HoleKey|1
+Trainee,Trainee_pack,"4,99$",250,CommonResource|Coin|2000,BoosterResource|RemovePin|1,BoosterResource|Undo|1,BoosterResource|Hammer|1,BoosterResource|HoleKey|1
+Carpenter,Carpenter_pack,9.99$,500,CommonResource|Coin|5000,BoosterResource|RemovePin|2,BoosterResource|Undo|2,BoosterResource|Hammer|2,BoosterResource|HoleKey|2
+Professional,Professional_pack,19.99$,1000,CommonResource|Coin|10000,BoosterResource|RemovePin|4,BoosterResource|Undo|4,BoosterResource|Hammer|4,BoosterResource|HoleKey|4
+Engineer,Engineer_pack,49.99$,2500,CommonResource|Coin|25000,BoosterResource|RemovePin|10,BoosterResource|Undo|10,BoosterResource|Hammer|10,BoosterResource|HoleKey|10
+Master,Master_pack,79.99$,4000,CommonResource|Coin|50000,BoosterResource|RemovePin|20,BoosterResource|Undo|20,BoosterResource|Hammer|20,BoosterResource|HoleKey|20
+Legend,Legend_pack,99.99$,5000,CommonResource|Coin|65000,BoosterResource|RemovePin|25,BoosterResource|Undo|25,BoosterResource|Hammer|25,BoosterResource|HoleKey|25
+Gem1,Gem1_pack,"0,99$",50,CommonResource|Gem|80,,,,
+Gem2,Gem2_pack,"4,99$",250,CommonResource|Gem|500,,,,
+Gem3,Gem3_pack,"9,99$",500,CommonResource|Gem|1200,,,,
+Gem4,Gem4_pack,"19,99$",1000,CommonResource|Gem|2500,,,,
+Gem5,Gem5_pack,"49,99$",2500,CommonResource|Gem|6500,,,,
+Gem6,Gem6_pack,"99,99$",5000,CommonResource|Gem|14000,,,,

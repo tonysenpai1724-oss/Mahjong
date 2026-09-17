@@ -1,0 +1,52 @@
+{
+  "levels": [
+    {
+      "levelIndex": 0,
+      "difficulty": "Easy",
+      "layerCount": 1,
+      "categoryCount": 1,
+      "minPair": 10,
+      "maxPair": 20,
+      "uniquePair": 10,
+      "shape": "Cube",
+      "faceDown": 0,
+      "totalMatchedCount": 0,
+      "blockCount": 1,
+      "blockSpacingCells": 1,
+      "comboTileRatio": 0,
+      "fillCategoryNames": []
+    },
+    {
+      "levelIndex": 1,
+      "difficulty": "Easy",
+      "layerCount": 1,
+      "categoryCount": 1,
+      "minPair": 10,
+      "maxPair": 50,
+      "uniquePair": 20,
+      "shape": "Cube",
+      "faceDown": 0,
+      "totalMatchedCount": 0,
+      "blockCount": 1,
+      "blockSpacingCells": 1,
+      "comboTileRatio": 0,
+      "fillCategoryNames": []
+    },
+    {
+      "levelIndex": 2,
+      "difficulty": "Easy",
+      "layerCount": 1,
+      "categoryCount": 1,
+      "minPair": 10,
+      "maxPair": 20,
+      "uniquePair": 10,
+      "shape": "Cube",
+      "faceDown": 0,
+      "totalMatchedCount": 0,
+      "blockCount": 1,
+      "blockSpacingCells": 1,
+      "comboTileRatio": 0,
+      "fillCategoryNames": []
+    }
+  ]
+}

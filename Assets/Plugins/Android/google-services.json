@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1004378040669",
+    "project_id": "mahjong-3d-a7f3c",
+    "storage_bucket": "mahjong-3d-a7f3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1004378040669:android:a6031af78d4958c724e0b4",
+        "android_client_info": {
+          "package_name": "com.oc.mahjong.blast"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJDLwWsVreQKF1648OmRxuQI8m5sOkacE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c41f5735b5714f11a50f2ddb6f3b0d21, type: 3}
+  m_Name: ProceduralLevelBatchGenerator
+  m_EditorClassIdentifier: MahjongOut3D.Runtime::MahjongOut3D.LevelSystem.ProceduralLevelBatchGenerator
+  targetCatalog: {fileID: 11400000, guid: f8b473ff57de4323baabdd6333f902f1, type: 2}
+  layoutOverride: {fileID: 11400000, guid: 67155f736c2a4e0d8cd1e601cd86583f, type: 2}
+  tilePrefab: {fileID: -5892857342694290962, guid: 1e089effe00ac8f89ab118777d5f166b, type: 3}
+  authoredShape: {fileID: 11400000, guid: 112b929257a9ab7ea9653c2c64061369, type: 2}
+  surfaceTileGap: 0
+  leftRightSurfaceGapOffset: 0
+  upDownSurfaceGapOffset: 0
+  frontBackSurfaceGapOffset: 0
+  outputFolder: Assets/00 Scripts/Mahjong/Generated Levels
+  levelNamePrefix: Generated
+  seed: 20260730
+  jsonGenerationConfig: {fileID: 4900000, guid: 1547903db31cab876875504492ec5a70, type: 3}
+  googleSheetUrl: https://docs.google.com/spreadsheets/d/1Op3SijuPKQVv2yrRks8Z0CcG1vfnuUz7Yb33g7PVNG8/edit?gid=0#gid=0
+  generationWriteMode: 0
+  easySettings:
+    label: Easy
+    levelCount: 1
+    minLayerCount: 1
+    maxLayerCount: 1
+    minPairCount: 1
+    maxPairCount: 40
+    flippedTileChance: 0.35
+    shape: 0
+    allowedShapes: 02000000
+    difficulty: 0
+  normalSettings:
+    label: Normal
+    levelCount: 0
+    minLayerCount: 1
+    maxLayerCount: 1
+    minPairCount: 15
+    maxPairCount: 70
+    flippedTileChance: 0.45
+    shape: 0
+    allowedShapes: 0d000000
+    difficulty: 1
+  hardSettings:
+    label: Hard
+    levelCount: 0
+    minLayerCount: 2
+    maxLayerCount: 2
+    minPairCount: 40
+    maxPairCount: 90
+    flippedTileChance: 0.55
+    shape: 2
+    allowedShapes: 0d000000
+    difficulty: 2
+  superHardSettings:
+    label: SuperHard
+    levelCount: 0
+    minLayerCount: 3
+    maxLayerCount: 3
+    minPairCount: 30
+    maxPairCount: 200
+    flippedTileChance: 0.65
+    shape: 0
+    allowedShapes: 00000000
+    difficulty: 3

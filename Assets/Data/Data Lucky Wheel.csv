@@ -1,0 +1,35 @@
+Reward,Rate,
+CommonResource|Coin|300,5,
+CommonResource|Coin|15,30,
+CommonResource|Coin|20,30,
+BoosterResource|Undo|1,10,
+BoosterResource|RemovePin|1,5,
+CommonResource|Coin|50,5,
+CommonResource|Coin|30,10,
+BoosterResource|HoleKey|1,5,
+,,
+,,
+Overview,,
+Vòng quay may mắn chứa nhiều phần thưởng giá trị,,
+"Bao gồm: Coins, Gem, Boosters, Energy",,
+Mỗi ngày được Free 4 lần (cooldown giữa mỗi lần là 1h),,
+Có thể dùng Gem để spin ngay lập tức (không ảnh hưởng đến cooldown),,
+,,
+,,
+Ratio,,
+,,
+Chi phí Gem tiêu hao mỗi lần quick spin sẽ tăng dần.,,
+5 lần đầu tốn 30 Gem,,
+Sau đó cứ cách mỗi 5 lần Spin tăng thêm 5 Gem,,
+Không đếm số lần Free trong cơ chế này,,
+,,
+Reward,Value,Ratio
+Coin,300,5
+Coin,15,30
+Coin,20,30
+Undo,1,10
+Remove Screw,1,5
+Coin,50,5
+Coin,30,10
+Key,1,5
+,,100
