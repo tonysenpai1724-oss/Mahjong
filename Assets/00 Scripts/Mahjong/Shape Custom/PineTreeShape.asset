@@ -126,7 +126,7 @@ MonoBehaviour:
     localEulerAngles: {x: 0.0000017075473, y: 330, z: 66.15358}
     surfaceShellIndex: 0
   - gridCoordinate: {x: 1, y: 0, z: 1}
-    localPosition: {x: 0.61441284, y: 0.21494806, z: -1.0150995}
+    localPosition: {x: 0.6578833, y: 0.2279545, z: -1.1009619}
     localEulerAngles: {x: 0.0000034150946, y: 240, z: 65.13015}
     surfaceShellIndex: 0
   - gridCoordinate: {x: 2, y: 0, z: 1}

@@ -471,7 +471,7 @@ MonoBehaviour:
     surfaceShellIndex: 0
   - stableId: c213f21cd71042d9bb3a05ab4d4cc077
     matchId: 20
-    localPosition: {x: 0.61183375, y: 1.7093054, z: -1.0597274}
+    localPosition: {x: 0.6553042, y: 1.7223119, z: -1.14559}
     pose:
       face: 5
       rollQuarterTurns: 1
